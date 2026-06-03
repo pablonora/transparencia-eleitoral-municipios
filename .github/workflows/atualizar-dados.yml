@@ -1,0 +1,62 @@
+name: Atualizar dados e publicar
+
+# Roda o pipeline (baixa TSE/IBGE, recalcula, regenera os JSONs e o manifest),
+# commita os resultados e publica o site estático no GitHub Pages.
+# O pipeline NÃO roda no Pages — só arquivos estáticos são servidos.
+
+on:
+  workflow_dispatch:        # botão manual
+  schedule:
+    - cron: "0 6 5 * *"     # todo dia 5, 06:00 UTC (após atualizações usuais)
+
+permissions:
+  contents: write           # para commitar os dados regenerados
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rodar pipeline (Brasil)
+        run: PYTHONPATH=src python -m eleitoral.build
+
+      - name: Rodar testes
+        run: PYTHONPATH=src python -m unittest discover -s tests -v
+
+      - name: Commitar dados regenerados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data manifest/provenance.json data/raw/crosswalk data/raw/ibge
+          if git diff --cached --quiet; then
+            echo "Sem mudanças nos dados."
+          else
+            git commit -m "chore(dados): atualização automática do pipeline"
+            git push
+          fi
+
+      - name: Preparar artefato do Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

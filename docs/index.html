@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quantos eleitores cabem num município? — Brasil</title>
+  <meta name="description" content="739 municípios brasileiros têm mais eleitores registrados (TSE) que habitantes estimados (IBGE). Painel aberto que cruza os dados oficiais, município a município.">
+  <meta property="og:title" content="Quantos eleitores cabem num município?">
+  <meta property="og:description" content="739 municípios têm mais eleitores registrados que habitantes estimados. Veja o cruzamento oficial TSE × IBGE, município a município.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // aplica o tema antes da pintura (evita "flash"): localStorage → preferência do sistema → escuro
+    (function () {
+      try {
+        var s = localStorage.getItem("tema");
+        var claro = s ? s === "light" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
+        document.documentElement.dataset.theme = claro ? "light" : "dark";
+      } catch (e) { document.documentElement.dataset.theme = "dark"; }
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="toolbar">
+  <a id="ghLink" class="tb-btn" href="#" target="_blank" rel="noopener" aria-label="Código no GitHub" title="Código no GitHub">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+  </a>
+  <button id="temaBtn" class="tb-btn" type="button" aria-label="Alternar tema">☀️</button>
+</div>
+<button id="topoBtn" class="topo-btn" type="button" aria-label="Voltar ao topo">↑</button>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Transparência eleitoral · dados oficiais <strong>TSE</strong> + <strong>IBGE</strong></p>
+    <h1>Quantos eleitores cabem<br>num município?</h1>
+    <p class="lede" id="lede">Carregando os dados oficiais…</p>
+    <p class="anos-ref" id="anosRef"></p>
+
+    <div class="citysearch">
+      <input type="search" id="buscaCidade" placeholder="🔎 Encontre sua cidade…" autocomplete="off" aria-label="Encontre sua cidade">
+      <div class="ac" id="acCidade" hidden></div>
+    </div>
+    <button class="btn ghost geo" id="btnGeo" type="button">📍 Mostrar minha cidade</button>
+    <p class="geo-nota">Sua localização é usada só no seu navegador — não enviamos a lugar nenhum.</p>
+
+    <div class="ticker" id="ticker" aria-live="polite"></div>
+
+    <div class="hero-stats" id="heroStats"></div>
+
+    <div class="hero-actions">
+      <button class="btn" id="btnExplorar" type="button">Explorar os municípios ↓</button>
+      <button class="btn ghost" id="btnShare" type="button">Compartilhar</button>
+      <a class="btn ghost" id="btnTweet" target="_blank" rel="noopener">Postar no X</a>
+    </div>
+
+    <p class="disclaimer">
+      <strong>Importante.</strong> Razão alta — inclusive acima de 100% — é
+      <em>comum e majoritariamente legítima</em>: o domicílio eleitoral não é o
+      mesmo que o civil, há migração com manutenção do título, e a população do
+      IBGE é <em>estimada</em>. Isto <strong>não é um detector de fraude</strong>:
+      apenas mostra os números oficiais lado a lado, com as explicações.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="bloco" id="entenda">
+    <h2>Entenda em 1 minuto</h2>
+    <div class="explica">
+      <div class="ex">
+        <div class="n">1</div>
+        <h3>O que é a razão?</h3>
+        <p>Dividimos o número de <b>eleitores com título</b> no município (TSE) pela
+        <b>população estimada</b> (IBGE). Uma razão de <b>120%</b> significa 120
+        eleitores registrados para cada 100 habitantes estimados.</p>
+      </div>
+      <div class="ex">
+        <div class="n">2</div>
+        <h3>Por que passa de 100%? <span class="ok">é normal</span></h3>
+        <p>O título fica onde a pessoa <b>registrou</b>, não onde mora. Quem se mudou
+        e não transferiu continua contando ali. E a população do IBGE é uma
+        <b>estimativa</b>. Por isso <b id="ex-n100">739</b> municípios têm mais
+        eleitores que habitantes — e quase sempre de forma legítima.</p>
+      </div>
+      <div class="ex">
+        <div class="n">3</div>
+        <h3>Razão 16+ <span class="warn">leia com cuidado</span></h3>
+        <p>Aqui o denominador é só quem tem <b>idade de votar</b> (16+), cerca de 80%
+        da população. Como o divisor é menor, esse número é <b>quase sempre maior</b>:
+        <b id="ex-r16pct">64%</b> dos municípios já passam de 100% só por isso. Use a <b>razão
+        total</b> como referência principal.</p>
+      </div>
+      <div class="ex">
+        <div class="n">4</div>
+        <h3>O que isto <b>não</b> é</h3>
+        <p>Não é um detector de fraude. É um <b>ponto de partida</b> para investigar —
+        sempre com as explicações oficiais ao lado. Razão alta, sozinha, não indica
+        irregularidade.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" id="mapaBloco">
+    <div class="mapa-head">
+      <div>
+        <h2>O mapa</h2>
+        <p class="sub">Colorir por
+          <select id="mapaInd" aria-label="Indicador do mapa">
+            <option value="razao">Eleitores ÷ população</option>
+            <option value="razao16">Razão 16+</option>
+            <option value="idoso">% eleitorado 70+</option>
+            <option value="escol">% até fundamental</option>
+            <option value="saldo">Saldo de transferências</option>
+            <option value="cresc">Crescimento populacional</option>
+            <option value="abst24">% abstenção (2024)</option>
+            <option value="abst22">% abstenção (2022)</option>
+          </select>
+          · realçar
+          <span class="seg" id="mapaFiltro" role="group" aria-label="Destaque">
+            <button data-f="todos" class="on" type="button">todos</button>
+            <button data-f="cem" type="button">&gt;100%</button>
+            <button data-f="atip" type="button">atípicos</button>
+          </span>
+          <br><span id="mapaDica">Dê zoom (scroll) ou clique num estado para ver os municípios.</span>
+        </p>
+      </div>
+      <button class="btn ghost" id="mapaVoltar" type="button" hidden>← Voltar ao Brasil</button>
+    </div>
+    <div id="mapa" role="img" aria-label="Mapa coroplético do Brasil"></div>
+    <div class="mapa-legenda" id="mapaLegenda"></div>
+  </section>
+
+  <section class="bloco">
+    <h2>A foto do Brasil</h2>
+    <p class="sub">Razão eleitores ÷ população estimada, distribuída entre os <span id="nMun">—</span> municípios. Cada barra é uma faixa de razão.</p>
+    <div id="histograma" class="histograma" aria-label="Histograma da razão eleitores/população"></div>
+    <div class="hist-legenda" id="histLegenda"></div>
+  </section>
+
+  <section class="bloco" id="rankBloco">
+    <h2>Quem se destaca</h2>
+    <div class="tabs" id="rankTabs" role="tablist">
+      <button class="tab on" data-rk="razao">Maior razão</button>
+      <button class="tab" data-rk="saldo">Entrada líquida de eleitores</button>
+      <button class="tab" data-rk="idoso">Eleitorado mais idoso</button>
+      <button class="tab" data-rk="jovem">Mais jovem</button>
+      <button class="tab" data-rk="escol">Menor escolaridade</button>
+      <button class="tab" data-rk="facult">% voto facultativo</button>
+      <button class="tab" data-rk="abst">Maior abstenção</button>
+      <button class="tab" data-rk="margem">Entrada &gt; margem (2024)</button>
+      <button class="tab" data-rk="rev3">Atende aos 3 critérios (TSE)</button>
+    </div>
+    <p class="sub" id="rankSub"></p>
+    <div id="ranking" class="ranking"></div>
+  </section>
+
+  <section class="bloco" id="compararBloco">
+    <h2>Compare duas cidades</h2>
+    <p class="sub">Coloque dois municípios lado a lado — bom pra resolver aquela discussão.</p>
+    <div class="compare-inputs">
+      <div class="cmp-field"><input type="search" id="cmpA" placeholder="Cidade A…" autocomplete="off"><div class="ac" id="acA" hidden></div></div>
+      <div class="cmp-field"><input type="search" id="cmpB" placeholder="Cidade B…" autocomplete="off"><div class="ac" id="acB" hidden></div></div>
+    </div>
+    <div id="compareOut" class="compare-out"></div>
+  </section>
+
+  <section class="bloco" id="explorar">
+    <h2>Explore todos os municípios</h2>
+    <div class="controles">
+      <input type="search" id="busca" placeholder="Buscar município…" autocomplete="off">
+      <select id="uf" aria-label="Filtrar por UF"><option value="">Todas as UFs</option></select>
+      <div class="chips" id="chips" role="group" aria-label="Filtrar por marcador">
+        <button class="chip" data-flag="mais_eleitores_que_pop">Mais eleitores que habitantes (&gt;100%)</button>
+        <button class="chip" data-flag="acima_limiar_tse" title="Eleitorado > 80% da população — apenas o 3º dos três critérios cumulativos da Res. TSE 23.659/2021. Sozinho não enseja revisão.">Eleitorado &gt; 80% da pop.</button>
+        <button class="chip" data-flag="outlier_nacional" title="“Atípico” = a razão foge bem do padrão do país (acima de Q3 + 1,5×IQR, a regra estatística de Tukey). É raro, não é irregularidade.">Atípico (foge do padrão)</button>
+      </div>
+      <span class="contagem" id="contagem"></span>
+    </div>
+
+    <div class="tabela-wrap">
+      <table id="tabela">
+        <thead>
+          <tr>
+            <th data-k="nome">Município</th>
+            <th data-k="uf">UF</th>
+            <th data-k="eleitores" class="num">Eleitores</th>
+            <th data-k="pop_total_estimada" class="num">População <span id="th-anopop"></span></th>
+            <th data-k="razao_total" class="num">Razão <span class="ajuda" title="Eleitores ÷ população estimada, em %. 100% = tantos eleitores quanto habitantes.">ⓘ</span></th>
+            <th data-k="razao_16mais" class="num">Razão 16+ <span class="ajuda" title="Eleitores ÷ população em idade de votar (16+) estimada — proporção do Censo 2022 aplicada à estimativa do ano. Passa de 100% com facilidade (divisor menor); leia junto da razão total.">ⓘ</span></th>
+            <th data-k="_flags">Marcadores</th>
+          </tr>
+        </thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+    <p class="dica">Toque em qualquer município para abrir o perfil completo (transferências, abstenção, demografia, eleição 2024 e mais).</p>
+  </section>
+
+  <section class="bloco" id="metodologia">
+    <details>
+      <summary><h2>Metodologia e limites</h2><span class="abrir">ler ▾</span></summary>
+      <div class="meto">
+        <h3>Fontes e anos de referência</h3>
+        <ul>
+          <li><b>Eleitorado</b> — TSE, “Eleitorado Atual” <span id="meto-ger"></span> (mais recente).</li>
+          <li><b>População total</b> — IBGE, estimativa anual (tabela 6579), <b id="meto-anopop"></b>.</li>
+          <li><b>Idade (16+)</b> — IBGE, Censo 2022 (tabela 9514).</li>
+          <li><b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.</li>
+        </ul>
+        <p class="aviso-anos">⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.</p>
+
+        <h3>Como calculamos</h3>
+        <ul>
+          <li><b>Razão total</b> = eleitores ÷ população total estimada.</li>
+          <li><b>Razão 16+</b> = eleitores ÷ população em idade de votar <i>estimada</i>.
+          Como a estimativa anual não traz idade, aplicamos a <b>proporção de 16+ do
+          Censo 2022</b> à estimativa do ano. É uma <b>extrapolação</b> (assume que a
+          estrutura etária do município se manteve igual à de 2022).</li>
+          <li><b>Outlier estatístico</b> = razão acima de Q3 + 1,5·IQR (regra de Tukey),
+          calculado no Brasil; a leitura por UF aparece no detalhe.</li>
+        </ul>
+
+        <h3>O marcador de 80% e a revisão de eleitorado (o que a lei diz)</h3>
+        <p>Pela <b>Resolução TSE nº 23.659/2021, art. 105</b>, a revisão de eleitorado
+        de ofício depende de <b>três critérios CUMULATIVOS</b> (todos juntos), e ainda
+        assim é discricionária:</p>
+        <ol>
+          <li>transferências no ano ≥ 10% acima do ano anterior;</li>
+          <li>eleitorado superior ao <b>dobro</b> da população de 10–15 anos somada à de 70+;</li>
+          <li>eleitorado superior a <b>80%</b> da população projetada pelo IBGE.</li>
+        </ol>
+        <p>Mostramos apenas o 3º critério (&gt;80%) como um <b>marcador</b> — <b>ele
+        sozinho NÃO enseja revisão</b>. O próprio TSE afirma que <i>“a desproporção
+        entre o número de eleitores e a população, por si só, não enseja a revisão”</i>.
+        Por isso ~58% dos municípios passam de 80% e isso, isolado, não significa nada
+        de irregular.</p>
+
+        <h3>Limites que você deve saber</h3>
+        <ul>
+          <li>A população do IBGE é <b>estimativa</b>, não contagem exata.</li>
+          <li>A <b>razão 16+ passa de 100% por construção</b> em boa parte do país
+          (divisor menor) — não a leia como anomalia isolada.</li>
+          <li>Eleitores no <b>exterior</b> (≈917 mil) são excluídos (sem população IBGE).</li>
+          <li>A malha do mapa é simplificada — um ponto na divisa pode cair no vizinho.</li>
+          <li>Razão alta é <b>comum e majoritariamente legítima</b> (domicílio eleitoral,
+          migração). Isto sinaliza onde <i>olhar</i>, não onde há irregularidade.</li>
+        </ul>
+
+        <p class="repro">Tudo é reproduzível a partir dos dados brutos oficiais; cada
+        arquivo tem URL, data e hash em <code>manifest/provenance.json</code>.</p>
+      </div>
+    </details>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap">
+    <h2>Fontes e procedência</h2>
+    <div id="fontes"></div>
+    <p class="baixar">
+      <a class="btn ghost" href="data/brasil.json" download>⬇ Baixar os dados (JSON)</a>
+      <a class="btn ghost" href="#metodologia">Metodologia e limites</a>
+    </p>
+    <p class="meta-nota" id="metanota"></p>
+    <p class="licenca">
+      Código sob licença MIT · dados derivados sob CC-BY 4.0 · fontes originais:
+      TSE (CC-BY) e IBGE. Cada número é reproduzível a partir dos brutos
+      (<code>manifest/provenance.json</code>). População sempre <strong>estimada</strong>.
+    </p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" hidden>Link copiado ✓</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-bg" id="modalBg"></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

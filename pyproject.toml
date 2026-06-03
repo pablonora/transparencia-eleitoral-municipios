@@ -1,0 +1,14 @@
+[project]
+name = "eleitoral-transparencia"
+version = "0.1.0"
+description = "Painel de transparência: eleitorado (TSE) × população (IBGE) por município"
+requires-python = ">=3.10"
+# Sem dependências de terceiros: o pipeline usa apenas a biblioteca padrão.
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
