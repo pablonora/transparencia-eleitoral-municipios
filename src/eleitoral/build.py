@@ -14,8 +14,8 @@ from __future__ import annotations
 import argparse
 import json
 
-from . import (config, comparecimento, crosswalk, eleitorado, ibge, indicators,
-               malhas, resultados, transferencia)
+from . import (config, comparecimento, contas, crosswalk, eleitorado, ibge,
+               indicators, malhas, resultados, transferencia)
 from .download import baixar_tudo
 from .provenance import Manifest, utc_now_iso
 
@@ -71,6 +71,10 @@ def main(offline: bool = False) -> None:
     print(f"[eleicao] margem do prefeito {config.TSE_ELEICAO_ANO}...")
     prefeito = resultados.agregar_prefeito(paths["votos_eleicao"], uf=config.UF_SIGLA)
     transf_eleicao = transferencia.agregar_uf(paths["transferencia_eleicao"], uf=config.UF_SIGLA)
+
+    # 5d) prestação de contas (receitas/despesas de campanha) por município ----
+    print("[contas] prestação de contas eleitorais 2024...")
+    contas_mun = contas.agregar(manifest, uf=config.UF_SIGLA, offline=offline)
 
     # 6) indicadores ---------------------------------------------------------
     inds, limiares_uf, limiar_nacional = indicators.calcular(
@@ -140,6 +144,15 @@ def main(offline: bool = False) -> None:
             "crit3_acima_80": crit3,
             "atende_3": crit1 and crit2 and crit3,
         }
+
+        # Prestação de contas eleitorais 2024 (valores DECLARADOS; não causal).
+        c = contas_mun.get(cd0)
+        if c:
+            cc = dict(c)
+            if ind.eleitores:
+                cc["despesa_por_eleitor"] = round(c["despesa_total"] / ind.eleitores, 2)
+                cc["receita_por_eleitor"] = round(c["receita_total"] / ind.eleitores, 2)
+            d["contas"] = cc
         registros.append(d)
 
     # 7) saída ---------------------------------------------------------------
@@ -149,6 +162,9 @@ def main(offline: bool = False) -> None:
     n_out_uf = sum(1 for d in registros if d["outlier_uf"])
     n_out_nac = sum(1 for d in registros if d["outlier_nacional"])
     n_revisao = sum(1 for d in registros if d.get("revisao", {}).get("atende_3"))
+    n_contas = sum(1 for d in registros if d.get("contas"))
+    despesa_nac = round(sum(d["contas"]["despesa_total"] for d in registros if d.get("contas")), 2)
+    receita_nac = round(sum(d["contas"]["receita_total"] for d in registros if d.get("contas")), 2)
     ano_pop = anos[-1]
     ufs = sorted({d["uf"] for d in registros})
     # sigla -> código IBGE da UF (dois primeiros dígitos do código municipal)
@@ -174,6 +190,8 @@ def main(offline: bool = False) -> None:
             uf: round(v, 4) for uf, v in limiares_uf.items() if v is not None
         },
         "nota_neutra": config.NOTA_NEUTRA,
+        "nota_contas": config.NOTA_CONTAS,
+        "ano_contas": config.TSE_CONTAS_ANO,
         "resumo": {
             "n_municipios": len(registros),
             "n_mais_eleitores_que_pop": n_acima_100,
@@ -181,6 +199,9 @@ def main(offline: bool = False) -> None:
             "n_outlier_uf": n_out_uf,
             "n_outlier_nacional": n_out_nac,
             "n_revisao_3criterios": n_revisao,
+            "n_com_contas": n_contas,
+            "despesa_campanha_total": despesa_nac,
+            "receita_campanha_total": receita_nac,
             "razao_total_max": max((d["razao_total"] or 0) for d in registros),
             "razao_total_mediana": _mediana([d["razao_total"] for d in registros]),
         },
@@ -195,6 +216,8 @@ def main(offline: bool = False) -> None:
     print(f"[ok] {len(registros)} municípios em {len(ufs)} UF | >100%: {n_acima_100} | "
           f">{config.LIMIAR_REVISAO:.0%} (TSE): {n_acima_limiar} | "
           f"outlier UF: {n_out_uf} | outlier nac: {n_out_nac} | 3 critérios TSE: {n_revisao}")
+    print(f"[ok] contas: {n_contas} municípios | despesa campanha R$ {despesa_nac:,.0f} | "
+          f"receita R$ {receita_nac:,.0f}")
     print(f"[ok] docs/data/{config.escopo_slug()}.json + meta.json + manifest/provenance.json")
 
 
@@ -237,9 +260,26 @@ def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str) -> None
                 "definicao": "entradas de domicílio eleitoral no ano (e saldo entradas−saídas)",
                 "fonte": f"TSE — Transferência do eleitorado ({config.TSE_TRANSFERENCIA_ANO})",
             },
+            "contas_campanha": {
+                "definicao": (
+                    "soma das receitas declaradas (arrecadação) e das despesas "
+                    "contratadas (gasto) das campanhas de candidatos do município, "
+                    f"eleição municipal de {config.TSE_CONTAS_ANO}, por cargo."
+                ),
+                "metodo": (
+                    "Agregado por SG_UE (código do município no TSE). Lidos por HTTP "
+                    "Range apenas os arquivos por-UF de receitas e despesas "
+                    "contratadas; os arquivos _BRASIL (concatenação) são excluídos "
+                    "para não duplicar. 'despesas pagas' e 'doador originário' não "
+                    "entram. Valores em reais correntes de 2024."
+                ),
+                "ressalva": config.NOTA_CONTAS,
+                "fonte": f"TSE — Prestação de contas eleitorais ({config.TSE_CONTAS_ANO})",
+            },
         },
         "limiar_revisao": config.LIMIAR_REVISAO,
         "nota_neutra": config.NOTA_NEUTRA,
+        "nota_contas": config.NOTA_CONTAS,
         "fontes": fontes,
     }
     (config.DOCS_DATA / "meta.json").write_text(

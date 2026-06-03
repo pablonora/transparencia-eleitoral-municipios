@@ -30,6 +30,7 @@ Por município:
 | **Perfil demográfico** | % do eleitorado por faixa (16–17, 70+), gênero e escolaridade | TSE — Eleitorado Atual |
 | **Comparecimento / abstenção** | % que compareceu e que se absteve (1º turno), 2022 e 2024 | TSE — Comparecimento e Abstenção |
 | **Razão na época da eleição** | eleitorado apto ÷ população **do mesmo ano** (2022 via Censo; 2024 via estimativa) | TSE (aptos) ÷ IBGE |
+| **Gastos e arrecadação de campanha** | receita declarada e despesa contratada das campanhas de candidatos (total e por cargo), 2024 | TSE — Prestação de contas eleitorais |
 
 > A **razão na época** é year-matched (mais precisa que a "atual" para o contexto
 > eleitoral): usa o eleitorado apto daquele pleito (`QT_APTOS`) e a população do
@@ -231,7 +232,8 @@ recalcula e commita os JSONs de volta (tolerando falha de rede). Configure
 
 ```
 src/eleitoral/      pipeline (download, crosswalk, eleitorado, ibge,
-                    transferencia, indicators, build, provenance, config)
+                    transferencia, resultados, contas, indicators, build,
+                    provenance, config)
 data/raw/           brutos originais (TSE/IBGE) — imutáveis
 manifest/           provenance.json (URL + SHA-256 por arquivo)
 docs/               site estático (index.html, app.js, style.css) + data/*.json
@@ -248,6 +250,24 @@ tests/              testes (crosswalk e indicadores)
   mapa (`docs/data/malha/`).
 - **TSE — Votação nominal por município e zona (2024)**: margem de vitória do
   prefeito (turno decisivo).
+- **TSE — Prestação de contas eleitorais — candidatos (2024)**: receitas
+  (arrecadação) e despesas contratadas (gasto) das campanhas, agregadas por
+  município. O ZIP oficial tem ~1,28 GB, quase tudo nos arquivos `_BRASIL.csv`
+  (concatenação nacional que, somada, **dobraria** cada município). Em vez de
+  baixá-lo inteiro, `contas.py` lê por **HTTP Range** apenas os arquivos por-UF
+  (`receitas_candidatos_2024_{UF}` e `despesas_contratadas_candidatos_2024_{UF}`)
+  e os agrega em streaming — ~470 MB trafegados. (`despesas_pagas` não traz o
+  município e doadores não entram.)
+
+### Gastos de campanha: o que fazemos e o que NÃO fazemos
+
+Mostramos, por município, **quanto as campanhas arrecadaram e gastaram** em 2024
+(total, por cargo e por eleitor). São valores **declarados** na prestação de
+contas — **não** refletem o julgamento das contas pelo TSE e **não** indicam, por
+si sós, irregularidade. **Gasto maior não significa compra de votos**: o voto é
+secreto. O ranking é normalizado **por eleitor** (não absoluto, que só refletiria
+o tamanho da cidade) e vem sempre com a ressalva. É a mesma postura factual e
+não-causal dos votos — a ferramenta sinaliza, não acusa.
 
 ### Votos × transferências: o que fazemos e o que NÃO fazemos
 

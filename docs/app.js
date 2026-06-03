@@ -6,6 +6,17 @@ const PCT0 = (x) => (x == null ? "—" : Math.round(x * 100) + "%");
 const fmt = (x) => (x == null ? "—" : NF.format(x));
 const sig = (x) => (x == null ? "—" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + "%");
 const sig0 = (x) => (x == null ? "—" : (x > 0 ? "+" : "") + fmt(x));
+const BRL2 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const BRL0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+// valor compacto: R$ 1,2 bi / R$ 340 mi / R$ 27 mil / R$ 912
+function moeda(x) {
+  if (x == null) return "—";
+  const a = Math.abs(x);
+  if (a >= 1e9) return "R$ " + (x / 1e9).toFixed(1).replace(".", ",") + " bi";
+  if (a >= 1e6) return "R$ " + (x / 1e6).toFixed(1).replace(".", ",") + " mi";
+  if (a >= 1e4) return "R$ " + Math.round(x / 1e3) + " mil";
+  return BRL0.format(x);
+}
 const REPO_URL = "https://github.com/pablonora/transparencia-eleitoral-municipios";
 function initChrome() {
   const gh = document.getElementById("ghLink");
@@ -175,6 +186,11 @@ function rankDefs() {
       val: (m) => (m.revisao && m.revisao.atende_3) ? m.razao_total : null,
       fmt: PCT,
     },
+    gasto: {
+      titulo: `Maior gasto de campanha DECLARADO por eleitor em ${DADOS.ano_contas || 2024} (despesa contratada ÷ eleitores). São valores declarados ao TSE — não indicam irregularidade nem compra de votos; o voto é secreto. Normalizado por eleitor para não ser só um ranking de cidade grande.`,
+      val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null),
+      fmt: (v) => BRL2.format(v),
+    },
   };
 }
 function renderRanking() {
@@ -185,7 +201,7 @@ function renderRanking() {
   const top = pool.slice(0, 15);
   const maxV = Math.max(...top.map((m) => Math.abs(def.val(m))), 1e-9);
   const sub = document.getElementById("rankSub");
-  const sensivel = (rankAtual === "margem" || rankAtual === "rev3");
+  const sensivel = (rankAtual === "margem" || rankAtual === "rev3" || rankAtual === "gasto");
   sub.className = sensivel ? "sub rank-cuidado" : "sub";
   sub.innerHTML = (sensivel ? "⚠️ " : "") + def.titulo + (ufSel ? ` <strong>(${ufSel})</strong>` : "");
   document.getElementById("ranking").innerHTML = top.map((m) => {
@@ -253,6 +269,19 @@ function eleicaoBlock(m) {
     <div class="cb-row"><span class="cb-ano">Vencedor</span><b>${e.vencedor}</b> · ${fmt(e.votos_venc)} votos</div>
     <div class="cb-row"><span class="cb-ano">Margem (1º−2º)</span><b>${fmt(e.margem)}</b> votos</div>
     ${cruz}</div>`;
+}
+function contasBlock(m) {
+  const c = m.contas;
+  if (!c) return "";
+  const dpe = c.despesa_por_eleitor != null ? ` <small>(${BRL2.format(c.despesa_por_eleitor)}/eleitor)</small>` : "";
+  return `<div class="comp-blk"><div class="cb-tit">Prestação de contas — campanha ${DADOS.ano_contas}</div>
+    <div class="cb-row"><span class="cb-ano">Arrecadado</span><b>${moeda(c.receita_total)}</b></div>
+    <div class="cb-row"><span class="cb-ano">Gasto declarado</span><b>${moeda(c.despesa_total)}</b>${dpe}</div>
+    <div class="cb-row"><span class="cb-ano">Prefeito(a)</span>${moeda(c.despesa_prefeito)} <small>(${fmt(c.n_cand_prefeito)} candidatos)</small></div>
+    <div class="cb-row"><span class="cb-ano">Vereadores</span>${moeda(c.despesa_vereador)}</div>
+    <div class="cb-row"><span class="cb-ano">Candidatos</span>${fmt(c.n_candidatos)}</div>
+    <div class="cb-fonte">${DADOS.nota_contas || ""}</div>
+  </div>`;
 }
 function criteriosBlock(m) {
   const r = m.revisao;
@@ -408,6 +437,7 @@ function cityCardHTML(m) {
     ${demoGrid(m)}
     ${compBlock(m)}
     ${eleicaoBlock(m)}
+    ${contasBlock(m)}
     ${criteriosBlock(m)}
     <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${DADOS.nota_neutra}</p>
     <div class="acts">
@@ -540,6 +570,7 @@ const MAP_INDS = {
   cresc:   { label: "Crescimento populacional", val: (m) => (m.crescimento_pop_pct != null ? m.crescimento_pop_pct / 100 : null), div: [-0.01, 0, 0.01], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−1%", "0", "+1%"] },
   abst24:  { label: "% abstenção (2024)", val: (m) => (m.comparecimento && m.comparecimento["2024"] ? m.comparecimento["2024"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
   abst22:  { label: "% abstenção (2022)", val: (m) => (m.comparecimento && m.comparecimento["2022"] ? m.comparecimento["2022"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
+  gasto:   { label: "Gasto de campanha / eleitor", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), seq: [10, 90], fmt: (v) => (v == null ? "—" : BRL2.format(v)), leg: ["≤R$ 10", "≥R$ 90"] },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];

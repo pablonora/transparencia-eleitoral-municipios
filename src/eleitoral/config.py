@@ -114,6 +114,34 @@ TSE_TRANSFERENCIA_URL = (
 )
 TSE_TRANSFERENCIA_DATASET = "Transferência do eleitorado"
 
+# TSE — Prestação de contas eleitorais (receitas e despesas dos CANDIDATOS),
+# eleição municipal 2024. ATENÇÃO: o ZIP oficial tem ~1,28 GB porque inclui os
+# arquivos `_BRASIL.csv` (concatenação nacional, que ainda DOBRARIA a contagem,
+# o mesmo gotcha de votos/comparecimento). Por isso NÃO baixamos o ZIP inteiro:
+# o módulo `contas` lê por HTTP Range apenas os membros POR-UF que interessam —
+# `receitas_candidatos_2024_{UF}.csv` (arrecadação) e
+# `despesas_contratadas_candidatos_2024_{UF}.csv` (despesa declarada total) —
+# e agrega em streaming. `despesas_pagas_*` é descartado (não traz o município),
+# assim como `*_doador_originario_*` e os `_BRASIL.csv`.
+#
+# Enquadramento: são valores DECLARADOS na prestação de contas; não refletem
+# julgamento/aprovação das contas pelo TSE nem indicam irregularidade.
+TSE_CONTAS_ANO = 2024
+TSE_CONTAS_URL = (
+    "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/"
+    f"prestacao_de_contas_eleitorais_candidatos_{TSE_CONTAS_ANO}.zip"
+)
+TSE_CONTAS_DATASET = "Prestação de contas eleitorais — candidatos"
+# Membros por-UF que lemos (prefixos); o {UF} é cada sigla das 27 unidades.
+TSE_CONTAS_MEMBROS = ("receitas_candidatos", "despesas_contratadas_candidatos")
+# Nota colada ao dado de prestação de contas (guardrail de linguagem).
+NOTA_CONTAS = (
+    "Valores declarados na prestação de contas eleitorais de 2024 (candidatos). "
+    "São o que cada campanha informou ao TSE — não refletem o julgamento das "
+    "contas e não indicam, por si sós, irregularidade. Gasto maior não significa "
+    "compra de votos: o voto é secreto."
+)
+
 # IBGE — API de Agregados v3.
 IBGE_API = "https://servicodados.ibge.gov.br/api/v3/agregados"
 

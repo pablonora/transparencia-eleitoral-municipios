@@ -122,6 +122,7 @@
             <option value="cresc">Crescimento populacional</option>
             <option value="abst24">% abstenção (2024)</option>
             <option value="abst22">% abstenção (2022)</option>
+            <option value="gasto">Gasto de campanha / eleitor</option>
           </select>
           · realçar
           <span class="seg" id="mapaFiltro" role="group" aria-label="Destaque">
@@ -156,6 +157,7 @@
       <button class="tab" data-rk="facult">% voto facultativo</button>
       <button class="tab" data-rk="abst">Maior abstenção</button>
       <button class="tab" data-rk="margem">Entrada &gt; margem (2024)</button>
+      <button class="tab" data-rk="gasto">Gasto de campanha por eleitor</button>
       <button class="tab" data-rk="rev3">Atende aos 3 critérios (TSE)</button>
     </div>
     <p class="sub" id="rankSub"></p>
@@ -213,6 +215,7 @@
           <li><b>Eleitorado</b> — TSE, “Eleitorado Atual” <span id="meto-ger"></span> (mais recente).</li>
           <li><b>População total</b> — IBGE, estimativa anual (tabela 6579), <b id="meto-anopop"></b>.</li>
           <li><b>Idade (16+)</b> — IBGE, Censo 2022 (tabela 9514).</li>
+          <li><b>Gastos e arrecadação de campanha</b> — TSE, “Prestação de contas eleitorais — candidatos”, eleição municipal 2024 (receitas e despesas contratadas).</li>
           <li><b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.</li>
         </ul>
         <p class="aviso-anos">⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.</p>
@@ -252,6 +255,11 @@
           <li>A malha do mapa é simplificada — um ponto na divisa pode cair no vizinho.</li>
           <li>Razão alta é <b>comum e majoritariamente legítima</b> (domicílio eleitoral,
           migração). Isto sinaliza onde <i>olhar</i>, não onde há irregularidade.</li>
+          <li><b>Gastos de campanha</b> são valores <b>declarados</b> na prestação de contas
+          de 2024 — não refletem o julgamento das contas pelo TSE e não indicam, por si
+          sós, irregularidade. <b>Gasto maior não significa compra de votos</b>: o voto é
+          secreto. Usamos as <i>despesas contratadas</i> (gasto total declarado) e as
+          <i>receitas</i> (arrecadação); “despesas pagas” e doadores não entram.</li>
         </ul>
 
         <p class="repro">Tudo é reproduzível a partir dos dados brutos oficiais; cada
