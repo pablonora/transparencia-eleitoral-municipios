@@ -1,13 +1,23 @@
-name: Atualizar dados e publicar
+name: Publicar site e atualizar dados
 
-# Roda o pipeline (baixa TSE/IBGE, recalcula, regenera os JSONs e o manifest),
-# commita os resultados e publica o site estático no GitHub Pages.
-# O pipeline NÃO roda no Pages — só arquivos estáticos são servidos.
+# Duas responsabilidades SEPARADAS:
+#  1) "deploy": publica o site estático (docs/) no GitHub Pages. NÃO depende de
+#     baixar nada — usa os dados já versionados em docs/data. Roda em todo push
+#     ao main (e manualmente), então a página nunca fica fora do ar por causa de
+#     uma instabilidade do TSE/IBGE.
+#  2) "atualizar-dados": baixa TSE/IBGE, recalcula e commita os JSONs de volta.
+#     Roda só no agendamento mensal (ou manual) e TOLERA falha de rede — se as
+#     fontes estiverem fora do ar, o site segue publicado com o último dado bom.
 
 on:
-  workflow_dispatch:        # botão manual
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
   schedule:
-    - cron: "0 6 5 * *"     # todo dia 5, 06:00 UTC (após atualizações usuais)
+    - cron: "0 6 5 * *"     # todo dia 5, 06:00 UTC
 
 permissions:
   contents: write           # para commitar os dados regenerados
@@ -19,7 +29,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # 1) Atualiza os dados (baixa, recalcula, commita). Só no agendamento/manual.
+  #    continue-on-error nas etapas de rede: instabilidade do TSE não derruba o deploy.
+  atualizar-dados:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,12 +42,16 @@ jobs:
           python-version: "3.12"
 
       - name: Rodar pipeline (Brasil)
+        id: pipeline
+        continue-on-error: true
         run: PYTHONPATH=src python -m eleitoral.build
 
       - name: Rodar testes
+        if: steps.pipeline.outcome == 'success'
         run: PYTHONPATH=src python -m unittest discover -s tests -v
 
       - name: Commitar dados regenerados
+        if: steps.pipeline.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -46,17 +63,28 @@ jobs:
             git push
           fi
 
-      - name: Preparar artefato do Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
+      - name: Aviso se o pipeline falhou
+        if: steps.pipeline.outcome != 'success'
+        run: echo "::warning::Atualização de dados falhou (provável instabilidade de rede TSE/IBGE). O site segue publicado com os dados versionados."
 
+  # 2) Publica docs/ no Pages. Sempre roda (mesmo se a atualização acima for
+  #    pulada ou falhar), garantindo que o site fique no ar.
   deploy:
-    needs: build
+    needs: [atualizar-dados]
+    if: always()
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main          # pega o estado mais recente (inclui dados recém-commitados)
+
+      - name: Preparar artefato do Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
       - id: deployment
         uses: actions/deploy-pages@v4

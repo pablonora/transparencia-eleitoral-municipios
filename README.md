@@ -218,8 +218,11 @@ Saídas: `docs/data/brasil.json`, `docs/data/meta.json`, `manifest/provenance.js
 
 ### Publicação (GitHub Pages, sem backend)
 
-O workflow `.github/workflows/atualizar-dados.yml` roda o pipeline (manual ou
-mensalmente), commita os JSONs/manifest e publica `docs/` no Pages. Configure
+O workflow `.github/workflows/atualizar-dados.yml` tem duas partes **separadas**:
+um job `deploy` que publica `docs/` no Pages a cada push ao `main` (usando os
+dados **já versionados**, sem baixar nada — a página nunca cai por instabilidade
+das fontes) e um job `atualizar-dados` que, mensalmente, baixa TSE/IBGE,
+recalcula e commita os JSONs de volta (tolerando falha de rede). Configure
 **Settings → Pages → Source: GitHub Actions**.
 
 ---

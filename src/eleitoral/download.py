@@ -8,6 +8,8 @@ Stdlib apenas (urllib).
 """
 from __future__ import annotations
 
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -17,22 +19,38 @@ from .provenance import Manifest, utc_now_iso
 _UA = "eleitoral-transparencia/0.1 (+https://github.com; pesquisa jornalística)"
 
 
-def _download(url: str, dest: Path, timeout: int = 300) -> tuple[int, str]:
-    """Baixa url -> dest. Retorna (status, content_type)."""
+def _download(url: str, dest: Path, timeout: int = 120, tentativas: int = 4) -> tuple[int, str]:
+    """Baixa url -> dest com retentativas. Retorna (status, content_type).
+
+    O CDN do TSE às vezes recusa/atrasa conexões (especialmente de fora do
+    Brasil, como nos runners do GitHub). Em vez de derrubar tudo no primeiro
+    timeout, tentamos algumas vezes com backoff exponencial.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
     req = urllib.request.Request(url, headers={"User-Agent": _UA})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        status = resp.status
-        ctype = resp.headers.get("Content-Type", "")
-        tmp = dest.with_suffix(dest.suffix + ".part")
-        with open(tmp, "wb") as fh:
-            while True:
-                chunk = resp.read(1024 * 256)
-                if not chunk:
-                    break
-                fh.write(chunk)
-        tmp.replace(dest)
-    return status, ctype
+    ultimo_erro: Exception | None = None
+    for n in range(1, tentativas + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                status = resp.status
+                ctype = resp.headers.get("Content-Type", "")
+                tmp = dest.with_suffix(dest.suffix + ".part")
+                with open(tmp, "wb") as fh:
+                    while True:
+                        chunk = resp.read(1024 * 256)
+                        if not chunk:
+                            break
+                        fh.write(chunk)
+                tmp.replace(dest)
+            return status, ctype
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            ultimo_erro = e
+            if n < tentativas:
+                espera = min(30, 3 * 2 ** (n - 1))   # 3s, 6s, 12s, ...
+                print(f"[retry] {dest.name}: tentativa {n}/{tentativas} falhou "
+                      f"({e}); aguardando {espera}s")
+                time.sleep(espera)
+    raise RuntimeError(f"Falha ao baixar {url} após {tentativas} tentativas") from ultimo_erro
 
 
 def baixar_tudo(manifest: Manifest, *, pular_existentes: bool = False) -> dict[str, Path]:
