@@ -204,6 +204,7 @@
   "font_fonte": "Source",
   "metanota_metodo": "Each municipality's share of people aged 16+ comes from the 2022 Census (table 9514). Since the annual estimates (6579) carry no age breakdown and do not cover 2022, we apply that 2022 Census share to the year's estimate to obtain the ESTIMATED 16+ population. It is an extrapolation: it assumes the municipality's age structure stayed the same as in 2022.",
   "nota_neutra": "Differences may stem from electoral domicile (≠ civil residence), migration with the registration kept, and the fact that the IBGE population is an estimate. A high ratio does not, in itself, indicate any irregularity.",
+  "nota_contas": "Figures declared in the 2024 electoral accounts (candidates). They are what each campaign reported to the TSE — they do not reflect any judgment of the accounts and do not, in themselves, indicate irregularity. Spending more does not mean buying votes: the ballot is secret.",
 
   "met_summary": "Methodology and limits",
   "met_ler": "read ▾",

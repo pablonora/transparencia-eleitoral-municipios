@@ -204,6 +204,7 @@
   "font_fonte": "Fonte",
   "metanota_metodo": "A proporção de pessoas com 16+ por município vem do Censo 2022 (tabela 9514). Como as estimativas anuais (6579) não trazem recorte etário e não cobrem 2022, aplicamos essa proporção do Censo 2022 à estimativa do ano para obter a população 16+ ESTIMADA. É uma extrapolação: assume que a estrutura etária do município se manteve igual à de 2022.",
   "nota_neutra": "Diferenças podem decorrer de domicílio eleitoral (≠ domicílio civil), migração com manutenção do título e do fato de a população do IBGE ser uma estimativa. Razão alta não indica irregularidade por si só.",
+  "nota_contas": "Valores declarados na prestação de contas eleitorais de 2024 (candidatos). São o que cada campanha informou ao TSE — não refletem o julgamento das contas e não indicam, por si sós, irregularidade. Gasto maior não significa compra de votos: o voto é secreto.",
 
   "met_summary": "Metodologia e limites",
   "met_ler": "ler ▾",
