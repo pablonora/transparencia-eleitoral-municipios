@@ -622,12 +622,16 @@ function gerarInsights() {
   const idoso = by((m) => m.pct_70mais), saldo = by((m) => m.transferencias_saldo), jovem = by((m) => m.pct_16_17);
   const met = ufMetrics(); let ufTop = null;
   for (const uf in met) if (!ufTop || met[uf].pct100 > met[ufTop].pct100) ufTop = uf;
+  const bnTop = by((m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null));
   const out = [
     t("ins_1", { local: `${top.nome}-${top.uf}`, pct: PCT0(top.razao_total) }),
     t("ins_2", { n: fmt(r.n_mais_eleitores_que_pop) }),
     saldo ? t("ins_3", { local: `${saldo.nome}-${saldo.uf}`, saldo: sig0(saldo.transferencias_saldo), ano: saldo.transferencias_ano }) : "",
     idoso ? t("ins_4", { local: `${idoso.nome}-${idoso.uf}`, pct: PCT(idoso.pct_70mais) }) : "",
     ufTop ? t("ins_5", { uf: ufTop, pct: PCT(met[ufTop].pct100) }) : "",
+    r.despesa_campanha_total ? t("ins_6", { v: moeda(r.despesa_campanha_total) }) : "",
+    r.orcamento_saude_total ? t("ins_7", { s: moeda(r.orcamento_saude_total), e: moeda(r.orcamento_educacao_total), ano: DADOS.ano_orcamento }) : "",
+    (bnTop && bnTop.eleicao2024) ? t("ins_8", { local: `${bnTop.nome}-${bnTop.uf}`, pct: PCT(bnTop.eleicao2024.pct_brancos_nulos) }) : "",
   ].filter(Boolean);
   return out;
 }

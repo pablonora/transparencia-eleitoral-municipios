@@ -335,6 +335,21 @@ def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str) -> None
                 "ressalva": config.NOTA_ORCAMENTO,
                 "fonte": f"{config.SICONFI_PUBLISHER} — DCA ({config.ORCAMENTO_ANO})",
             },
+            "votos_branco_nulo": {
+                "definicao": ("votos válidos, brancos e nulos na eleição para prefeito "
+                              "(1º turno de 2024) e o % de brancos+nulos sobre o comparecimento"),
+                "ressalva": ("% alto pode refletir protesto, indecisão ou erro na urna — "
+                             "e municípios com eleição anulada/sub judice aparecem altos; não é fraude"),
+                "fonte": "TSE — Detalhe da votação por município e zona (2024)",
+            },
+            "eleicao": {
+                "definicao": ("prefeito eleito em 2024 (vencedor, partido, margem, turno) e "
+                              "governador eleito em 2022 (partido)"),
+                "ressalva": ("mostramos o PARTIDO do eleito (factual), SEM rótulo ideológico "
+                             "(esquerda/direita): o partido não representa a ideologia da "
+                             "população e o voto é secreto"),
+                "fonte": "TSE — Votação nominal por município e zona (2024 e 2022)",
+            },
         },
         "limiar_revisao": config.LIMIAR_REVISAO,
         "nota_neutra": config.NOTA_NEUTRA,
