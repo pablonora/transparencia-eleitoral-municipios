@@ -56,7 +56,7 @@
   "leg_realcando": "realçando {q}",
 
   "foto_h2": "A foto do Brasil",
-  "foto_sub": "Razão eleitores ÷ população estimada, distribuída entre os <span id='nMun'>—</span> municípios. Cada barra é uma faixa de razão.",
+  "foto_sub": "Distribuição dos <span id='nMun'>—</span> municípios pelo indicador escolhido (abaixo). Cada barra é uma faixa de valores.",
   "hist_tip": "{faixa}: {n} municípios",
   "hist_leg_le": "<b>{n}</b> cidades até 100% da população",
   "hist_leg_gt": "<b>{n}</b> acima de 100% (mais eleitores que habitantes)",
@@ -274,6 +274,7 @@
   "met_li_gastos": "<b>Gastos e arrecadação de campanha</b> — TSE, “Prestação de contas eleitorais — candidatos”, eleição municipal 2024 (receitas e despesas contratadas).",
   "met_li_orcamento": "<b>Orçamento público municipal</b> — Tesouro Nacional/SICONFI, Declaração de Contas Anuais 2024 (receita e despesa por função: saúde, educação, segurança).",
   "met_li_votos": "<b>Votos válidos, brancos e nulos</b> — TSE, “Detalhe da votação por município e zona”, prefeito, 1º turno de 2024.",
+  "met_li_eleicao": "<b>Resultado da eleição</b> — TSE, “Votação nominal por município e zona”: prefeito 2024 (vencedor, partido, margem) e governador 2022 (partido). Mostramos o <b>partido do eleito</b>, sem rótulo ideológico.",
   "met_li_codigos": "<b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.",
   "met_aviso_anos": "⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.",
   "met_h3_calc": "Como calculamos",

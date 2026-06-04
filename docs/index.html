@@ -29,7 +29,7 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260603d">
+  <link rel="stylesheet" href="style.css?v=20260603e">
 </head>
 <body>
 
@@ -153,7 +153,7 @@
 
   <section class="bloco">
     <h2 data-i18n="foto_h2">A foto do Brasil</h2>
-    <p class="sub" data-i18n="foto_sub">Razão eleitores ÷ população estimada, distribuída entre os <span id="nMun">—</span> municípios. Cada barra é uma faixa de razão.</p>
+    <p class="sub" data-i18n="foto_sub">Distribuição dos <span id="nMun">—</span> municípios pelo indicador escolhido (abaixo). Cada barra é uma faixa de valores.</p>
     <div class="bloco-uf">
       <label><span data-i18n="uf_label">Filtrar UF:</span>
         <select class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select></label>
@@ -266,6 +266,7 @@
           <li data-i18n="met_li_gastos"><b>Gastos e arrecadação de campanha</b> — TSE, “Prestação de contas eleitorais — candidatos”, eleição municipal 2024 (receitas e despesas contratadas).</li>
           <li data-i18n="met_li_orcamento"><b>Orçamento público municipal</b> — Tesouro Nacional/SICONFI, Declaração de Contas Anuais 2024 (receita e despesa por função: saúde, educação, segurança).</li>
           <li data-i18n="met_li_votos"><b>Votos válidos, brancos e nulos</b> — TSE, “Detalhe da votação por município e zona”, prefeito, 1º turno de 2024.</li>
+          <li data-i18n="met_li_eleicao"><b>Resultado da eleição</b> — TSE, “Votação nominal por município e zona”: prefeito 2024 (vencedor, partido, margem) e governador 2022 (partido). Mostramos o <b>partido do eleito</b>, sem rótulo ideológico.</li>
           <li data-i18n="met_li_codigos"><b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.</li>
         </ul>
         <p class="aviso-anos" data-i18n="met_aviso_anos">⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.</p>
@@ -348,6 +349,6 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js?v=20260603d"></script>
+<script src="app.js?v=20260603e"></script>
 </body>
 </html>

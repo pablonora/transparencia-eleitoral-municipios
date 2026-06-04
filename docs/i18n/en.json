@@ -56,7 +56,7 @@
   "leg_realcando": "highlighting {q}",
 
   "foto_h2": "Brazil at a glance",
-  "foto_sub": "Voters ÷ estimated population, spread across the <span id='nMun'>—</span> municipalities. Each bar is a ratio band.",
+  "foto_sub": "Distribution of the <span id='nMun'>—</span> municipalities by the selected indicator (below). Each bar is a value band.",
   "hist_tip": "{faixa}: {n} municipalities",
   "hist_leg_le": "<b>{n}</b> cities up to 100% of the population",
   "hist_leg_gt": "<b>{n}</b> above 100% (more voters than residents)",
@@ -274,6 +274,7 @@
   "met_li_gastos": "<b>Campaign spending and fundraising</b> — TSE, “Electoral accounts — candidates”, 2024 municipal election (revenues and contracted expenses).",
   "met_li_orcamento": "<b>Municipal public budget</b> — National Treasury/SICONFI, 2024 Annual Accounts Declaration (revenue and spending by function: health, education, security).",
   "met_li_votos": "<b>Valid, blank and null votes</b> — TSE, “Detailed vote by municipality and zone”, mayor, 2024 first round.",
+  "met_li_eleicao": "<b>Election results</b> — TSE, “Nominal vote by municipality and zone”: 2024 mayor (winner, party, margin) and 2022 governor (party). We show the <b>elected official's party</b>, with no ideological label.",
   "met_li_codigos": "<b>Code matching</b> — official TSE↔IBGE crosswalk.",
   "met_aviso_anos": "⚠️ The three datasets are from <b>different years</b> (most recent electorate, population estimate, and the 2022 Census). They are the best available, but the comparison is not from the same moment.",
   "met_h3_calc": "How we calculate",
