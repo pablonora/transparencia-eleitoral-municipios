@@ -221,7 +221,9 @@ function renderHero() {
 
 /* ---------------- HISTOGRAMA ---------------- */
 function renderHistograma() {
-  const rs = LINHAS.map((m) => m.razao_total).filter((x) => x != null);
+  const base = ufSel ? LINHAS.filter((m) => m.uf === ufSel) : LINHAS;
+  const nm = document.getElementById("nMun"); if (nm) nm.textContent = fmt(base.length);
+  const rs = base.map((m) => m.razao_total).filter((x) => x != null);
   const LO = 0.4, HI = 1.7, STEP = 0.05;
   const nb = Math.round((HI - LO) / STEP);
   const bins = new Array(nb + 1).fill(0); // último = overflow (>HI)
@@ -901,8 +903,7 @@ function atualizarRotulos() {
 }
 
 function zoomParaUF(cod, sg) {
-  ufSel = sg; document.getElementById("uf").value = sg;
-  render(); renderRanking();
+  setUF(sg);
   const alvo = [];
   ufLayer.eachLayer((uf) => { if (String(uf.feature.properties.codarea).padStart(2, "0") === cod) alvo.push(uf); });
   if (alvo.length) MAP.flyToBounds(alvo[0].getBounds(), { padding: [20, 20], duration: 0.6 });
@@ -911,8 +912,7 @@ function zoomParaUF(cod, sg) {
 
 function voltarBrasil() {
   munLayer.clearLayers(); loadedUFs.clear(); labeled = new Set();
-  ufSel = ""; document.getElementById("uf").value = "";
-  render(); renderRanking();
+  setUF("");
   document.getElementById("mapaVoltar").hidden = true;
   document.getElementById("mapaDica").textContent = t("map_dica_default");
   if (ufLayer) MAP.flyToBounds(ufLayer.getBounds(), { padding: [10, 10], duration: 0.6 });
@@ -933,8 +933,16 @@ function legend() {
 
 /* ---------------- TABELA ---------------- */
 function preencherUFs(ufs) {
-  const sel = document.getElementById("uf");
-  ufs.forEach((u) => { const o = document.createElement("option"); o.value = u; o.textContent = u; sel.appendChild(o); });
+  document.querySelectorAll("select.uf-sync").forEach((sel) => {
+    ufs.forEach((u) => { const o = document.createElement("option"); o.value = u; o.textContent = u; sel.appendChild(o); });
+  });
+}
+// filtro de UF unificado: sincroniza todos os seletores e re-renderiza tabela,
+// ranking e histograma (assim o filtro vale "em todo lugar", de forma consistente).
+function setUF(uf) {
+  ufSel = uf || "";
+  document.querySelectorAll("select.uf-sync").forEach((s) => { if (s.value !== ufSel) s.value = ufSel; });
+  render(); renderRanking(); renderHistograma();
 }
 
 function badges(m) {
@@ -1000,7 +1008,8 @@ function render() {
 /* ---------------- EVENTOS ---------------- */
 function bind() {
   document.getElementById("busca").addEventListener("input", (e) => { busca = e.target.value.trim().toLowerCase(); render(); });
-  document.getElementById("uf").addEventListener("change", (e) => { ufSel = e.target.value; render(); renderRanking(); });
+  document.querySelectorAll("select.uf-sync").forEach((s) =>
+    s.addEventListener("change", (e) => setUF(e.target.value)));
   document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; recolorMapa(); });
   document.querySelectorAll("#mapaFiltro button").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll("#mapaFiltro button").forEach((x) => x.classList.remove("on"));

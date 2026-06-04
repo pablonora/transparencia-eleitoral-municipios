@@ -151,12 +151,16 @@
   <section class="bloco">
     <h2 data-i18n="foto_h2">A foto do Brasil</h2>
     <p class="sub" data-i18n="foto_sub">Razão eleitores ÷ população estimada, distribuída entre os <span id="nMun">—</span> municípios. Cada barra é uma faixa de razão.</p>
+    <div class="bloco-uf"><label><span data-i18n="uf_label">Filtrar UF:</span>
+      <select class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select></label></div>
     <div id="histograma" class="histograma" aria-label="Histograma da razão eleitores/população"></div>
     <div class="hist-legenda" id="histLegenda"></div>
   </section>
 
   <section class="bloco" id="rankBloco">
     <h2 data-i18n="rank_h2">Quem se destaca</h2>
+    <div class="bloco-uf"><label><span data-i18n="uf_label">Filtrar UF:</span>
+      <select class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select></label></div>
     <div class="tabs" id="rankTabs" role="tablist">
       <button class="tab on" data-rk="razao" data-i18n="rank_tab_razao">Maior razão</button>
       <button class="tab" data-rk="saldo" data-i18n="rank_tab_saldo">Entrada líquida de eleitores</button>
@@ -189,7 +193,7 @@
     <h2 data-i18n="expl_h2">Explore todos os municípios</h2>
     <div class="controles">
       <input type="search" id="busca" placeholder="Buscar município…" data-i18n-ph="expl_search_ph" autocomplete="off">
-      <select id="uf" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select>
+      <select id="uf" class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select>
       <div class="chips" id="chips" role="group" aria-label="Filtrar por marcador">
         <button class="chip" data-flag="mais_eleitores_que_pop" data-i18n="chip_cem" data-i18n-title="chip_cem_t">Mais eleitores que habitantes (&gt;100%)</button>
         <button class="chip" data-flag="acima_limiar_tse" data-i18n="chip_tse" data-i18n-title="chip_tse_t" title="Eleitorado > 80% da população — apenas o 3º dos três critérios cumulativos da Res. TSE 23.659/2021. Sozinho não enseja revisão.">Eleitorado &gt; 80% da pop.</button>

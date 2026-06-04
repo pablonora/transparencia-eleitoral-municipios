@@ -131,6 +131,7 @@
   "expl_h2": "Explore all municipalities",
   "expl_search_ph": "Search municipality…",
   "expl_all_ufs": "All states",
+  "uf_label": "Filter state:",
   "chip_cem": "More voters than residents (>100%)",
   "chip_cem_t": "Municipalities with more registered voters than estimated residents.",
   "chip_tse": "Electorate > 80% of pop.",

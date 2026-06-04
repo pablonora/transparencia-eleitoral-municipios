@@ -131,6 +131,7 @@
   "expl_h2": "Explore todos os municípios",
   "expl_search_ph": "Buscar município…",
   "expl_all_ufs": "Todas as UFs",
+  "uf_label": "Filtrar UF:",
   "chip_cem": "Mais eleitores que habitantes (>100%)",
   "chip_cem_t": "Municípios com mais eleitores registrados que habitantes estimados.",
   "chip_tse": "Eleitorado > 80% da pop.",
