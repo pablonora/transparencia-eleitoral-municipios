@@ -84,6 +84,11 @@ def baixar_tudo(manifest: Manifest, *, pular_existentes: bool = False) -> dict[s
         f"Votação nominal por município e zona - {_ae}", "TSE — Portal de Dados Abertos", str(_ae),
     ))
     jobs.append((
+        "detalhe_votacao", config.tse_detalhe_url(_ae),
+        config.RAW / "tse" / f"detalhe_votacao_munzona_{_ae}.zip",
+        f"Detalhe da votação por município e zona - {_ae}", "TSE — Portal de Dados Abertos", str(_ae),
+    ))
+    jobs.append((
         "transferencia_eleicao",
         f"https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitor_transferencia/perfil_eleitorado_transferencia_{_ae}.zip",
         config.RAW / "tse" / f"perfil_eleitorado_transferencia_{_ae}.zip",

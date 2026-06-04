@@ -88,5 +88,36 @@ class TestResultadosPrefeito(unittest.TestCase):
         self.assertEqual(e["margem"], 50)            # 1100 − 1050 (2º turno)
 
 
+class TestBrancosNulos(unittest.TestCase):
+    HEAD = ("NR_TURNO;SG_UF;CD_MUNICIPIO;NM_MUNICIPIO;DS_CARGO;QT_COMPARECIMENTO;"
+            "QT_TOTAL_VOTOS_VALIDOS;QT_VOTOS_BRANCOS;QT_TOTAL_VOTOS_NULOS\n")
+
+    def test_soma_zonas_prefeito_1turno(self):
+        csv = self.HEAD + (
+            "1;AP;06041;X;Prefeito;100;80;5;15\n"
+            "1;AP;06041;X;Prefeito;100;90;4;6\n"      # 2ª zona: soma
+            "1;AP;06041;X;Vereador;100;70;10;20\n"    # cargo diferente: ignora
+            "2;AP;06041;X;Prefeito;999;999;9;9\n"     # 2º turno: ignora (turno=1)
+        )
+        r = resultados.agregar_brancos_nulos(_zip("det_AP.csv", csv), uf=None, turno="1")
+        self.assertIn("6041", r)                      # zero à esquerda removido
+        e = r["6041"]
+        self.assertEqual(e["comparecimento"], 200)
+        self.assertEqual(e["validos"], 170)
+        self.assertEqual(e["brancos"], 9)             # 5 + 4
+        self.assertEqual(e["nulos"], 21)              # 15 + 6
+        self.assertEqual(e["validos"] + e["brancos"] + e["nulos"], e["comparecimento"])
+
+    def test_ignora_arquivo_brasil(self):
+        linha = "1;AP;06041;X;Prefeito;100;80;5;15\n"
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            z.writestr("detalhe_2024_AP.csv", (self.HEAD + linha).encode("latin-1"))
+            z.writestr("detalhe_2024_BRASIL.csv", (self.HEAD + linha).encode("latin-1"))
+        buf.seek(0)
+        r = resultados.agregar_brancos_nulos(buf, uf=None, turno="1")
+        self.assertEqual(r["6041"]["comparecimento"], 100)   # contado UMA vez
+
+
 if __name__ == "__main__":
     unittest.main()

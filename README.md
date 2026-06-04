@@ -32,6 +32,7 @@ Por município:
 | **Razão na época da eleição** | eleitorado apto ÷ população **do mesmo ano** (2022 via Censo; 2024 via estimativa) | TSE (aptos) ÷ IBGE |
 | **Gastos e arrecadação de campanha** | receita declarada e despesa contratada das campanhas de candidatos (total e por cargo), 2024 | TSE — Prestação de contas eleitorais |
 | **Orçamento público municipal** | receita e despesa da prefeitura por função (saúde, educação, segurança…), 2024 | Tesouro Nacional — SICONFI (DCA) |
+| **Votos válidos, brancos e nulos** | na eleição para prefeito (1º turno), com % sobre o comparecimento | TSE — Detalhe da votação por município e zona |
 
 > A **razão na época** é year-matched (mais precisa que a "atual" para o contexto
 > eleitoral): usa o eleitorado apto daquele pleito (`QT_APTOS`) e a população do

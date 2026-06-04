@@ -76,3 +76,45 @@ def agregar_prefeito(zip_path: Path, uf: str | None = config.UF_SIGLA) -> dict[s
             "n_cand": len(ranked),
         }
     return out
+
+
+def agregar_brancos_nulos(zip_path: Path, uf: str | None = config.UF_SIGLA,
+                          turno: str = "1") -> dict[str, dict]:
+    """Votos válidos, brancos e nulos do PREFEITO por município (1º turno).
+
+    Fonte: "Detalhe da votação por município e zona". Branco/nulo não são
+    candidatos, então não estão na votação nominal — vêm daqui. Soma as zonas
+    (e, se houver, voto em trânsito) de cada município. Ignora o arquivo BRASIL.
+    Retorna {cd_tse(sem zero) -> {comparecimento, validos, brancos, nulos}}.
+    """
+    z = zipfile.ZipFile(zip_path)
+    csvs = [n for n in z.namelist() if n.lower().endswith(".csv") and "brasil" not in n.lower()]
+    acc: dict[str, dict] = {}
+    for nome in csvs:
+        with z.open(nome, "r") as raw:
+            leitor = csv.reader(io.TextIOWrapper(raw, encoding="latin-1", newline=""), delimiter=";")
+            c = {n: i for i, n in enumerate(next(leitor))}
+            i_turno, i_cd = c["NR_TURNO"], c["CD_MUNICIPIO"]
+            i_uf = c.get("SG_UF")  # opcional (só usado ao filtrar por UF)
+            i_cargo = c["DS_CARGO"]
+            i_comp, i_val = c["QT_COMPARECIMENTO"], c["QT_TOTAL_VOTOS_VALIDOS"]
+            i_br, i_nul = c["QT_VOTOS_BRANCOS"], c["QT_TOTAL_VOTOS_NULOS"]
+            for linha in leitor:
+                if linha[i_cargo].strip().lower() != CARGO_PREFEITO:
+                    continue
+                if linha[i_turno].strip() != turno:
+                    continue
+                if uf is not None and i_uf is not None and linha[i_uf] != uf:
+                    continue
+                cd = linha[i_cd].strip().lstrip("0")
+                d = acc.setdefault(cd, {"comparecimento": 0, "validos": 0, "brancos": 0, "nulos": 0})
+                def _i(j):
+                    try:
+                        return int(linha[j])
+                    except (ValueError, IndexError):
+                        return 0
+                d["comparecimento"] += _i(i_comp)
+                d["validos"] += _i(i_val)
+                d["brancos"] += _i(i_br)
+                d["nulos"] += _i(i_nul)
+    return acc

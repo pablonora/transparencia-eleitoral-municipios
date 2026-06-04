@@ -282,6 +282,11 @@ function rankDefs() {
       val: (m) => (m.orcamento && m.orcamento.saude != null && m.pop_total_estimada) ? m.orcamento.saude / m.pop_total_estimada : null,
       fmt: (v) => BRL0.format(v),
     },
+    bn: {
+      titulo: t("rank_t_bn"),
+      val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null),
+      fmt: PCT,
+    },
   };
 }
 function renderRanking() {
@@ -361,9 +366,15 @@ function eleicaoBlock(m) {
       ? `<div class="el-flag">${t("el_flag", { saldo: sig0(e.transf_saldo), margem: fmt(e.margem) })}</div>`
       : `<div class="cb-row"><span class="cb-ano">${t("el_entrada_lab")}</span>${t("el_entrada_val", { saldo: sig0(e.transf_saldo), margem: fmt(e.margem) })}</div>`;
   }
+  let bn = "";
+  if (e.pct_brancos != null) {
+    bn = `<div class="cb-row"><span class="cb-ano">${t("el_brancos")}</span>${fmt(e.brancos)} <small>(${PCT(e.pct_brancos)})</small></div>
+    <div class="cb-row"><span class="cb-ano">${t("el_nulos")}</span>${fmt(e.nulos)} <small>(${PCT(e.pct_nulos)})</small></div>`;
+  }
   return `<div class="comp-blk"><div class="cb-tit">${t("el_tit", { turno })}</div>
     <div class="cb-row"><span class="cb-ano">${t("el_vencedor")}</span><b>${e.vencedor}</b> · ${fmt(e.votos_venc)} ${t("el_votos_suf")}</div>
     <div class="cb-row"><span class="cb-ano">${t("el_margem_lab")}</span><b>${fmt(e.margem)}</b> ${t("el_votos_suf")}</div>
+    ${bn}
     ${cruz}</div>`;
 }
 function contasBlock(m) {
@@ -649,6 +660,7 @@ function renderCompare() {
     { lab: t("cmp_r_saldo"), f: (m) => m.transferencias_saldo, fm: sig0, d: fmt },
     { lab: t("cmp_r_abst"), f: (m) => m._abst, fm: PCT, d: _ppF },
     { lab: t("cmp_r_margem"), f: (m) => (m.eleicao2024 ? m.eleicao2024.margem : null), fm: fmt },
+    { lab: t("cmp_r_bn"), f: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), fm: PCT, d: _ppF },
     { grp: t("cmp_g_dinheiro") },
     { lab: t("cmp_r_gasto"), f: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), fm: _moedaC },
     { lab: t("cmp_r_orc_despesa_hab"), f: (m) => (m.orcamento && m.orcamento.despesa && m.pop_total_estimada) ? m.orcamento.despesa / m.pop_total_estimada : null, fm: _moedaH },
@@ -724,6 +736,7 @@ const MAP_INDS = {
   gasto:   { label: "mi_gasto", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), seq: [10, 90], fmt: (v) => (v == null ? "—" : BRL2.format(v)), leg: ["≤R$ 10", "≥R$ 90"] },
   orcsaude:{ label: "mi_orc_saude", val: (m) => (m.orcamento && m.orcamento.saude != null && m.orcamento.despesa) ? m.orcamento.saude / m.orcamento.despesa : null, seq: [0.15, 0.32], fmt: (v) => PCT(v), leg: ["≤15%", "≥32%"] },
   orceduc: { label: "mi_orc_educ", val: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null, seq: [0.18, 0.42], fmt: (v) => PCT(v), leg: ["≤18%", "≥42%"] },
+  bn:      { label: "mi_bn", val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), seq: [0.02, 0.10], fmt: (v) => PCT(v), leg: ["≤2%", "≥10%"] },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];

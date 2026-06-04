@@ -97,6 +97,16 @@ def tse_votos_url(ano: int) -> str:
         f"votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip"
     )
 
+# TSE — Detalhe da votação por município e zona: traz votos VÁLIDOS, BRANCOS e
+# NULOS por município/cargo/turno (o que a votação por candidato não tem, pois
+# branco/nulo não são candidatos). Arquivo pequeno (~1,5 MB). Usamos o cargo
+# Prefeito, 1º turno (todos os municípios têm), para o bloco da eleição 2024.
+def tse_detalhe_url(ano: int) -> str:
+    return (
+        "https://cdn.tse.jus.br/estatistica/sead/odsele/"
+        f"detalhe_votacao_munzona/detalhe_votacao_munzona_{ano}.zip"
+    )
+
 # TSE — Crosswalk OFICIAL TSE <-> IBGE (fonte autoritativa da correspondência).
 TSE_CROSSWALK_URL = (
     "https://cdn.tse.jus.br/estatistica/sead/odsele/"

@@ -71,6 +71,8 @@ def main(offline: bool = False) -> None:
     print(f"[eleicao] margem do prefeito {config.TSE_ELEICAO_ANO}...")
     prefeito = resultados.agregar_prefeito(paths["votos_eleicao"], uf=config.UF_SIGLA)
     transf_eleicao = transferencia.agregar_uf(paths["transferencia_eleicao"], uf=config.UF_SIGLA)
+    # votos válidos/brancos/nulos do prefeito (1º turno) — fonte: detalhe da votação
+    brancos_nulos = resultados.agregar_brancos_nulos(paths["detalhe_votacao"], uf=config.UF_SIGLA)
 
     # 5d) prestação de contas (receitas/despesas de campanha) por município ----
     print("[contas] prestação de contas eleitorais 2024...")
@@ -132,6 +134,17 @@ def main(offline: bool = False) -> None:
                     and p["margem"] is not None and p["margem"] >= 0
                     and saldo24 > p["margem"]),
             }
+            # votos válidos/brancos/nulos do prefeito (1º turno)
+            bn = brancos_nulos.get(cd0)
+            if bn and bn["comparecimento"]:
+                comp_pref = bn["comparecimento"]
+                d["eleicao2024"].update({
+                    "validos": bn["validos"], "brancos": bn["brancos"], "nulos": bn["nulos"],
+                    "comparecimento_pref": comp_pref,
+                    "pct_brancos": round(bn["brancos"] / comp_pref, 4),
+                    "pct_nulos": round(bn["nulos"] / comp_pref, 4),
+                    "pct_brancos_nulos": round((bn["brancos"] + bn["nulos"]) / comp_pref, 4),
+                })
 
         # Três critérios CUMULATIVOS da revisão de eleitorado de ofício
         # (Res. TSE 23.659/2021, art. 105). Atender aos três é o conjunto
