@@ -1,5 +1,14 @@
 "use strict";
 
+// Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
+// index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
+// muda quando o conteúdo muda), em vez de re-baixar a cada visita.
+const ASSET_V = "20260604c";
+// respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
+const prefersReducedMotion = () =>
+  window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const scrollBehavior = () => (prefersReducedMotion() ? "auto" : "smooth");
+
 // Formatação locale-aware: muda com o idioma (pt-BR ↔ en-US). Ver bloco I18N.
 let LANG = "pt";
 const _loc = () => (LANG === "en" ? "en-US" : "pt-BR");
@@ -81,8 +90,8 @@ function t(key, vars) {
 async function carregarI18n() {
   try {
     const [pt, en] = await Promise.all([
-      fetch("i18n/pt.json", { cache: "no-store" }).then((r) => r.json()),
-      fetch("i18n/en.json", { cache: "no-store" }).then((r) => r.json()),
+      fetch(`i18n/pt.json?v=${ASSET_V}`, { cache: "force-cache" }).then((r) => r.json()),
+      fetch(`i18n/en.json?v=${ASSET_V}`, { cache: "force-cache" }).then((r) => r.json()),
     ]);
     I18N = { pt, en };
   } catch (e) { console.warn("i18n: falha ao carregar dicionários", e); }
@@ -106,12 +115,32 @@ function aplicarI18nDOM() {
     const v = _tr(el.dataset.i18nTitle); if (v != null) el.title = v.replace(/<[^>]+>/g, "");
   });
 }
+// Reflete o idioma atual na URL (?lang=), preservando os demais parâmetros. Como
+// o Pages é estático, o cartão social (og) servido a scrapers fica em PT; mas o
+// link compartilhado carrega ?lang= → quem abrir vê a página já no idioma certo.
+function refletirLangNaURL() {
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.get("lang") === LANG) return;
+    u.searchParams.set("lang", LANG);
+    history.replaceState(null, "", u);
+  } catch (_) {}
+}
 function aplicarIdioma(lang) {
   LANG = (lang === "en") ? "en" : "pt";
   refmtLocale();
   document.documentElement.lang = (LANG === "en") ? "en-US" : "pt-BR";
+  refletirLangNaURL();
   const _ti = _tr("title"); if (_ti) document.title = _ti;
-  const md = document.querySelector('meta[name="description"]'); const _md = _tr("meta_desc"); if (md && _md) md.content = _md;
+  const _md = _tr("meta_desc");
+  const setMeta = (sel, v) => { const el = document.querySelector(sel); if (el && v) el.content = v; };
+  setMeta('meta[name="description"]', _md);
+  // mantém o cartão social coerente com o idioma da página (scrapers leem o HTML
+  // estático em PT, mas isto corrige o que o usuário vê/copia ao alternar idioma)
+  setMeta('meta[property="og:title"]', _ti);
+  setMeta('meta[property="og:description"]', _md);
+  setMeta('meta[name="twitter:title"]', _ti);
+  setMeta('meta[name="twitter:description"]', _md);
   const ogl = document.querySelector('meta[property="og:locale"]'); if (ogl) ogl.content = (LANG === "en") ? "en_US" : "pt_BR";
   const btn = document.getElementById("idiomaBtn");
   if (btn) {
@@ -156,10 +185,16 @@ const flagsAtivas = new Set();
 let busca = "", ufSel = "";
 
 async function carregar() {
-  // no-store: o JSON é regenerado pelo pipeline; sempre buscar a versão atual.
-  const [a, b] = await Promise.all([
-    fetch("data/brasil.json", { cache: "no-store" }).then((r) => r.json()),
-    fetch("data/meta.json", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
+  // meta.json é pequeno e sempre buscado fresco (no-store); dele tiramos a "versão"
+  // dos dados (gerado_em) para versionar o brasil.json. Assim o JSON grande (~2,4 MB
+  // gzip) pode ser cacheado de forma IMUTÁVEL: instantâneo em revisitas e re-baixado
+  // só quando o pipeline regenera (a URL muda). Sem versão (meta indisponível),
+  // cai no comportamento antigo (no-store).
+  const b = await fetch("data/meta.json", { cache: "no-store" }).then((r) => r.json()).catch(() => null);
+  const ver = (b && b.gerado_em) ? encodeURIComponent(b.gerado_em) : "";
+  const dataURL = ver ? `data/brasil.json?v=${ver}` : "data/brasil.json";
+  const [a] = await Promise.all([
+    fetch(dataURL, { cache: ver ? "force-cache" : "no-store" }).then((r) => r.json()),
     carregarI18n(),
   ]);
   DADOS = a; META = b; LINHAS = a.municipios;
@@ -320,10 +355,30 @@ function renderRanking() {
   }).join("");
 }
 function initRankTabs() {
-  document.querySelectorAll("#rankTabs .tab").forEach((t) => {
-    t.addEventListener("click", () => {
-      document.querySelectorAll("#rankTabs .tab").forEach((x) => x.classList.remove("on"));
-      t.classList.add("on"); rankAtual = t.dataset.rk; renderRanking();
+  const tabs = [...document.querySelectorAll("#rankTabs .tab")];
+  const selecionar = (tab) => {
+    tabs.forEach((x) => {
+      const on = x === tab;
+      x.classList.toggle("on", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+      x.setAttribute("tabindex", on ? "0" : "-1");   // roving tabindex
+    });
+    rankAtual = tab.dataset.rk; renderRanking();
+  };
+  tabs.forEach((tab, i) => {
+    const on = tab.classList.contains("on");
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+    tab.setAttribute("tabindex", on ? "0" : "-1");
+    tab.addEventListener("click", () => selecionar(tab));
+    tab.addEventListener("keydown", (e) => {
+      let j = null;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") j = (i + 1) % tabs.length;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") j = (i - 1 + tabs.length) % tabs.length;
+      else if (e.key === "Home") j = 0;
+      else if (e.key === "End") j = tabs.length - 1;
+      if (j === null) return;
+      e.preventDefault(); tabs[j].focus(); selecionar(tabs[j]);
     });
   });
   document.getElementById("ranking").addEventListener("click", (e) => {
@@ -344,6 +399,26 @@ function demoGrid(m) {
   if (!items.length) return "";
   return `<div class="demo">${items.map(([k, l]) =>
     `<div class="d"><b>${PCT(m[k])}</b> <span>${l}</span></div>`).join("")}</div>`;
+}
+// Evolução do TAMANHO do eleitorado ao longo das eleições (2014→2024): eleitorado
+// APTO (QT_APTOS) em cada pleito, do TSE — definição consistente entre os pontos.
+function eleitoradoEvolBlock(m) {
+  const s = m.eleitorado_serie;
+  if (!s || s.length < 2) return "";
+  const max = Math.max(...s.map((p) => p.aptos)) || 1;
+  const first = s[0].aptos, last = s[s.length - 1].aptos;
+  const cresc = first ? ((last - first) / first) * 100 : null;
+  const barras = s.map((p) => `<div class="evo-item">
+      <div class="evo-track"><div class="evo-bar" style="height:${Math.max(5, (p.aptos / max) * 100)}%"></div></div>
+      <div class="evo-v">${fmt(p.aptos)}</div><div class="evo-l">${p.ano}</div>
+    </div>`).join("");
+  const varLinha = (cresc != null)
+    ? `<div class="evo-var ${cresc >= 0 ? "up" : "down"}">${t("evo_var", { pct: sig(cresc), de: s[0].ano, ate: s[s.length - 1].ano })}</div>` : "";
+  return `<div class="comp-blk"><div class="cb-tit">${t("evo_tit")}</div>
+    <div class="evo-chart">${barras}</div>
+    ${varLinha}
+    <div class="cb-fonte">${t("evo_nota")}</div>
+  </div>`;
 }
 function compBlock(m) {
   const c = m.comparecimento || {};
@@ -426,6 +501,27 @@ function orcamentoBlock(m) {
     <div class="cb-fonte">${t("nota_orcamento")}</div>
   </div>`;
 }
+// Pisos constitucionais (RREO): % aplicado em saúde (ASPS, ≥15%) e educação
+// (MDE, ≥25%) sobre a RECEITA DE IMPOSTOS — não sobre a despesa total.
+function pisosBlock(m) {
+  const p = m.pisos;
+  if (!p) return "";
+  const linha = (lab, pct, min) => {
+    if (pct == null) return "";
+    const ok = pct >= min;
+    const v = pct.toFixed(1).replace(".", _dec()) + "%";
+    return `<div class="cb-row"><span class="cb-ano">${lab}</span>
+      <b class="${ok ? "piso-ok" : "piso-no"}">${v}</b>
+      <small>${t("piso_min", { min: Math.round(min) })} ${ok ? "✓" : "✕"}</small></div>`;
+  };
+  const sa = linha(t("piso_saude"), p.saude_pct, p.saude_min != null ? p.saude_min : 15);
+  const ed = linha(t("piso_educacao"), p.educacao_pct, p.educacao_min != null ? p.educacao_min : 25);
+  if (!sa && !ed) return "";
+  return `<div class="comp-blk"><div class="cb-tit">${t("piso_tit")}</div>
+    ${sa}${ed}
+    <div class="cb-fonte">${t("orc_piso_nota")}</div>
+  </div>`;
+}
 function criteriosBlock(m) {
   const r = m.revisao;
   if (!r) return "";
@@ -498,6 +594,20 @@ function initBuscaCidade() {
   document.getElementById("modalBg").addEventListener("click", fecharModal);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharModal(); });
   document.getElementById("btnGeo").addEventListener("click", localizar);
+  // foco preso dentro do modal enquanto aberto (a11y: teclado não "escapa" pro fundo)
+  document.getElementById("modalCard").addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const f = focaveis(document.getElementById("modalCard"));
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+  });
+}
+// elementos focáveis e visíveis dentro de um container (para o focus-trap do modal)
+function focaveis(c) {
+  return [...c.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+    .filter((el) => el.offsetParent !== null);
 }
 
 /* ---------------- GEOLOCALIZAÇÃO (tudo no navegador) ---------------- */
@@ -541,7 +651,14 @@ function localizar() {
   }, () => { reset(); toast(t("geo_sem_loc")); },
     { enableHighAccuracy: false, timeout: 9000, maximumAge: 600000 });
 }
-function fecharModal() { document.getElementById("modal").hidden = true; window._cidadeAberta = null; }
+function fecharModal() {
+  document.getElementById("modal").hidden = true;
+  window._cidadeAberta = null;
+  // devolve o foco a quem abriu o modal (a11y)
+  const prev = window._lastFocus;
+  window._lastFocus = null;
+  if (prev && typeof prev.focus === "function") { try { prev.focus(); } catch (_) {} }
+}
 
 function barRow(lab, v, max, cls) {
   const w = max ? Math.min(100, (v / max) * 100) : 0;
@@ -578,11 +695,13 @@ function cityCardHTML(m) {
       ${m.transferencias_saldo != null ? `<div class="d"><b>${sig0(m.transferencias_saldo)}</b> <span>${t("city_d_saldo", { pct: saldoPct != null ? " (" + PCT(saldoPct) + ")" : "" })}</span></div>` : ""}
     </div>
     ${demoGrid(m)}
+    ${eleitoradoEvolBlock(m)}
     ${compBlock(m)}
     ${eleicaoBlock(m)}
     ${govBlock(m)}
     ${contasBlock(m)}
     ${orcamentoBlock(m)}
+    ${pisosBlock(m)}
     ${criteriosBlock(m)}
     <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${t("nota_neutra")}</p>
     <div class="acts">
@@ -592,13 +711,24 @@ function cityCardHTML(m) {
   </div>`;
 }
 function linkCidade(m) {
-  return location.origin + location.pathname + "?cidade=" + m.cd_ibge;
+  const u = new URL(location.origin + location.pathname);
+  u.searchParams.set("cidade", m.cd_ibge);
+  u.searchParams.set("lang", LANG);
+  return u.toString();
 }
 function abrirCidade(m) {
+  // guarda quem tinha o foco, para devolver ao fechar (a11y)
+  if (!window._cidadeAberta) window._lastFocus = document.activeElement;
   window._cidadeAberta = m;
-  document.getElementById("modalCard").innerHTML = cityCardHTML(m);
+  const card = document.getElementById("modalCard");
+  card.innerHTML = cityCardHTML(m);
+  // rotula o diálogo pelo nome da cidade (aria-labelledby)
+  const h3 = card.querySelector("h3");
+  if (h3) { h3.id = "modalTitulo"; card.setAttribute("aria-labelledby", "modalTitulo"); }
   document.getElementById("modal").hidden = false;
-  document.getElementById("modalFechar").addEventListener("click", fecharModal);
+  const btnFechar = document.getElementById("modalFechar");
+  btnFechar.addEventListener("click", fecharModal);
+  btnFechar.focus();   // move o foco pro diálogo
   const per100 = Math.round((m.razao_total || 0) * 100);
   const link = linkCidade(m);
   document.getElementById("pf-x").href =
@@ -611,8 +741,20 @@ function abrirCidade(m) {
   });
 }
 function abrirDeepLink() {
-  const cd = new URLSearchParams(location.search).get("cidade");
+  const q = new URLSearchParams(location.search);
+  const cd = q.get("cidade");
   if (cd && munById.has(cd)) abrirCidade(munById.get(cd));
+  // comparação compartilhada por link: ?a=<ibge>&b=<ibge>
+  const a = q.get("a"), b = q.get("b");
+  const okA = a && munById.has(a), okB = b && munById.has(b);
+  if (okA || okB) {
+    if (okA) { cmpAsel = munById.get(a); document.getElementById("cmpA").value = cmpAsel.nome; }
+    if (okB) { cmpBsel = munById.get(b); document.getElementById("cmpB").value = cmpBsel.nome; }
+    renderCompare();
+    if (okA && okB && !cd) {
+      document.getElementById("compararBloco").scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+    }
+  }
 }
 
 /* ---------------- DESTAQUES (ticker) ---------------- */
@@ -647,9 +789,26 @@ function initTicker() {
 
 /* ---------------- COMPARAR CIDADES ---------------- */
 let cmpAsel = null, cmpBsel = null;
+// link compartilhável da comparação A×B, preservando ?lang e descartando ?cidade
+function linkCompare(A, B) {
+  const u = new URL(location.origin + location.pathname + location.search);
+  u.searchParams.delete("cidade");
+  u.searchParams.set("a", A.cd_ibge);
+  u.searchParams.set("b", B.cd_ibge);
+  return u.toString();
+}
 function initComparar() {
   attachAutocomplete(document.getElementById("cmpA"), document.getElementById("acA"), (m) => { cmpAsel = m; renderCompare(); });
   attachAutocomplete(document.getElementById("cmpB"), document.getElementById("acB"), (m) => { cmpBsel = m; renderCompare(); });
+  const sh = document.getElementById("cmpShare");
+  if (sh) sh.addEventListener("click", async () => {
+    if (!cmpAsel || !cmpBsel) return;
+    const link = linkCompare(cmpAsel, cmpBsel);
+    try {
+      if (navigator.share) { await navigator.share({ title: `${cmpAsel.nome} × ${cmpBsel.nome}`, url: link }); return; }
+      await navigator.clipboard.writeText(link); toast();
+    } catch (_) { /* cancelado */ }
+  });
 }
 // formatadores tolerantes a null para o comparador
 const _moedaC = (v) => (v == null ? "—" : BRL2.format(v));
@@ -659,8 +818,12 @@ const _ppF = (x) => (x * 100).toFixed(1).replace(".", _dec()) + _ppsuf();  // x 
 const _ppN = (x) => x.toFixed(1).replace(".", _dec()) + _ppsuf();          // x já em pontos % (crescimento)
 function renderCompare() {
   const out = document.getElementById("compareOut");
-  if (!cmpAsel || !cmpBsel) { out.innerHTML = ""; return; }
+  const sh = document.getElementById("cmpShare");
+  if (!cmpAsel || !cmpBsel) { out.innerHTML = ""; if (sh) sh.hidden = true; return; }
   const A = cmpAsel, B = cmpBsel, ano = DADOS.ano_populacao;
+  if (sh) sh.hidden = false;
+  // reflete a comparação na URL (deep link) sem recarregar nem poluir o histórico
+  try { history.replaceState(null, "", linkCompare(A, B)); } catch (_) {}
   const anoT = A.transferencias_ano || B.transferencias_ano;
   const orcF = (chave) => (m) => (m.orcamento && m.orcamento[chave] != null && m.orcamento.despesa) ? m.orcamento[chave] / m.orcamento.despesa : null;
   const orcHab = (chave) => (m) => (m.orcamento && m.orcamento[chave] != null && m.pop_total_estimada) ? m.orcamento[chave] / m.pop_total_estimada : null;
@@ -778,7 +941,10 @@ const MAP_INDS = {
   bn:      { label: "mi_bn", val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), seq: [0.02, 0.10], fmt: (v) => PCT(v), leg: ["≤2%", "≥10%"] },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];
+// divergente daltônico-friendly: azul ↔ laranja (em vez de azul ↔ vermelho).
+// Azul/laranja é o divergente seguro para daltonismo vermelho-verde (o mais comum)
+// e os dois extremos diferem também em luminância (legível até em escala de cinza).
+const DIV_LO = [42, 118, 199], DIV_MID = [236, 239, 244], DIV_HI = [233, 113, 50];
 function corDiv(t) {
   t = Math.max(0, Math.min(1, t));
   return t <= 0.5 ? `rgb(${_lerp(DIV_LO, DIV_MID, t / 0.5).join(",")})` : `rgb(${_lerp(DIV_MID, DIV_HI, (t - 0.5) / 0.5).join(",")})`;
@@ -952,7 +1118,7 @@ function voltarBrasil() {
 function legend() {
   const ind = MAP_INDS[mapInd];
   const grad = ind.div
-    ? "linear-gradient(90deg, rgb(56,135,255), rgb(232,236,245), rgb(255,77,61))"
+    ? "linear-gradient(90deg, rgb(42,118,199), rgb(236,239,244), rgb(233,113,50))"
     : "linear-gradient(90deg,#1d3b4a,#46e0c0,#ffd23f,#ff7b3d)";
   const fim = ind.div ? ind.leg[2] : ind.leg[1];
   const pivo = ind.div ? ` · ${t("leg_vira")} <b>${ind.leg[1]}</b>` : "";
@@ -1066,12 +1232,16 @@ function bind() {
   const histSel = document.getElementById("histInd");
   if (histSel) histSel.addEventListener("change", (e) => { histInd = e.target.value; renderHistograma(); });
   document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; recolorMapa(); });
-  document.querySelectorAll("#mapaFiltro button").forEach((b) => b.addEventListener("click", () => {
-    document.querySelectorAll("#mapaFiltro button").forEach((x) => x.classList.remove("on"));
-    b.classList.add("on"); destaque = b.dataset.f; recolorMapa();
-  }));
+  document.querySelectorAll("#mapaFiltro button").forEach((b) => {
+    b.setAttribute("aria-pressed", b.classList.contains("on") ? "true" : "false");
+    b.addEventListener("click", () => {
+      document.querySelectorAll("#mapaFiltro button").forEach((x) => { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); });
+      b.classList.add("on"); b.setAttribute("aria-pressed", "true"); destaque = b.dataset.f; recolorMapa();
+    });
+  });
   document.getElementById("mapaVoltar").addEventListener("click", voltarBrasil);
   document.querySelectorAll(".chip").forEach((c) => {
+    c.setAttribute("aria-pressed", "false");
     c.addEventListener("click", () => {
       const f = c.dataset.flag;
       if (flagsAtivas.has(f)) { flagsAtivas.delete(f); c.setAttribute("aria-pressed", "false"); }
@@ -1094,7 +1264,7 @@ function bind() {
     if (m) abrirCidade(m);
   });
   document.getElementById("btnExplorar").addEventListener("click", () =>
-    document.getElementById("explorar").scrollIntoView({ behavior: "smooth" }));
+    document.getElementById("explorar").scrollIntoView({ behavior: scrollBehavior() }));
   document.getElementById("btnShare").addEventListener("click", async () => {
     const url = location.href;
     try {

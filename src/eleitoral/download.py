@@ -70,7 +70,9 @@ def baixar_tudo(manifest: Manifest, *, pular_existentes: bool = False) -> dict[s
         ("transferencia",  config.TSE_TRANSFERENCIA_URL,    config.RAW / "tse" / f"perfil_eleitorado_transferencia_{config.TSE_TRANSFERENCIA_ANO}.zip",
          config.TSE_TRANSFERENCIA_DATASET, "TSE — Portal de Dados Abertos", str(config.TSE_TRANSFERENCIA_ANO)),
     ]
-    for ano in config.TSE_COMPARECIMENTO_ANOS:
+    # comparecimento: anos de exibição (2022/2024) + anos extras da série histórica
+    # do eleitorado (2014–2024). Arquivos por-UF; baixados sob demanda (cache em raw).
+    for ano in config.tse_comparecimento_anos_todos():
         jobs.append((
             f"comparecimento_{ano}", config.tse_comparecimento_url(ano),
             config.RAW / "tse" / f"perfil_comparecimento_abstencao_{ano}.zip",

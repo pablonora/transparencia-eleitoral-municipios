@@ -10,7 +10,19 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:site_name" content="Transparência eleitoral — Brasil">
+  <meta property="og:url" content="https://pablonora.github.io/transparencia-eleitoral-municipios/">
+  <link rel="canonical" href="https://pablonora.github.io/transparencia-eleitoral-municipios/">
+  <meta property="og:image" content="https://pablonora.github.io/transparencia-eleitoral-municipios/og-image.png?v=20260604a">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="Painel de transparência eleitoral do Brasil: eleitores registrados (TSE) vs. população estimada (IBGE), município a município.">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Quantos eleitores cabem num município?">
+  <meta name="twitter:description" content="739 municípios têm mais eleitores registrados que habitantes estimados. Veja o cruzamento oficial TSE × IBGE, município a município.">
+  <meta name="twitter:image" content="https://pablonora.github.io/transparencia-eleitoral-municipios/og-image.png?v=20260604a">
+  <meta name="twitter:image:alt" content="Painel de transparência eleitoral do Brasil: eleitores (TSE) vs. população (IBGE).">
   <link rel="alternate" hreflang="pt-BR" href="https://pablonora.github.io/transparencia-eleitoral-municipios/?lang=pt">
   <link rel="alternate" hreflang="en" href="https://pablonora.github.io/transparencia-eleitoral-municipios/?lang=en">
   <link rel="alternate" hreflang="x-default" href="https://pablonora.github.io/transparencia-eleitoral-municipios/">
@@ -29,9 +41,31 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260603g">
+  <link rel="stylesheet" href="style.css?v=20260604c">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Transparência eleitoral dos municípios brasileiros — eleitorado (TSE) × população (IBGE)",
+    "description": "Painel aberto que cruza, por município, o eleitorado registrado (TSE) com a população estimada (IBGE), além de gastos de campanha, orçamento público (SICONFI), comparecimento/abstenção e resultado eleitoral. Sinaliza municípios com razão eleitores/população atípica — não é um detector de fraude.",
+    "url": "https://pablonora.github.io/transparencia-eleitoral-municipios/",
+    "sameAs": "https://github.com/pablonora/transparencia-eleitoral-municipios",
+    "keywords": ["eleições", "Brasil", "TSE", "IBGE", "transparência", "eleitorado", "municípios", "dados abertos"],
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "creator": { "@type": "Person", "name": "Pablo Nora" },
+    "isAccessibleForFree": true,
+    "spatialCoverage": { "@type": "Country", "name": "Brasil" },
+    "distribution": {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://pablonora.github.io/transparencia-eleitoral-municipios/data/brasil.json"
+    }
+  }
+  </script>
 </head>
 <body>
+
+<a class="skip-link" href="#conteudo" data-i18n="skip_link">Pular para o conteúdo</a>
 
 <div class="toolbar">
   <a id="ghLink" class="tb-btn" href="#" target="_blank" rel="noopener" aria-label="Código no GitHub" title="Código no GitHub">
@@ -76,7 +110,7 @@
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="conteudo">
 
   <section class="bloco" id="entenda">
     <h2 data-i18n="entenda_h2">Entenda em 1 minuto</h2>
@@ -236,6 +270,7 @@
       <div class="cmp-field"><input type="search" id="cmpB" placeholder="Cidade B…" data-i18n-ph="cmp_b_ph" autocomplete="off"><div class="ac" id="acB" hidden></div></div>
     </div>
     <div id="compareOut" class="compare-out"></div>
+    <button class="btn ghost" id="cmpShare" type="button" hidden data-i18n="cmp_share">🔗 Compartilhar esta comparação</button>
   </section>
 
   <section class="bloco" id="explorar">
@@ -379,6 +414,6 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js?v=20260603g"></script>
+<script src="app.js?v=20260604c"></script>
 </body>
 </html>

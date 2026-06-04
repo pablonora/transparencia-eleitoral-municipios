@@ -75,6 +75,38 @@
   transition: background-color .18s ease, color .18s ease, border-color .18s ease !important;
 }
 html { scroll-behavior: smooth; }
+
+/* ---------- ACESSIBILIDADE ---------- */
+/* foco visível e consistente por teclado em TODO elemento interativo (o teclado
+   recebe um anel claro; o mouse não, via :focus-visible) */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* inputs/selects: além do anel, mantêm a borda de destaque já existente */
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; }
+
+/* link "pular para o conteúdo" — só aparece ao receber foco por teclado */
+.skip-link {
+  position: fixed; top: -100px; left: 1rem; z-index: 1500;
+  background: var(--accent); color: var(--btn-ink); font-weight: 700;
+  padding: .6rem 1rem; border-radius: 0 0 10px 10px; text-decoration: none;
+  transition: top .15s ease;
+}
+.skip-link:focus { top: 0; }
+
+/* respeita "reduzir movimento" do sistema: corta animações/transições e o
+   scroll suave (mantém só o essencial). */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 body {
   margin: 0; background: var(--bg); color: var(--ink);
   font-family: "Inter", system-ui, -apple-system, sans-serif;
@@ -387,6 +419,20 @@ code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; f
 .cb-row { font-size: .85rem; color: var(--soft); margin: .2rem 0; }
 .cb-ano { display: inline-block; min-width: 150px; color: var(--muted); vertical-align: top; }
 .cb-fonte { display: block; color: var(--muted); font-size: .7rem; margin-top: .35rem; }
+/* pisos constitucionais: % aplicado em saúde/educação (verde = cumpre, âmbar = abaixo) */
+.cb-row b.piso-ok { color: var(--accent2); }
+.cb-row b.piso-no { color: var(--b100); }
+/* mini-gráfico de evolução do eleitorado (3 pontos) */
+.evo-chart { display: flex; align-items: flex-end; gap: .8rem; margin: .3rem 0 .2rem; }
+.evo-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 0; }
+.evo-track { width: 100%; height: 76px; display: flex; align-items: flex-end; justify-content: center; }
+.evo-bar { width: 56%; min-height: 4px; border-radius: 5px 5px 0 0; background: linear-gradient(180deg, var(--accent2), #2b7a6b); }
+.evo-item:last-child .evo-bar { background: linear-gradient(180deg, var(--accent), #b8860b); }
+.evo-v { font-family: "Sora"; font-weight: 700; font-size: .82rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.evo-l { font-size: .68rem; color: var(--muted); text-align: center; line-height: 1.2; }
+.evo-var { font-family: "Sora"; font-weight: 700; font-size: .82rem; margin-top: .2rem; }
+.evo-var.up { color: var(--accent2); }
+.evo-var.down { color: var(--b100); }
 .cb-cols { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
 .cb-col { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: .6rem .75rem; }
 .cb-ano-tit { font-family: "Sora"; font-weight: 700; font-size: .82rem; margin-bottom: .45rem; }

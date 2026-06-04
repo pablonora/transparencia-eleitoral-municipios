@@ -15,7 +15,7 @@ import argparse
 import json
 
 from . import (config, comparecimento, contas, crosswalk, eleitorado, governador,
-               ibge, indicators, malhas, orcamento, resultados, transferencia)
+               ibge, indicators, malhas, orcamento, pisos, resultados, transferencia)
 from .download import baixar_tudo
 from .provenance import Manifest, utc_now_iso
 
@@ -62,8 +62,10 @@ def main(offline: bool = False) -> None:
     transf_entradas = {cd: v["entradas"] for cd, v in transf.items()}
 
     # 5b) comparecimento / abstenção por eleição -----------------------------
+    # Agregamos a UNIÃO dos anos: os de exibição (2022/2024, com bloco completo) e
+    # os extras da série histórica do eleitorado (2014–2024, só QT_APTOS).
     comp_por_ano = {}
-    for ano in config.TSE_COMPARECIMENTO_ANOS:
+    for ano in config.tse_comparecimento_anos_todos():
         print(f"[comparec] agregando {ano}...")
         comp_por_ano[ano] = comparecimento.agregar(paths[f"comparecimento_{ano}"], uf=config.UF_SIGLA)
 
@@ -96,6 +98,11 @@ def main(offline: bool = False) -> None:
     print("[orcamento] orçamento público municipal (SICONFI)...")
     orcamento_mun = orcamento.agregar(manifest, [ind.cd_ibge for ind in inds], offline=offline)
 
+    # 6c) pisos constitucionais (SICONFI/RREO Anexo 14): % aplicado em saúde (ASPS)
+    # e educação (MDE), sobre a receita de impostos. Aplicação mínima constitucional.
+    print("[pisos] pisos constitucionais de saúde/educação (SICONFI/RREO)...")
+    pisos_mun = pisos.agregar(manifest, [ind.cd_ibge for ind in inds], offline=offline)
+
     registros = []
     for ind in inds:
         d = indicators.para_dict(ind)
@@ -103,7 +110,8 @@ def main(offline: bool = False) -> None:
         d["transferencias_saidas"] = t.get("saidas")
         d["transferencias_saldo"] = t.get("saldo")
         comp = {}
-        for ano, mapa_comp in comp_por_ano.items():
+        for ano in config.TSE_COMPARECIMENTO_ANOS:   # blocos completos só nos anos exibidos
+            mapa_comp = comp_por_ano.get(ano, {})
             c = mapa_comp.get(ind.cd_tse.lstrip("0"))
             if c and c["aptos"]:
                 # razão da ÉPOCA: eleitorado apto daquele ano ÷ população do mesmo
@@ -125,6 +133,15 @@ def main(offline: bool = False) -> None:
                     "razao_epoca_fonte": "Censo 2022" if ano == config.IBGE_CENSO_ANO_INT else f"estimativa {ano}",
                 }
         d["comparecimento"] = comp
+        # série histórica do TAMANHO do eleitorado: eleitorado APTO (QT_APTOS) em
+        # cada eleição disponível (definição consistente entre os pontos).
+        serie = []
+        for ano in config.TSE_ELEITORADO_SERIE_ANOS:
+            c = comp_por_ano.get(ano, {}).get(ind.cd_tse.lstrip("0"))
+            if c and c.get("aptos"):
+                serie.append({"ano": ano, "aptos": c["aptos"]})
+        if len(serie) >= 2:
+            d["eleitorado_serie"] = serie
         # eleição 2024 (prefeito) — cruzamento FACTUAL com transferências do ano
         cd0 = ind.cd_tse.lstrip("0")
         p = prefeito.get(cd0)
@@ -184,6 +201,10 @@ def main(offline: bool = False) -> None:
         o = orcamento_mun.get(ind.cd_ibge)
         if o:
             d["orcamento"] = o
+        # Pisos constitucionais (SICONFI/RREO): % aplicado em saúde/educação.
+        pz = pisos_mun.get(ind.cd_ibge)
+        if pz:
+            d["pisos"] = pz
         registros.append(d)
 
     # 7) saída ---------------------------------------------------------------
@@ -197,6 +218,7 @@ def main(offline: bool = False) -> None:
     despesa_nac = round(sum(d["contas"]["despesa_total"] for d in registros if d.get("contas")), 2)
     receita_nac = round(sum(d["contas"]["receita_total"] for d in registros if d.get("contas")), 2)
     n_orcamento = sum(1 for d in registros if d.get("orcamento"))
+    n_pisos = sum(1 for d in registros if d.get("pisos"))
     orc_despesa_nac = round(sum(d["orcamento"].get("despesa") or 0 for d in registros if d.get("orcamento")), 2)
     orc_saude_nac = round(sum(d["orcamento"].get("saude") or 0 for d in registros if d.get("orcamento")), 2)
     orc_educ_nac = round(sum(d["orcamento"].get("educacao") or 0 for d in registros if d.get("orcamento")), 2)
@@ -229,6 +251,8 @@ def main(offline: bool = False) -> None:
         "ano_contas": config.TSE_CONTAS_ANO,
         "nota_orcamento": config.NOTA_ORCAMENTO,
         "ano_orcamento": config.ORCAMENTO_ANO,
+        "nota_piso": config.NOTA_PISO,
+        "ano_pisos": config.PISOS_ANO,
         "governadores": governadores,
         "resumo": {
             "n_municipios": len(registros),
@@ -241,6 +265,7 @@ def main(offline: bool = False) -> None:
             "despesa_campanha_total": despesa_nac,
             "receita_campanha_total": receita_nac,
             "n_com_orcamento": n_orcamento,
+            "n_com_pisos": n_pisos,
             "orcamento_despesa_total": orc_despesa_nac,
             "orcamento_saude_total": orc_saude_nac,
             "orcamento_educacao_total": orc_educ_nac,
@@ -262,6 +287,7 @@ def main(offline: bool = False) -> None:
           f"receita R$ {receita_nac:,.0f}")
     print(f"[ok] orçamento: {n_orcamento} municípios | despesa pública R$ {orc_despesa_nac:,.0f} | "
           f"saúde R$ {orc_saude_nac:,.0f} | educação R$ {orc_educ_nac:,.0f}")
+    print(f"[ok] pisos: {n_pisos} municípios com % constitucional de saúde/educação (RREO)")
     print(f"[ok] docs/data/{config.escopo_slug()}.json + meta.json + manifest/provenance.json")
 
 
@@ -335,6 +361,21 @@ def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str) -> None
                 "ressalva": config.NOTA_ORCAMENTO,
                 "fonte": f"{config.SICONFI_PUBLISHER} — DCA ({config.ORCAMENTO_ANO})",
             },
+            "pisos_constitucionais": {
+                "definicao": (
+                    "percentual aplicado em saúde (ASPS, piso 15%) e educação "
+                    "(MDE, piso 25%) sobre a receita de impostos e transferências, "
+                    f"exercício {config.PISOS_ANO}."
+                ),
+                "metodo": (
+                    "RREO Anexo 14 (Demonstrativo Simplificado), 6º bimestre, no "
+                    "SICONFI/Tesouro Nacional; consulta por ente (código IBGE) na API "
+                    "pública. Calculado sobre a receita de impostos — não sobre a "
+                    "despesa total. Cobertura depende do envio de cada município."
+                ),
+                "ressalva": config.NOTA_PISO,
+                "fonte": f"{config.SICONFI_PUBLISHER} — RREO Anexo 14 ({config.PISOS_ANO})",
+            },
             "votos_branco_nulo": {
                 "definicao": ("votos válidos, brancos e nulos na eleição para prefeito "
                               "(1º turno de 2024) e o % de brancos+nulos sobre o comparecimento"),
@@ -355,6 +396,7 @@ def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str) -> None
         "nota_neutra": config.NOTA_NEUTRA,
         "nota_contas": config.NOTA_CONTAS,
         "nota_orcamento": config.NOTA_ORCAMENTO,
+        "nota_piso": config.NOTA_PISO,
         "fontes": fontes,
     }
     (config.DOCS_DATA / "meta.json").write_text(
