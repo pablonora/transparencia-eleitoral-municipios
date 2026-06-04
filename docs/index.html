@@ -29,7 +29,7 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260603">
 </head>
 <body>
 
@@ -138,6 +138,9 @@
             <button data-f="todos" class="on" type="button" data-i18n="map_f_todos">todos</button>
             <button data-f="cem" type="button" data-i18n="map_f_cem">&gt;100%</button>
             <button data-f="atip" type="button" data-i18n="map_f_atip">atípicos</button>
+            <button data-f="marg" type="button" data-i18n="map_f_marg">entrada &gt; margem</button>
+            <button data-f="rev3" type="button" data-i18n="map_f_rev3">3 critérios</button>
+            <button data-f="t2" type="button" data-i18n="map_f_t2">2º turno</button>
           </span>
           <br><span id="mapaDica" data-i18n="map_dica_default">Dê zoom (scroll) ou clique num estado para ver os municípios.</span>
         </p>
@@ -151,9 +154,25 @@
   <section class="bloco">
     <h2 data-i18n="foto_h2">A foto do Brasil</h2>
     <p class="sub" data-i18n="foto_sub">Razão eleitores ÷ população estimada, distribuída entre os <span id="nMun">—</span> municípios. Cada barra é uma faixa de razão.</p>
-    <div class="bloco-uf"><label><span data-i18n="uf_label">Filtrar UF:</span>
-      <select class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select></label></div>
-    <div id="histograma" class="histograma" aria-label="Histograma da razão eleitores/população"></div>
+    <div class="bloco-uf">
+      <label><span data-i18n="uf_label">Filtrar UF:</span>
+        <select class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select></label>
+      <label><span data-i18n="hist_label">Indicador:</span>
+        <select id="histInd" aria-label="Indicador do histograma">
+          <option value="razao" data-i18n="mi_razao">Eleitores ÷ população</option>
+          <option value="razao16" data-i18n="mi_razao16">Razão 16+</option>
+          <option value="idoso" data-i18n="mi_idoso">% eleitorado 70+</option>
+          <option value="escol" data-i18n="mi_escol">% até fundamental</option>
+          <option value="saldo" data-i18n="mi_saldo">Saldo de transferências</option>
+          <option value="cresc" data-i18n="mi_cresc">Crescimento populacional</option>
+          <option value="abst24" data-i18n="mi_abst24">% abstenção (2024)</option>
+          <option value="bn" data-i18n="mi_bn">% brancos+nulos (prefeito)</option>
+          <option value="gasto" data-i18n="mi_gasto">Gasto de campanha / eleitor</option>
+          <option value="orcsaude" data-i18n="mi_orc_saude">% do orçamento em saúde</option>
+          <option value="orceduc" data-i18n="mi_orc_educ">% do orçamento em educação</option>
+        </select></label>
+    </div>
+    <div id="histograma" class="histograma" aria-label="Histograma do indicador selecionado"></div>
     <div class="hist-legenda" id="histLegenda"></div>
   </section>
 
@@ -194,6 +213,17 @@
     <div class="controles">
       <input type="search" id="busca" placeholder="Buscar município…" data-i18n-ph="expl_search_ph" autocomplete="off">
       <select id="uf" class="uf-sync" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select>
+      <select id="ordcampo" aria-label="Ordenar por">
+        <option value="" data-i18n="ord_default">Ordenar por…</option>
+        <option value="razao_total" data-i18n="th_razao">Razão</option>
+        <option value="o_abst" data-i18n="ord_abst">Abstenção</option>
+        <option value="o_bn" data-i18n="ord_bn">% brancos+nulos</option>
+        <option value="o_gasto" data-i18n="ord_gasto">Gasto campanha/eleitor</option>
+        <option value="o_receita_camp" data-i18n="ord_receita_camp">Arrecadação de campanha</option>
+        <option value="o_orc_hab" data-i18n="ord_orc_hab">Despesa pública/hab</option>
+        <option value="o_orc_saude" data-i18n="ord_orc_saude">% orçamento saúde</option>
+        <option value="o_orc_educ" data-i18n="ord_orc_educ">% orçamento educação</option>
+      </select>
       <div class="chips" id="chips" role="group" aria-label="Filtrar por marcador">
         <button class="chip" data-flag="mais_eleitores_que_pop" data-i18n="chip_cem" data-i18n-title="chip_cem_t">Mais eleitores que habitantes (&gt;100%)</button>
         <button class="chip" data-flag="acima_limiar_tse" data-i18n="chip_tse" data-i18n-title="chip_tse_t" title="Eleitorado > 80% da população — apenas o 3º dos três critérios cumulativos da Res. TSE 23.659/2021. Sozinho não enseja revisão.">Eleitorado &gt; 80% da pop.</button>
@@ -318,6 +348,6 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=20260603"></script>
 </body>
 </html>

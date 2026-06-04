@@ -220,36 +220,43 @@ function renderHero() {
 }
 
 /* ---------------- HISTOGRAMA ---------------- */
+let histInd = "razao";
 function renderHistograma() {
   const base = ufSel ? LINHAS.filter((m) => m.uf === ufSel) : LINHAS;
   const nm = document.getElementById("nMun"); if (nm) nm.textContent = fmt(base.length);
-  const rs = base.map((m) => m.razao_total).filter((x) => x != null);
-  const LO = 0.4, HI = 1.7, STEP = 0.05;
-  const nb = Math.round((HI - LO) / STEP);
-  const bins = new Array(nb + 1).fill(0); // último = overflow (>HI)
-  rs.forEach((x) => {
-    if (x >= HI) bins[nb]++;
-    else bins[Math.max(0, Math.floor((x - LO) / STEP))]++;
-  });
-  const maxB = Math.max(...bins);
-  const boundary = Math.round((1.0 - LO) / STEP);   // índice da 1ª barra ≥100%
-  const el = document.getElementById("histograma");
+  const ind = MAP_INDS[histInd] || MAP_INDS.razao;
+  const isRaz = (histInd === "razao" || histInd === "razao16");  // têm o pivô do 100%
+  const vals = base.map(ind.val).filter((x) => x != null).sort((a, b) => a - b);
+  const el = document.getElementById("histograma"), leg = document.getElementById("histLegenda");
+  if (!vals.length) { el.innerHTML = ""; leg.innerHTML = ""; return; }
+  const NB = 26;
+  const qq = (p) => vals[Math.min(vals.length - 1, Math.max(0, Math.round(p * (vals.length - 1))))];
+  // razão usa faixa fixa (visual consagrado); demais indicadores, faixa p2–p98
+  let lo, hi;
+  if (histInd === "razao") { lo = 0.4; hi = 1.7; }
+  else { lo = qq(0.02); hi = qq(0.98); }
+  if (hi <= lo) hi = lo + (Math.abs(lo) || 1);
+  const step = (hi - lo) / NB;
+  const bins = new Array(NB + 1).fill(0);        // última barra = overflow (≥ hi)
+  vals.forEach((x) => { if (x >= hi) bins[NB]++; else bins[Math.max(0, Math.floor((x - lo) / step))]++; });
+  const maxB = Math.max(...bins, 1);
   const barras = bins.map((c, i) => {
-    const ini = LO + i * STEP;
-    const hot = ini >= 1.0;
-    const faixa = i === nb ? `≥ ${PCT0(HI)}` : `${PCT0(ini)}–${PCT0(ini + STEP)}`;
-    const h = maxB ? (c / maxB) * 100 : 0;
-    return `<div class="hbar ${hot ? "hot" : ""}" style="height:${h}%">
-      <span class="tip">${t("hist_tip", { faixa, n: fmt(c) })}</span></div>`;
+    const ini = lo + i * step;
+    const hot = isRaz && ini >= 1.0;
+    const faixa = i === NB ? `≥ ${ind.fmt(hi)}` : `${ind.fmt(ini)}–${ind.fmt(ini + step)}`;
+    return `<div class="hbar ${hot ? "hot" : ""}" style="height:${(c / maxB) * 100}%"><span class="tip">${t("hist_tip", { faixa, n: fmt(c) })}</span></div>`;
   });
-  // linha divisória no 100%, encaixada entre as barras (alinhamento exato)
-  barras.splice(boundary, 0, `<div class="hist-div"><span class="hd-tag">100%</span></div>`);
+  if (isRaz && lo < 1.0 && hi > 1.0) {
+    barras.splice(Math.round((1.0 - lo) / step), 0, `<div class="hist-div"><span class="hd-tag">100%</span></div>`);
+  }
   el.innerHTML = barras.join("");
-
-  const nGt = rs.filter((x) => x > 1).length, nLe = rs.length - nGt;
-  document.getElementById("histLegenda").innerHTML =
-    `<span><span class="sw" style="background:#46e0c0"></span>${t("hist_leg_le", { n: fmt(nLe) })}</span>
+  if (isRaz) {
+    const nGt = vals.filter((x) => x > 1).length, nLe = vals.length - nGt;
+    leg.innerHTML = `<span><span class="sw" style="background:#46e0c0"></span>${t("hist_leg_le", { n: fmt(nLe) })}</span>
      <span><span class="sw" style="background:#ffd23f"></span>${t("hist_leg_gt", { n: fmt(nGt) })}</span>`;
+  } else {
+    leg.innerHTML = `<span>${t("hist_leg_generic", { label: t(ind.label), lo: ind.fmt(vals[0]), med: ind.fmt(qq(0.5)), hi: ind.fmt(vals[vals.length - 1]) })}</span>`;
+  }
 }
 
 /* ---------------- RANKING (abas) ---------------- */
@@ -771,11 +778,19 @@ function ufAggMap(ind) {
   const g = {}; LINHAS.forEach((m) => { const v = ind.val(m); if (v != null) (g[m.uf] || (g[m.uf] = [])).push(v); });
   const out = {}; for (const uf in g) out[uf] = mediana(g[uf]); return out;
 }
+const DEST_PREDS = {
+  cem: (m) => m.mais_eleitores_que_pop,
+  atip: (m) => m.outlier_nacional,
+  marg: (m) => m.eleicao2024 && m.eleicao2024.entrada_maior_que_margem,
+  rev3: (m) => m.revisao && m.revisao.atende_3,
+  t2: (m) => m.eleicao2024 && m.eleicao2024.turno === "2",
+};
+const DEST_LABELS = { cem: "map_f_cem", atip: "map_f_atip", marg: "map_f_marg", rev3: "map_f_rev3", t2: "map_f_t2" };
 function matchDestaque(m) {
   if (!m) return false;
-  if (destaque === "cem") return !!m.mais_eleitores_que_pop;
-  if (destaque === "atip") return !!m.outlier_nacional;
-  return true;
+  if (destaque === "todos") return true;
+  const p = DEST_PREDS[destaque];
+  return p ? !!p(m) : true;
 }
 function styleUF(f) { const ind = MAP_INDS[mapInd]; return { fillColor: corInd(ind, UF_AGG[codToSigla[_pad(f)]]), fillOpacity: 0.88, color: "#0a0b10", weight: 1 }; }
 function styleMun(f) {
@@ -925,7 +940,7 @@ function legend() {
     : "linear-gradient(90deg,#1d3b4a,#46e0c0,#ffd23f,#ff7b3d)";
   const fim = ind.div ? ind.leg[2] : ind.leg[1];
   const pivo = ind.div ? ` · ${t("leg_vira")} <b>${ind.leg[1]}</b>` : "";
-  const realce = destaque === "todos" ? "" : ` · ${t("leg_realcando", { q: destaque === "cem" ? ">100%" : t("map_f_atip") })}`;
+  const realce = destaque === "todos" ? "" : ` · ${t("leg_realcando", { q: t(DEST_LABELS[destaque] || "map_f_todos") })}`;
   document.getElementById("mapaLegenda").innerHTML =
     `<span>${ind.leg[0]}</span><span class="grad" style="background:${grad}"></span><span>${fim}</span>` +
     ` &nbsp;·&nbsp; <b>${t(ind.label)}</b>${pivo}${realce}`;
@@ -973,11 +988,26 @@ function filtrar() {
     return true;
   });
 }
+// acessores p/ ordenar por indicadores NOVOS (aninhados/derivados), além das colunas
+const ORD_ACC = {
+  o_abst: (m) => m._abst,
+  o_bn: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null),
+  o_gasto: (m) => (m.contas ? m.contas.despesa_por_eleitor : null),
+  o_receita_camp: (m) => (m.contas ? m.contas.receita_total : null),
+  o_orc_hab: (m) => (m.orcamento && m.orcamento.despesa && m.pop_total_estimada) ? m.orcamento.despesa / m.pop_total_estimada : null,
+  o_orc_saude: (m) => (m.orcamento && m.orcamento.saude != null && m.orcamento.despesa) ? m.orcamento.saude / m.orcamento.despesa : null,
+  o_orc_educ: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null,
+};
+const ORD_FMT = {
+  o_abst: PCT, o_bn: PCT, o_orc_saude: PCT, o_orc_educ: PCT,
+  o_gasto: (v) => BRL2.format(v), o_receita_camp: (v) => moeda(v), o_orc_hab: (v) => BRL0.format(v),
+};
 function ordenar(linhas) {
   const k = ordenarPor;
+  const acc = ORD_ACC[k];
   return linhas.slice().sort((a, b) => {
-    let va = a[k], vb = b[k];
-    if (k === "nome" || k === "uf") return ordemDesc ? String(vb).localeCompare(va) : String(va).localeCompare(vb);
+    if (!acc && (k === "nome" || k === "uf")) return ordemDesc ? String(b[k]).localeCompare(a[k]) : String(a[k]).localeCompare(b[k]);
+    let va = acc ? acc(a) : a[k], vb = acc ? acc(b) : b[k];
     va = va == null ? -Infinity : va; vb = vb == null ? -Infinity : vb;
     return ordemDesc ? vb - va : va - vb;
   });
@@ -985,10 +1015,13 @@ function ordenar(linhas) {
 function render() {
   const todas = ordenar(filtrar());
   const linhas = todas.slice(0, LIMITE_LINHAS);
+  const accOrd = ORD_ACC[ordenarPor], fmtOrd = ORD_FMT[ordenarPor] || fmt;
   document.getElementById("corpo").innerHTML = linhas.map((m) => {
     const forte = m.razao_total != null && m.razao_total > 1 ? "razao-forte" : "";
+    const ov = accOrd ? accOrd(m) : null;
+    const ovTxt = (accOrd && ov != null) ? ` <small class="ordv">${fmtOrd(ov)}</small>` : "";
     return `<tr class="clicavel" data-cd="${m.cd_ibge}">
-        <td class="nome">${m.nome}</td><td>${m.uf}</td>
+        <td class="nome">${m.nome}${ovTxt}</td><td>${m.uf}</td>
         <td class="num">${fmt(m.eleitores)}</td>
         <td class="num">${fmt(m.pop_total_estimada)}</td>
         <td class="num ${forte}">${PCT(m.razao_total)}</td>
@@ -1010,6 +1043,12 @@ function bind() {
   document.getElementById("busca").addEventListener("input", (e) => { busca = e.target.value.trim().toLowerCase(); render(); });
   document.querySelectorAll("select.uf-sync").forEach((s) =>
     s.addEventListener("change", (e) => setUF(e.target.value)));
+  const ordSel = document.getElementById("ordcampo");
+  if (ordSel) ordSel.addEventListener("change", (e) => {
+    ordenarPor = e.target.value || "razao_total"; ordemDesc = true; render();
+  });
+  const histSel = document.getElementById("histInd");
+  if (histSel) histSel.addEventListener("change", (e) => { histInd = e.target.value; renderHistograma(); });
   document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; recolorMapa(); });
   document.querySelectorAll("#mapaFiltro button").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll("#mapaFiltro button").forEach((x) => x.classList.remove("on"));
