@@ -142,6 +142,44 @@ NOTA_CONTAS = (
     "compra de votos: o voto é secreto."
 )
 
+# Tesouro Nacional — SICONFI (orçamento PÚBLICO municipal): receita e despesa por
+# função (saúde, educação, segurança…) da PREFEITURA. Fonte DISTINTA da prestação
+# de contas de campanha (TSE): dinheiro público ≠ dinheiro de campanha. Não
+# misturar na interface.
+#
+# Declaração de Contas Anuais (DCA): Anexo I-E = Despesa por Função; Anexo I-C =
+# Receita. API REST pública (sem autenticação), por ente (código IBGE de 7 díg),
+# um anexo por requisição. Não há bulk estável (o FINBRA fica atrás de página
+# JSF); seguimos o padrão sancionado de consultar por ente, com concorrência
+# limitada + cache (≈22 min uma vez; reaproveitado por --offline).
+SICONFI_DCA_URL = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/dca"
+SICONFI_PUBLISHER = "Tesouro Nacional — SICONFI"
+SICONFI_DATASET = "SICONFI — Declaração de Contas Anuais (DCA) dos municípios"
+ORCAMENTO_ANO = 2024
+ORCAMENTO_WORKERS = 12  # requisições concorrentes (educado, com retries)
+# Funções orçamentárias que destacamos (código → chave interna). O total e as
+# demais funções entram em "outras".
+ORCAMENTO_FUNCOES = {
+    "10": "saude",
+    "12": "educacao",
+    "06": "seguranca",
+    "08": "assistencia",
+    "15": "urbanismo",
+    "04": "administracao",
+    "26": "transporte",
+    "09": "previdencia",
+}
+# Ressalva colada ao dado de orçamento público (guardrail de linguagem).
+NOTA_ORCAMENTO = (
+    "Orçamento público da PREFEITURA declarado ao SICONFI/Tesouro Nacional "
+    f"(Declaração de Contas Anuais de {ORCAMENTO_ANO}). São despesas EMPENHADAS e "
+    "receitas realizadas informadas pelo próprio município — a cobertura depende "
+    "do envio de cada prefeitura e os valores não refletem julgamento de contas. "
+    "Não confundir com gastos de campanha (TSE): aqui é dinheiro público. "
+    "Segurança pública é majoritariamente função estadual — muitos municípios "
+    "gastam pouco ou nada nessa função."
+)
+
 # IBGE — API de Agregados v3.
 IBGE_API = "https://servicodados.ibge.gov.br/api/v3/agregados"
 

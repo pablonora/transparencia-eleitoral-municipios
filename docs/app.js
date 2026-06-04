@@ -75,7 +75,7 @@ let I18N = { pt: {}, en: {} };
 function t(key, vars) {
   const d = I18N[LANG] || {};
   let s = (d[key] != null) ? d[key] : (I18N.pt[key] != null ? I18N.pt[key] : key);
-  if (vars) for (const k in vars) s = s.split("{" + k + "}").join(vars[k]);
+  if (vars) for (const k in vars) s = s.split("{" + k + "}").join(vars[k] == null ? "" : vars[k]);
   return s;
 }
 async function carregarI18n() {
@@ -277,6 +277,11 @@ function rankDefs() {
       val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null),
       fmt: (v) => BRL2.format(v),
     },
+    orc: {
+      titulo: t("orc_tab_t"),
+      val: (m) => (m.orcamento && m.orcamento.saude != null && m.pop_total_estimada) ? m.orcamento.saude / m.pop_total_estimada : null,
+      fmt: (v) => BRL0.format(v),
+    },
   };
 }
 function renderRanking() {
@@ -287,7 +292,7 @@ function renderRanking() {
   const top = pool.slice(0, 15);
   const maxV = Math.max(...top.map((m) => Math.abs(def.val(m))), 1e-9);
   const sub = document.getElementById("rankSub");
-  const sensivel = (rankAtual === "margem" || rankAtual === "rev3" || rankAtual === "gasto");
+  const sensivel = (rankAtual === "margem" || rankAtual === "rev3" || rankAtual === "gasto" || rankAtual === "orc");
   sub.className = sensivel ? "sub rank-cuidado" : "sub";
   sub.innerHTML = (sensivel ? "⚠️ " : "") + def.titulo + (ufSel ? ` <strong>(${ufSel})</strong>` : "");
   document.getElementById("ranking").innerHTML = top.map((m) => {
@@ -372,6 +377,25 @@ function contasBlock(m) {
     <div class="cb-row"><span class="cb-ano">${t("ct_vereadores")}</span>${moeda(c.despesa_vereador)}</div>
     <div class="cb-row"><span class="cb-ano">${t("ct_candidatos")}</span>${fmt(c.n_candidatos)}</div>
     <div class="cb-fonte">${t("nota_contas")}</div>
+  </div>`;
+}
+function orcamentoBlock(m) {
+  const o = m.orcamento;
+  if (!o) return "";
+  const pop = m.pop_total_estimada;
+  const pcap = (v) => (v != null && pop ? `${BRL0.format(v / pop)}${t("orc_hab")}` : "");
+  const pctd = (v) => (v != null && o.despesa ? PCT(v / o.despesa) : "");
+  const linha = (lab, v) => v == null ? "" :
+    `<div class="cb-row"><span class="cb-ano">${lab}</span>${moeda(v)} <small>${[pctd(v), pcap(v)].filter(Boolean).join(" · ")}</small></div>`;
+  return `<div class="comp-blk"><div class="cb-tit">${t("orc_tit", { ano: DADOS.ano_orcamento })}</div>
+    <div class="cb-row"><span class="cb-ano">${t("orc_receita")}</span><b>${moeda(o.receita)}</b></div>
+    <div class="cb-row"><span class="cb-ano">${t("orc_despesa")}</span><b>${moeda(o.despesa)}</b>${pop ? ` <small>(${BRL0.format(o.despesa / pop)}${t("orc_hab")})</small>` : ""}</div>
+    ${linha(t("orc_saude"), o.saude)}
+    ${linha(t("orc_educacao"), o.educacao)}
+    ${linha(t("orc_seguranca"), o.seguranca)}
+    ${linha(t("orc_assistencia"), o.assistencia)}
+    ${linha(t("orc_urbanismo"), o.urbanismo)}
+    <div class="cb-fonte">${t("nota_orcamento")}</div>
   </div>`;
 }
 function criteriosBlock(m) {
@@ -529,6 +553,7 @@ function cityCardHTML(m) {
     ${compBlock(m)}
     ${eleicaoBlock(m)}
     ${contasBlock(m)}
+    ${orcamentoBlock(m)}
     ${criteriosBlock(m)}
     <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${t("nota_neutra")}</p>
     <div class="acts">
@@ -663,6 +688,8 @@ const MAP_INDS = {
   abst24:  { label: "mi_abst24", val: (m) => (m.comparecimento && m.comparecimento["2024"] ? m.comparecimento["2024"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
   abst22:  { label: "mi_abst22", val: (m) => (m.comparecimento && m.comparecimento["2022"] ? m.comparecimento["2022"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
   gasto:   { label: "mi_gasto", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), seq: [10, 90], fmt: (v) => (v == null ? "—" : BRL2.format(v)), leg: ["≤R$ 10", "≥R$ 90"] },
+  orcsaude:{ label: "mi_orc_saude", val: (m) => (m.orcamento && m.orcamento.saude != null && m.orcamento.despesa) ? m.orcamento.saude / m.orcamento.despesa : null, seq: [0.15, 0.32], fmt: (v) => PCT(v), leg: ["≤15%", "≥32%"] },
+  orceduc: { label: "mi_orc_educ", val: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null, seq: [0.18, 0.42], fmt: (v) => PCT(v), leg: ["≤18%", "≥42%"] },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];

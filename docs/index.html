@@ -129,6 +129,8 @@
             <option value="abst24" data-i18n="mi_abst24">% abstenção (2024)</option>
             <option value="abst22" data-i18n="mi_abst22">% abstenção (2022)</option>
             <option value="gasto" data-i18n="mi_gasto">Gasto de campanha / eleitor</option>
+            <option value="orcsaude" data-i18n="mi_orc_saude">% do orçamento em saúde</option>
+            <option value="orceduc" data-i18n="mi_orc_educ">% do orçamento em educação</option>
           </select>
           · <span data-i18n="map_highlight">realçar</span>
           <span class="seg" id="mapaFiltro" role="group" aria-label="Destaque">
@@ -164,6 +166,7 @@
       <button class="tab" data-rk="abst" data-i18n="rank_tab_abst">Maior abstenção</button>
       <button class="tab" data-rk="margem" data-i18n="rank_tab_margem">Entrada &gt; margem (2024)</button>
       <button class="tab" data-rk="gasto" data-i18n="rank_tab_gasto">Gasto de campanha por eleitor</button>
+      <button class="tab" data-rk="orc" data-i18n="orc_tab">Gasto público em saúde por habitante</button>
       <button class="tab" data-rk="rev3" data-i18n="rank_tab_rev3">Atende aos 3 critérios (TSE)</button>
     </div>
     <p class="sub" id="rankSub"></p>
@@ -222,6 +225,7 @@
           <li data-i18n="met_li_pop"><b>População total</b> — IBGE, estimativa anual (tabela 6579), <b id="meto-anopop"></b>.</li>
           <li data-i18n="met_li_idade"><b>Idade (16+)</b> — IBGE, Censo 2022 (tabela 9514).</li>
           <li data-i18n="met_li_gastos"><b>Gastos e arrecadação de campanha</b> — TSE, “Prestação de contas eleitorais — candidatos”, eleição municipal 2024 (receitas e despesas contratadas).</li>
+          <li data-i18n="met_li_orcamento"><b>Orçamento público municipal</b> — Tesouro Nacional/SICONFI, Declaração de Contas Anuais 2024 (receita e despesa por função: saúde, educação, segurança).</li>
           <li data-i18n="met_li_codigos"><b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.</li>
         </ul>
         <p class="aviso-anos" data-i18n="met_aviso_anos">⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.</p>
@@ -266,6 +270,11 @@
           sós, irregularidade. <b>Gasto maior não significa compra de votos</b>: o voto é
           secreto. Usamos as <i>despesas contratadas</i> (gasto total declarado) e as
           <i>receitas</i> (arrecadação); “despesas pagas” e doadores não entram.</li>
+          <li data-i18n="met_li_lim7"><b>Orçamento público</b> (SICONFI) é dinheiro da <b>prefeitura</b>, não de
+          campanha. São despesas <i>empenhadas</i> e receitas realizadas declaradas pelo próprio
+          município; a <b>cobertura depende do envio</b> de cada um e os valores não refletem
+          julgamento de contas. <b>Segurança pública</b> é majoritariamente função estadual —
+          muitos municípios gastam pouco ou nada.</li>
         </ul>
 
         <p class="repro" data-i18n="met_repro">Tudo é reproduzível a partir dos dados brutos oficiais; cada

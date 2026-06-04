@@ -15,7 +15,7 @@ import argparse
 import json
 
 from . import (config, comparecimento, contas, crosswalk, eleitorado, ibge,
-               indicators, malhas, resultados, transferencia)
+               indicators, malhas, orcamento, resultados, transferencia)
 from .download import baixar_tudo
 from .provenance import Manifest, utc_now_iso
 
@@ -82,6 +82,11 @@ def main(offline: bool = False) -> None:
         estimativas=estimativas, anos_estimativa=anos,
         censo=censo, transferencias=transf_entradas,
     )
+
+    # 6b) orçamento público municipal (SICONFI) — receita e despesa por função.
+    # Fonte distinta da prestação de contas de campanha (dinheiro público).
+    print("[orcamento] orçamento público municipal (SICONFI)...")
+    orcamento_mun = orcamento.agregar(manifest, [ind.cd_ibge for ind in inds], offline=offline)
 
     registros = []
     for ind in inds:
@@ -153,6 +158,11 @@ def main(offline: bool = False) -> None:
                 cc["despesa_por_eleitor"] = round(c["despesa_total"] / ind.eleitores, 2)
                 cc["receita_por_eleitor"] = round(c["receita_total"] / ind.eleitores, 2)
             d["contas"] = cc
+
+        # Orçamento público municipal (SICONFI) — dinheiro público, NÃO campanha.
+        o = orcamento_mun.get(ind.cd_ibge)
+        if o:
+            d["orcamento"] = o
         registros.append(d)
 
     # 7) saída ---------------------------------------------------------------
@@ -165,6 +175,10 @@ def main(offline: bool = False) -> None:
     n_contas = sum(1 for d in registros if d.get("contas"))
     despesa_nac = round(sum(d["contas"]["despesa_total"] for d in registros if d.get("contas")), 2)
     receita_nac = round(sum(d["contas"]["receita_total"] for d in registros if d.get("contas")), 2)
+    n_orcamento = sum(1 for d in registros if d.get("orcamento"))
+    orc_despesa_nac = round(sum(d["orcamento"].get("despesa") or 0 for d in registros if d.get("orcamento")), 2)
+    orc_saude_nac = round(sum(d["orcamento"].get("saude") or 0 for d in registros if d.get("orcamento")), 2)
+    orc_educ_nac = round(sum(d["orcamento"].get("educacao") or 0 for d in registros if d.get("orcamento")), 2)
     ano_pop = anos[-1]
     ufs = sorted({d["uf"] for d in registros})
     # sigla -> código IBGE da UF (dois primeiros dígitos do código municipal)
@@ -192,6 +206,8 @@ def main(offline: bool = False) -> None:
         "nota_neutra": config.NOTA_NEUTRA,
         "nota_contas": config.NOTA_CONTAS,
         "ano_contas": config.TSE_CONTAS_ANO,
+        "nota_orcamento": config.NOTA_ORCAMENTO,
+        "ano_orcamento": config.ORCAMENTO_ANO,
         "resumo": {
             "n_municipios": len(registros),
             "n_mais_eleitores_que_pop": n_acima_100,
@@ -202,6 +218,10 @@ def main(offline: bool = False) -> None:
             "n_com_contas": n_contas,
             "despesa_campanha_total": despesa_nac,
             "receita_campanha_total": receita_nac,
+            "n_com_orcamento": n_orcamento,
+            "orcamento_despesa_total": orc_despesa_nac,
+            "orcamento_saude_total": orc_saude_nac,
+            "orcamento_educacao_total": orc_educ_nac,
             "razao_total_max": max((d["razao_total"] or 0) for d in registros),
             "razao_total_mediana": _mediana([d["razao_total"] for d in registros]),
         },
@@ -218,6 +238,8 @@ def main(offline: bool = False) -> None:
           f"outlier UF: {n_out_uf} | outlier nac: {n_out_nac} | 3 critérios TSE: {n_revisao}")
     print(f"[ok] contas: {n_contas} municípios | despesa campanha R$ {despesa_nac:,.0f} | "
           f"receita R$ {receita_nac:,.0f}")
+    print(f"[ok] orçamento: {n_orcamento} municípios | despesa pública R$ {orc_despesa_nac:,.0f} | "
+          f"saúde R$ {orc_saude_nac:,.0f} | educação R$ {orc_educ_nac:,.0f}")
     print(f"[ok] docs/data/{config.escopo_slug()}.json + meta.json + manifest/provenance.json")
 
 
@@ -276,10 +298,26 @@ def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str) -> None
                 "ressalva": config.NOTA_CONTAS,
                 "fonte": f"TSE — Prestação de contas eleitorais ({config.TSE_CONTAS_ANO})",
             },
+            "orcamento_municipal": {
+                "definicao": (
+                    "receita e despesa do GOVERNO municipal (a prefeitura), por "
+                    "função (saúde, educação, segurança, etc.), exercício "
+                    f"{config.ORCAMENTO_ANO}. Distinto de gasto de campanha."
+                ),
+                "metodo": (
+                    "Declaração de Contas Anuais (DCA) no SICONFI/Tesouro Nacional: "
+                    "Anexo I-E (despesas EMPENHADAS por função) e Anexo I-C (receita "
+                    "realizada). Consulta por ente (código IBGE) na API pública. "
+                    "Cobertura depende do envio de cada município."
+                ),
+                "ressalva": config.NOTA_ORCAMENTO,
+                "fonte": f"{config.SICONFI_PUBLISHER} — DCA ({config.ORCAMENTO_ANO})",
+            },
         },
         "limiar_revisao": config.LIMIAR_REVISAO,
         "nota_neutra": config.NOTA_NEUTRA,
         "nota_contas": config.NOTA_CONTAS,
+        "nota_orcamento": config.NOTA_ORCAMENTO,
         "fontes": fontes,
     }
     (config.DOCS_DATA / "meta.json").write_text(

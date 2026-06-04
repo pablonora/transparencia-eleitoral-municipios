@@ -31,6 +31,7 @@ Por município:
 | **Comparecimento / abstenção** | % que compareceu e que se absteve (1º turno), 2022 e 2024 | TSE — Comparecimento e Abstenção |
 | **Razão na época da eleição** | eleitorado apto ÷ população **do mesmo ano** (2022 via Censo; 2024 via estimativa) | TSE (aptos) ÷ IBGE |
 | **Gastos e arrecadação de campanha** | receita declarada e despesa contratada das campanhas de candidatos (total e por cargo), 2024 | TSE — Prestação de contas eleitorais |
+| **Orçamento público municipal** | receita e despesa da prefeitura por função (saúde, educação, segurança…), 2024 | Tesouro Nacional — SICONFI (DCA) |
 
 > A **razão na época** é year-matched (mais precisa que a "atual" para o contexto
 > eleitoral): usa o eleitorado apto daquele pleito (`QT_APTOS`) e a população do
@@ -232,8 +233,8 @@ recalcula e commita os JSONs de volta (tolerando falha de rede). Configure
 
 ```
 src/eleitoral/      pipeline (download, crosswalk, eleitorado, ibge,
-                    transferencia, resultados, contas, indicators, build,
-                    provenance, config)
+                    transferencia, resultados, contas, orcamento, indicators,
+                    build, provenance, config)
 data/raw/           brutos originais (TSE/IBGE) — imutáveis
 manifest/           provenance.json (URL + SHA-256 por arquivo)
 docs/               site estático (index.html, app.js, style.css) + data/*.json
@@ -258,6 +259,23 @@ tests/              testes (crosswalk e indicadores)
   (`receitas_candidatos_2024_{UF}` e `despesas_contratadas_candidatos_2024_{UF}`)
   e os agrega em streaming — ~470 MB trafegados. (`despesas_pagas` não traz o
   município e doadores não entram.)
+
+- **Tesouro Nacional — SICONFI, Declaração de Contas Anuais (2024)**: orçamento
+  PÚBLICO da prefeitura — receita realizada (Anexo I-C) e despesa empenhada por
+  função (Anexo I-E: saúde, educação, segurança, etc.). Consultado por ente
+  (código IBGE) na API pública, com concorrência limitada + cache (não há bulk
+  estável). É uma fonte **distinta** da prestação de contas de campanha: aqui é
+  dinheiro público da administração municipal.
+
+### Orçamento público × gasto de campanha: não confundir
+
+São **duas coisas diferentes** e aparecem em blocos separados. *Gasto de campanha*
+(TSE) é o que as candidaturas arrecadaram/gastaram na eleição. *Orçamento público*
+(SICONFI) é o dinheiro da **prefeitura** — quanto arrecadou e quanto destinou a
+saúde, educação, etc. Os valores do SICONFI são **declarados** pelo próprio
+município (despesas empenhadas), a cobertura depende do envio de cada um, e não
+refletem julgamento de contas. **Segurança pública é majoritariamente função
+estadual** — muitos municípios gastam pouco ou nada nessa função; não é anomalia.
 
 ### Gastos de campanha: o que fazemos e o que NÃO fazemos
 
