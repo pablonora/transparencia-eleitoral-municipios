@@ -102,6 +102,9 @@ function aplicarI18nDOM() {
   document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
     const v = _tr(el.dataset.i18nPh); if (v != null) el.placeholder = v;
   });
+  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+    const v = _tr(el.dataset.i18nTitle); if (v != null) el.title = v.replace(/<[^>]+>/g, "");
+  });
 }
 function aplicarIdioma(lang) {
   LANG = (lang === "en") ? "en" : "pt";
@@ -109,19 +112,33 @@ function aplicarIdioma(lang) {
   document.documentElement.lang = (LANG === "en") ? "en-US" : "pt-BR";
   const _ti = _tr("title"); if (_ti) document.title = _ti;
   const md = document.querySelector('meta[name="description"]'); const _md = _tr("meta_desc"); if (md && _md) md.content = _md;
+  const ogl = document.querySelector('meta[property="og:locale"]'); if (ogl) ogl.content = (LANG === "en") ? "en_US" : "pt_BR";
   const btn = document.getElementById("idiomaBtn");
   if (btn) {
     btn.textContent = (LANG === "en") ? "🇺🇸" : "🇧🇷";
     btn.setAttribute("aria-label", LANG === "en" ? "Mudar para português" : "Switch to English");
   }
   aplicarI18nDOM();
-  // re-render das partes dinâmicas já traduzidas (slice: hero + textos)
-  if (DADOS) { preencherTextos(); renderHero(); }
+  // re-render de tudo que é montado em JS, para refletir idioma + formatação locale
+  if (DADOS) {
+    preencherTextos(); renderHero();
+    if (typeof renderHistograma === "function") renderHistograma();
+    if (typeof renderRanking === "function") renderRanking();
+    if (typeof renderCompare === "function") renderCompare();
+    if (typeof render === "function") render();
+    if (typeof renderFontes === "function") renderFontes();
+    if (MAP && ufLayer) { legend(); recolorMapa(); }
+    // perfil aberto: re-render para traduzir
+    const modal = document.getElementById("modal");
+    if (modal && !modal.hidden && window._cidadeAberta) abrirCidade(window._cidadeAberta);
+  }
 }
 function initIdioma() {
   let saved = null; try { saved = localStorage.getItem("idioma"); } catch (_) {}
+  const q = new URLSearchParams(location.search).get("lang");
   const nav = (navigator.language || "pt").toLowerCase();
-  aplicarIdioma(saved || (nav.startsWith("en") ? "en" : "pt"));
+  const escolhido = (q === "en" || q === "pt") ? q : (saved || (nav.startsWith("en") ? "en" : "pt"));
+  aplicarIdioma(escolhido);
   const btn = document.getElementById("idiomaBtn");
   if (btn) btn.addEventListener("click", () => {
     const novo = (LANG === "pt") ? "en" : "pt";
@@ -143,9 +160,9 @@ async function carregar() {
   const [a, b] = await Promise.all([
     fetch("data/brasil.json", { cache: "no-store" }).then((r) => r.json()),
     fetch("data/meta.json", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
+    carregarI18n(),
   ]);
   DADOS = a; META = b; LINHAS = a.municipios;
-  await carregarI18n();
   document.getElementById("th-anopop").textContent = "(" + a.ano_populacao + ")";
   document.getElementById("nMun").textContent = fmt(a.resumo.n_municipios);
   initTema();
@@ -221,7 +238,7 @@ function renderHistograma() {
     const faixa = i === nb ? `≥ ${PCT0(HI)}` : `${PCT0(ini)}–${PCT0(ini + STEP)}`;
     const h = maxB ? (c / maxB) * 100 : 0;
     return `<div class="hbar ${hot ? "hot" : ""}" style="height:${h}%">
-      <span class="tip">${faixa}: ${fmt(c)} municípios</span></div>`;
+      <span class="tip">${t("hist_tip", { faixa, n: fmt(c) })}</span></div>`;
   });
   // linha divisória no 100%, encaixada entre as barras (alinhamento exato)
   barras.splice(boundary, 0, `<div class="hist-div"><span class="hd-tag">100%</span></div>`);
@@ -229,34 +246,34 @@ function renderHistograma() {
 
   const nGt = rs.filter((x) => x > 1).length, nLe = rs.length - nGt;
   document.getElementById("histLegenda").innerHTML =
-    `<span><span class="sw" style="background:#46e0c0"></span><b>${fmt(nLe)}</b> cidades até 100% da população</span>
-     <span><span class="sw" style="background:#ffd23f"></span><b>${fmt(nGt)}</b> acima de 100% (mais eleitores que habitantes)</span>`;
+    `<span><span class="sw" style="background:#46e0c0"></span>${t("hist_leg_le", { n: fmt(nLe) })}</span>
+     <span><span class="sw" style="background:#ffd23f"></span>${t("hist_leg_gt", { n: fmt(nGt) })}</span>`;
 }
 
 /* ---------------- RANKING (abas) ---------------- */
 let rankAtual = "razao";
 function rankDefs() {
-  const ano = DADOS.ano_populacao, anoT = (LINHAS.find((m) => m.transferencias_ano) || {}).transferencias_ano;
+  const anoT = (LINHAS.find((m) => m.transferencias_ano) || {}).transferencias_ano;
   return {
-    razao: { titulo: "Os 15 municípios com maior razão eleitores/população. A linha marca 100%.", val: (m) => m.razao_total, fmt: PCT0, linha100: true },
-    saldo: { titulo: `Maior entrada líquida de eleitores por transferência em ${anoT} (entradas − saídas).`, val: (m) => m.transferencias_saldo, fmt: sig0 },
-    idoso: { titulo: "Maior parcela do eleitorado com 70 anos ou mais (voto facultativo).", val: (m) => m.pct_70mais, fmt: PCT },
-    jovem: { titulo: "Maior parcela de eleitores de 16–17 anos (voto facultativo).", val: (m) => m.pct_16_17, fmt: PCT },
-    escol: { titulo: "Maior parcela do eleitorado com escolaridade até o ensino fundamental.", val: (m) => m.pct_ate_fundamental, fmt: PCT },
-    facult: { titulo: "Maior parcela de voto facultativo (16–17 anos e 70+).", val: (m) => (m.eleitores ? m.eleitores_facultativo / m.eleitores : null), fmt: PCT },
-    abst: { titulo: "Maior abstenção na eleição mais recente disponível (municipal 2024, ou geral 2022).", val: (m) => m._abst, fmt: PCT },
+    razao: { titulo: t("rank_t_razao"), val: (m) => m.razao_total, fmt: PCT0, linha100: true },
+    saldo: { titulo: t("rank_t_saldo", { ano: anoT }), val: (m) => m.transferencias_saldo, fmt: sig0 },
+    idoso: { titulo: t("rank_t_idoso"), val: (m) => m.pct_70mais, fmt: PCT },
+    jovem: { titulo: t("rank_t_jovem"), val: (m) => m.pct_16_17, fmt: PCT },
+    escol: { titulo: t("rank_t_escol"), val: (m) => m.pct_ate_fundamental, fmt: PCT },
+    facult: { titulo: t("rank_t_facult"), val: (m) => (m.eleitores ? m.eleitores_facultativo / m.eleitores : null), fmt: PCT },
+    abst: { titulo: t("rank_t_abst"), val: (m) => m._abst, fmt: PCT },
     margem: {
-      titulo: "Municípios onde a entrada líquida de eleitores em 2024 superou a margem de vitória do prefeito. É um FATO (comparação de dois números) — não diz como esses eleitores votaram nem que decidiram a eleição.",
+      titulo: t("rank_t_margem"),
       val: (m) => (m.eleicao2024 && m.eleicao2024.entrada_maior_que_margem) ? m.eleicao2024.transf_saldo : null,
       fmt: (v) => "+" + fmt(v),
     },
     rev3: {
-      titulo: "Municípios que atendem aos TRÊS critérios cumulativos da Res. TSE 23.659/2021 (art. 105) — o conjunto legalmente definido. Atender NÃO é irregularidade nem revisão: a revisão é discricionária do TSE.",
+      titulo: t("rank_t_rev3"),
       val: (m) => (m.revisao && m.revisao.atende_3) ? m.razao_total : null,
       fmt: PCT,
     },
     gasto: {
-      titulo: `Maior gasto de campanha DECLARADO por eleitor em ${DADOS.ano_contas || 2024} (despesa contratada ÷ eleitores). São valores declarados ao TSE — não indicam irregularidade nem compra de votos; o voto é secreto. Normalizado por eleitor para não ser só um ranking de cidade grande.`,
+      titulo: t("rank_t_gasto", { ano: DADOS.ano_contas || 2024 }),
       val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null),
       fmt: (v) => BRL2.format(v),
     },
@@ -299,11 +316,11 @@ function initRankTabs() {
 /* ---------------- DEMOGRAFIA ---------------- */
 function demoGrid(m) {
   const items = [
-    ["pct_16_17", "jovens 16–17"],
-    ["pct_70mais", "70+ anos"],
-    ["pct_feminino", "mulheres"],
-    ["pct_superior", "ensino superior"],
-    ["pct_ate_fundamental", "até fundamental"],
+    ["pct_16_17", t("demo_1617")],
+    ["pct_70mais", t("demo_70")],
+    ["pct_feminino", t("demo_mulheres")],
+    ["pct_superior", t("demo_superior")],
+    ["pct_ate_fundamental", t("demo_fundamental")],
   ].filter(([k]) => m[k] != null);
   if (!items.length) return "";
   return `<div class="demo">${items.map(([k, l]) =>
@@ -313,43 +330,48 @@ function compBlock(m) {
   const c = m.comparecimento || {};
   const anos = ["2022", "2024"].filter((y) => c[y]);
   if (!anos.length) return "";
-  const rotulo = { "2022": "Eleição geral 2022", "2024": "Eleição municipal 2024" };
-  return `<div class="comp-blk"><div class="cb-tit">Na época de cada eleição (1º turno)</div>
+  const rotulo = { "2022": t("comp_2022"), "2024": t("comp_2024") };
+  const fonteTxt = (s) => {
+    if (!s) return "";
+    const mm = /(\d{4})/.exec(s);
+    return /[Cc]enso/.test(s) ? t("fonte_censo") : t("fonte_estim", { ano: mm ? mm[1] : "" });
+  };
+  return `<div class="comp-blk"><div class="cb-tit">${t("comp_tit")}</div>
     <div class="cb-cols">${
       anos.map((y) => `<div class="cb-col">
         <div class="cb-ano-tit">${rotulo[y]}</div>
-        <div class="cb-linha"><span title="eleitores ÷ população, em %">Eleitores ÷ população</span><b>${PCT(c[y].razao_epoca)}</b></div>
-        <div class="cb-linha"><span>Compareceram</span><b>${PCT(c[y].comp_pct)}</b></div>
-        <div class="cb-linha"><span>Abstenção</span><b class="ab">${PCT(c[y].abst_pct)}</b></div>
-        <div class="cb-fonte">eleitorado apto ÷ população ${c[y].razao_epoca_fonte}</div>
+        <div class="cb-linha"><span>${t("comp_ratio")}</span><b>${PCT(c[y].razao_epoca)}</b></div>
+        <div class="cb-linha"><span>${t("comp_compareceram")}</span><b>${PCT(c[y].comp_pct)}</b></div>
+        <div class="cb-linha"><span>${t("comp_abstencao")}</span><b class="ab">${PCT(c[y].abst_pct)}</b></div>
+        <div class="cb-fonte">${t("comp_fonte", { fonte: fonteTxt(c[y].razao_epoca_fonte) })}</div>
       </div>`).join("")}</div></div>`;
 }
 function eleicaoBlock(m) {
   const e = m.eleicao2024;
   if (!e) return "";
-  const turno = e.turno === "2" ? "2º turno" : "1º turno";
+  const turno = e.turno === "2" ? t("el_turno2") : t("el_turno1");
   let cruz = "";
   if (e.transf_saldo != null) {
     cruz = e.entrada_maior_que_margem
-      ? `<div class="el-flag">A <b>entrada líquida</b> de eleitores em 2024 (${sig0(e.transf_saldo)}) foi <b>maior que a margem de vitória</b> (${fmt(e.margem)} votos). É um fato que merece contexto — <b>não</b> significa que esses eleitores decidiram a eleição: <b>o voto é secreto</b> e não se sabe em quem votaram.</div>`
-      : `<div class="cb-row"><span class="cb-ano">Entrada líq. 2024</span>${sig0(e.transf_saldo)} eleitores (margem: ${fmt(e.margem)} votos)</div>`;
+      ? `<div class="el-flag">${t("el_flag", { saldo: sig0(e.transf_saldo), margem: fmt(e.margem) })}</div>`
+      : `<div class="cb-row"><span class="cb-ano">${t("el_entrada_lab")}</span>${t("el_entrada_val", { saldo: sig0(e.transf_saldo), margem: fmt(e.margem) })}</div>`;
   }
-  return `<div class="comp-blk"><div class="cb-tit">Eleição 2024 — prefeito (${turno})</div>
-    <div class="cb-row"><span class="cb-ano">Vencedor</span><b>${e.vencedor}</b> · ${fmt(e.votos_venc)} votos</div>
-    <div class="cb-row"><span class="cb-ano">Margem (1º−2º)</span><b>${fmt(e.margem)}</b> votos</div>
+  return `<div class="comp-blk"><div class="cb-tit">${t("el_tit", { turno })}</div>
+    <div class="cb-row"><span class="cb-ano">${t("el_vencedor")}</span><b>${e.vencedor}</b> · ${fmt(e.votos_venc)} ${t("el_votos_suf")}</div>
+    <div class="cb-row"><span class="cb-ano">${t("el_margem_lab")}</span><b>${fmt(e.margem)}</b> ${t("el_votos_suf")}</div>
     ${cruz}</div>`;
 }
 function contasBlock(m) {
   const c = m.contas;
   if (!c) return "";
-  const dpe = c.despesa_por_eleitor != null ? ` <small>(${BRL2.format(c.despesa_por_eleitor)}/eleitor)</small>` : "";
-  return `<div class="comp-blk"><div class="cb-tit">Prestação de contas — campanha ${DADOS.ano_contas}</div>
-    <div class="cb-row"><span class="cb-ano">Arrecadado</span><b>${moeda(c.receita_total)}</b></div>
-    <div class="cb-row"><span class="cb-ano">Gasto declarado</span><b>${moeda(c.despesa_total)}</b>${dpe}</div>
-    <div class="cb-row"><span class="cb-ano">Prefeito(a)</span>${moeda(c.despesa_prefeito)} <small>(${fmt(c.n_cand_prefeito)} candidatos)</small></div>
-    <div class="cb-row"><span class="cb-ano">Vereadores</span>${moeda(c.despesa_vereador)}</div>
-    <div class="cb-row"><span class="cb-ano">Candidatos</span>${fmt(c.n_candidatos)}</div>
-    <div class="cb-fonte">${DADOS.nota_contas || ""}</div>
+  const dpe = c.despesa_por_eleitor != null ? ` <small>(${t("ct_por_eleitor", { v: BRL2.format(c.despesa_por_eleitor) })})</small>` : "";
+  return `<div class="comp-blk"><div class="cb-tit">${t("ct_tit", { ano: DADOS.ano_contas })}</div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_arrecadado")}</span><b>${moeda(c.receita_total)}</b></div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_gasto")}</span><b>${moeda(c.despesa_total)}</b>${dpe}</div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_prefeito")}</span>${moeda(c.despesa_prefeito)} <small>(${t("ct_cand_n", { n: fmt(c.n_cand_prefeito) })})</small></div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_vereadores")}</span>${moeda(c.despesa_vereador)}</div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_candidatos")}</span>${fmt(c.n_candidatos)}</div>
+    <div class="cb-fonte">${t("nota_contas")}</div>
   </div>`;
 }
 function criteriosBlock(m) {
@@ -357,14 +379,14 @@ function criteriosBlock(m) {
   if (!r) return "";
   const item = (ok, txt) => `<div class="cr-item ${ok ? "ok" : "no"}"><span class="cr-ic">${ok ? "✓" : "✕"}</span> ${txt}</div>`;
   const verd = r.atende_3
-    ? `<div class="cr-verd sim"><b>Atende aos 3 critérios.</b> Ainda assim, a revisão é <b>discricionária</b> do TSE — isto não é uma revisão nem indica irregularidade.</div>`
-    : `<div class="cr-verd nao">Não atende aos 3 critérios cumulativos.</div>`;
-  return `<div class="comp-blk"><div class="cb-tit">Critérios legais de revisão de eleitorado</div>
-    ${item(r.crit1_transferencias, "Transferências do ano +10% vs. ano anterior")}
-    ${item(r.crit2_jovens_idosos, "Eleitorado &gt; 2× (pop. 10–15 anos + 70+)")}
-    ${item(r.crit3_acima_80, "Eleitorado &gt; 80% da população")}
+    ? `<div class="cr-verd sim">${t("cr_sim")}</div>`
+    : `<div class="cr-verd nao">${t("cr_nao")}</div>`;
+  return `<div class="comp-blk"><div class="cb-tit">${t("cr_tit")}</div>
+    ${item(r.crit1_transferencias, t("cr_1"))}
+    ${item(r.crit2_jovens_idosos, t("cr_2"))}
+    ${item(r.crit3_acima_80, t("cr_3"))}
     ${verd}
-    <div class="cb-fonte">Res. TSE 23.659/2021, art. 105 — os três são cumulativos. Critério 1 compara transferências 2025 × 2024.</div>
+    <div class="cb-fonte">${t("cr_fonte")}</div>
   </div>`;
 }
 
@@ -454,20 +476,20 @@ async function cidadePorCoord(lat, lng) {
 }
 function localizar() {
   const btn = document.getElementById("btnGeo");
-  if (!navigator.geolocation) { toast("Geolocalização indisponível neste navegador."); return; }
-  btn.disabled = true; btn.textContent = "Localizando…";
-  const reset = () => { btn.disabled = false; btn.textContent = "📍 Mostrar minha cidade"; };
+  if (!navigator.geolocation) { toast(t("geo_indisp")); return; }
+  btn.disabled = true; btn.textContent = t("geo_localizando");
+  const reset = () => { btn.disabled = false; btn.textContent = t("geo_btn"); };
   navigator.geolocation.getCurrentPosition(async (pos) => {
     try {
       const m = await cidadePorCoord(pos.coords.latitude, pos.coords.longitude);
       reset();
       if (m) abrirCidade(m);
-      else toast("Não consegui identificar seu município no Brasil.");
-    } catch (_) { reset(); toast("Falha ao identificar o município."); }
-  }, () => { reset(); toast("Não foi possível obter sua localização."); },
+      else toast(t("geo_nao_id"));
+    } catch (_) { reset(); toast(t("geo_falha")); }
+  }, () => { reset(); toast(t("geo_sem_loc")); },
     { enableHighAccuracy: false, timeout: 9000, maximumAge: 600000 });
 }
-function fecharModal() { document.getElementById("modal").hidden = true; }
+function fecharModal() { document.getElementById("modal").hidden = true; window._cidadeAberta = null; }
 
 function barRow(lab, v, max, cls) {
   const w = max ? Math.min(100, (v / max) * 100) : 0;
@@ -481,37 +503,37 @@ function cityCardHTML(m) {
   <div class="profile">
     <h3>${m.nome} <span class="uf-tag">${m.uf}</span></h3>
     <div class="big">${PCT(m.razao_total)}</div>
-    <p class="frase">São <b>${per100}</b> eleitores registrados (TSE, ${dataEleit()}) para cada <b>100</b> habitantes estimados (IBGE, ${DADOS.ano_populacao}). ${badges(m) === "—" ? "" : badges(m)}</p>
+    <p class="frase">${t("city_frase", { per100, data: dataEleit(), ano: DADOS.ano_populacao })} ${badges(m) === "—" ? "" : badges(m)}</p>
     <div class="rankline">
-      <div class="r"><b>#${m._rankNac || "—"}</b> de ${fmt(RANK_NAC_TOT)}<br>no país</div>
-      <div class="r"><b>#${m._rankUf || "—"}</b> de ${fmt(RANK_TOT_UF[m.uf])}<br>no ${m.uf}</div>
-      <div class="r" title="Eleitores ÷ população em idade de votar (16+) estimada. Passa de 100% com facilidade porque o divisor é menor — leia junto da razão total.">
-        <b>${PCT(m.razao_16mais)}</b><br>razão 16+ ⓘ</div>
+      <div class="r">${t("city_rank_pais", { r: m._rankNac || "—", tot: fmt(RANK_NAC_TOT) })}</div>
+      <div class="r">${t("city_rank_uf", { r: m._rankUf || "—", tot: fmt(RANK_TOT_UF[m.uf]), uf: m.uf })}</div>
+      <div class="r" title="${t("th_razao16_t")}">
+        <b>${PCT(m.razao_16mais)}</b><br>${t("city_r16_lab")}</div>
     </div>
-    ${m.razao_16mais != null && m.razao_16mais > 1 ? `<p class="aviso16">A razão 16+ acima de 100% é <b>esperada</b> aqui: o denominador conta só quem tem idade de votar. A razão total (${PCT(m.razao_total)}) é a referência mais sólida.</p>` : ""}
-    ${m.outlier_uf ? `<p class="ctx-uf">Contexto regional: também é <b>atípico para o próprio ${m.uf}</b> (acima de ${PCT((DADOS.limiares_estatisticos_por_uf || {})[m.uf])}, o limiar estatístico do estado). Leitura secundária — o padrão é fortemente regional.</p>` : ""}
-    <div class="cmp-cap">Razão = <b>eleitores ÷ população</b> (em %). 100% = 1 eleitor por habitante.</div>
+    ${m.razao_16mais != null && m.razao_16mais > 1 ? `<p class="aviso16">${t("city_aviso16", { razao: PCT(m.razao_total) })}</p>` : ""}
+    ${m.outlier_uf ? `<p class="ctx-uf">${t("city_ctx_uf", { uf: m.uf, lim: PCT((DADOS.limiares_estatisticos_por_uf || {})[m.uf]) })}</p>` : ""}
+    <div class="cmp-cap">${t("city_cmp_cap")}</div>
     <div class="cmpbar">
       ${barRow(m.nome, m.razao_total, maxR, "me")}
-      ${barRow("Mediana " + m.uf, medUf, maxR, "")}
-      ${barRow("Mediana Brasil", MED_NAC, maxR, "")}
+      ${barRow(t("city_med_uf", { uf: m.uf }), medUf, maxR, "")}
+      ${barRow(t("city_med_br"), MED_NAC, maxR, "")}
     </div>
     <div class="demo">
-      <div class="d"><b>${fmt(m.eleitores)}</b> <span>eleitores</span></div>
-      <div class="d"><b>${fmt(m.pop_total_estimada)}</b> <span>população ${DADOS.ano_populacao}</span></div>
-      ${m.crescimento_pop_pct != null ? `<div class="d"><b>${sig(m.crescimento_pop_pct)}</b> <span>crescimento pop. (${m.ano_pop_anterior}→${m.ano_pop})</span></div>` : ""}
-      ${m.transferencias_qtd != null ? `<div class="d"><b>${fmt(m.transferencias_qtd)}</b> <span>entradas por transf. ${m.transferencias_ano}</span></div>` : ""}
-      ${m.transferencias_saldo != null ? `<div class="d"><b>${sig0(m.transferencias_saldo)}</b> <span>saldo de transferências${saldoPct != null ? " (" + PCT(saldoPct) + ")" : ""}</span></div>` : ""}
+      <div class="d"><b>${fmt(m.eleitores)}</b> <span>${t("city_d_eleitores")}</span></div>
+      <div class="d"><b>${fmt(m.pop_total_estimada)}</b> <span>${t("city_d_pop", { ano: DADOS.ano_populacao })}</span></div>
+      ${m.crescimento_pop_pct != null ? `<div class="d"><b>${sig(m.crescimento_pop_pct)}</b> <span>${t("city_d_cresc", { de: m.ano_pop_anterior, para: m.ano_pop })}</span></div>` : ""}
+      ${m.transferencias_qtd != null ? `<div class="d"><b>${fmt(m.transferencias_qtd)}</b> <span>${t("city_d_transf", { ano: m.transferencias_ano })}</span></div>` : ""}
+      ${m.transferencias_saldo != null ? `<div class="d"><b>${sig0(m.transferencias_saldo)}</b> <span>${t("city_d_saldo", { pct: saldoPct != null ? " (" + PCT(saldoPct) + ")" : "" })}</span></div>` : ""}
     </div>
     ${demoGrid(m)}
     ${compBlock(m)}
     ${eleicaoBlock(m)}
     ${contasBlock(m)}
     ${criteriosBlock(m)}
-    <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${DADOS.nota_neutra}</p>
+    <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${t("nota_neutra")}</p>
     <div class="acts">
-      <button class="btn" id="pf-share">Compartilhar esta cidade</button>
-      <a class="btn ghost" id="pf-x" target="_blank" rel="noopener">Postar no X</a>
+      <button class="btn" id="pf-share">${t("city_share")}</button>
+      <a class="btn ghost" id="pf-x" target="_blank" rel="noopener">${t("btn_tweet")}</a>
     </div>
   </div>`;
 }
@@ -519,13 +541,14 @@ function linkCidade(m) {
   return location.origin + location.pathname + "?cidade=" + m.cd_ibge;
 }
 function abrirCidade(m) {
+  window._cidadeAberta = m;
   document.getElementById("modalCard").innerHTML = cityCardHTML(m);
   document.getElementById("modal").hidden = false;
   document.getElementById("modalFechar").addEventListener("click", fecharModal);
   const per100 = Math.round((m.razao_total || 0) * 100);
   const link = linkCidade(m);
   document.getElementById("pf-x").href =
-    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Em ${m.nome}-${m.uf}: ${per100} eleitores registrados (TSE) para cada 100 habitantes estimados (IBGE). Razão alta é comum e não indica irregularidade — veja o contexto oficial:`)}&url=${encodeURIComponent(link)}`;
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(t("city_tweet", { local: `${m.nome}-${m.uf}`, per100 }))}&url=${encodeURIComponent(link)}`;
   document.getElementById("pf-share").addEventListener("click", async () => {
     try {
       if (navigator.share) { await navigator.share({ title: `${m.nome}-${m.uf}`, url: link }); return; }
@@ -546,11 +569,11 @@ function gerarInsights() {
   const met = ufMetrics(); let ufTop = null;
   for (const uf in met) if (!ufTop || met[uf].pct100 > met[ufTop].pct100) ufTop = uf;
   const out = [
-    `Em <b>${top.nome}-${top.uf}</b> há <b>${PCT0(top.razao_total)}</b> de eleitores em relação à população estimada.`,
-    `<b>${fmt(r.n_mais_eleitores_que_pop)}</b> municípios têm mais eleitores registrados que habitantes estimados.`,
-    saldo ? `<b>${saldo.nome}-${saldo.uf}</b> teve a maior entrada líquida: <b>${sig0(saldo.transferencias_saldo)}</b> eleitores por transferência em ${saldo.transferencias_ano}.` : "",
-    idoso ? `O eleitorado mais idoso está em <b>${idoso.nome}-${idoso.uf}</b>: <b>${PCT(idoso.pct_70mais)}</b> têm 70+ anos.` : "",
-    ufTop ? `No <b>${ufTop}</b>, <b>${PCT(met[ufTop].pct100)}</b> dos municípios têm mais eleitores que habitantes.` : "",
+    t("ins_1", { local: `${top.nome}-${top.uf}`, pct: PCT0(top.razao_total) }),
+    t("ins_2", { n: fmt(r.n_mais_eleitores_que_pop) }),
+    saldo ? t("ins_3", { local: `${saldo.nome}-${saldo.uf}`, saldo: sig0(saldo.transferencias_saldo), ano: saldo.transferencias_ano }) : "",
+    idoso ? t("ins_4", { local: `${idoso.nome}-${idoso.uf}`, pct: PCT(idoso.pct_70mais) }) : "",
+    ufTop ? t("ins_5", { uf: ufTop, pct: PCT(met[ufTop].pct100) }) : "",
   ].filter(Boolean);
   return out;
 }
@@ -575,15 +598,15 @@ function renderCompare() {
   if (!cmpAsel || !cmpBsel) { out.innerHTML = ""; return; }
   const A = cmpAsel, B = cmpBsel, ano = DADOS.ano_populacao;
   const rows = [
-    ["Eleitores ÷ população", (m) => m.razao_total, PCT],
-    ["Razão 16+", (m) => m.razao_16mais, PCT],
-    ["Eleitores", (m) => m.eleitores, fmt],
-    [`População (${ano})`, (m) => m.pop_total_estimada, fmt],
-    ["% 16–17 anos", (m) => m.pct_16_17, PCT],
-    ["% 70+ anos", (m) => m.pct_70mais, PCT],
-    ["% mulheres", (m) => m.pct_feminino, PCT],
-    ["% ensino superior", (m) => m.pct_superior, PCT],
-    ["Saldo transferências", (m) => m.transferencias_saldo, sig0],
+    [t("cmp_r_razao"), (m) => m.razao_total, PCT],
+    [t("cmp_r_razao16"), (m) => m.razao_16mais, PCT],
+    [t("cmp_r_eleitores"), (m) => m.eleitores, fmt],
+    [t("cmp_r_pop", { ano }), (m) => m.pop_total_estimada, fmt],
+    [t("cmp_r_1617"), (m) => m.pct_16_17, PCT],
+    [t("cmp_r_70"), (m) => m.pct_70mais, PCT],
+    [t("cmp_r_mulheres"), (m) => m.pct_feminino, PCT],
+    [t("cmp_r_superior"), (m) => m.pct_superior, PCT],
+    [t("cmp_r_saldo"), (m) => m.transferencias_saldo, sig0],
   ];
   out.innerHTML = `<table class="cmp-table"><thead><tr><th></th><th>${A.nome}<br><small>${A.uf}</small></th><th>${B.nome}<br><small>${B.uf}</small></th></tr></thead><tbody>${
     rows.map(([lab, f, fm]) => {
@@ -631,15 +654,15 @@ function cor(t) {
 /* indicadores que o mapa pode mostrar (recolorem UF e município) */
 let mapInd = "razao", destaque = "todos", UF_AGG = {};
 const MAP_INDS = {
-  razao:   { label: "Eleitores ÷ população", val: (m) => m.razao_total, div: [0.5, 1.0, 1.6], fmt: (v) => PCT(v), leg: ["50%", "100%", "≥160%"] },
-  razao16: { label: "Razão 16+", val: (m) => m.razao_16mais, div: [0.6, 1.0, 2.0], fmt: (v) => PCT(v), leg: ["60%", "100%", "≥200%"] },
-  idoso:   { label: "% eleitorado 70+", val: (m) => m.pct_70mais, seq: [0, 0.20], fmt: (v) => PCT(v), leg: ["0%", "≥20%"] },
-  escol:   { label: "% até fundamental", val: (m) => m.pct_ate_fundamental, seq: [0.2, 0.8], fmt: (v) => PCT(v), leg: ["20%", "≥80%"] },
-  saldo:   { label: "Saldo de transferências", val: (m) => (m.eleitores ? m.transferencias_saldo / m.eleitores : null), div: [-0.05, 0, 0.05], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−5%", "0", "+5%"] },
-  cresc:   { label: "Crescimento populacional", val: (m) => (m.crescimento_pop_pct != null ? m.crescimento_pop_pct / 100 : null), div: [-0.01, 0, 0.01], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−1%", "0", "+1%"] },
-  abst24:  { label: "% abstenção (2024)", val: (m) => (m.comparecimento && m.comparecimento["2024"] ? m.comparecimento["2024"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
-  abst22:  { label: "% abstenção (2022)", val: (m) => (m.comparecimento && m.comparecimento["2022"] ? m.comparecimento["2022"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
-  gasto:   { label: "Gasto de campanha / eleitor", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), seq: [10, 90], fmt: (v) => (v == null ? "—" : BRL2.format(v)), leg: ["≤R$ 10", "≥R$ 90"] },
+  razao:   { label: "mi_razao", val: (m) => m.razao_total, div: [0.5, 1.0, 1.6], fmt: (v) => PCT(v), leg: ["50%", "100%", "≥160%"] },
+  razao16: { label: "mi_razao16", val: (m) => m.razao_16mais, div: [0.6, 1.0, 2.0], fmt: (v) => PCT(v), leg: ["60%", "100%", "≥200%"] },
+  idoso:   { label: "mi_idoso", val: (m) => m.pct_70mais, seq: [0, 0.20], fmt: (v) => PCT(v), leg: ["0%", "≥20%"] },
+  escol:   { label: "mi_escol", val: (m) => m.pct_ate_fundamental, seq: [0.2, 0.8], fmt: (v) => PCT(v), leg: ["20%", "≥80%"] },
+  saldo:   { label: "mi_saldo", val: (m) => (m.eleitores ? m.transferencias_saldo / m.eleitores : null), div: [-0.05, 0, 0.05], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−5%", "0", "+5%"] },
+  cresc:   { label: "mi_cresc", val: (m) => (m.crescimento_pop_pct != null ? m.crescimento_pop_pct / 100 : null), div: [-0.01, 0, 0.01], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−1%", "0", "+1%"] },
+  abst24:  { label: "mi_abst24", val: (m) => (m.comparecimento && m.comparecimento["2024"] ? m.comparecimento["2024"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
+  abst22:  { label: "mi_abst22", val: (m) => (m.comparecimento && m.comparecimento["2022"] ? m.comparecimento["2022"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
+  gasto:   { label: "mi_gasto", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), seq: [10, 90], fmt: (v) => (v == null ? "—" : BRL2.format(v)), leg: ["≤R$ 10", "≥R$ 90"] },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];
@@ -672,14 +695,14 @@ function popupHTML(m) {
   const cel = (v, l) => `<div><b>${v}</b><span>${l}</span></div>`;
   return `<div class="mapa-pop"><div class="pp-tit">${m.nome}-${m.uf}</div>
     <div class="pp-grid">
-      ${cel(PCT(m.razao_total), "razão")}${cel(PCT(m.razao_16mais), "razão 16+")}
-      ${cel(fmt(m.eleitores), "eleitores")}${cel(fmt(m.pop_total_estimada), "pop. " + DADOS.ano_populacao)}
-      ${m.transferencias_saldo != null ? cel(sig0(m.transferencias_saldo), "saldo transf.") : ""}
-      ${m._abst != null ? cel(PCT(m._abst), "abstenção") : ""}
-      ${cel("#" + (m._rankNac || "—"), "no país")}
+      ${cel(PCT(m.razao_total), t("pp_razao"))}${cel(PCT(m.razao_16mais), t("pp_razao16"))}
+      ${cel(fmt(m.eleitores), t("pp_eleitores"))}${cel(fmt(m.pop_total_estimada), t("pp_pop", { ano: DADOS.ano_populacao }))}
+      ${m.transferencias_saldo != null ? cel(sig0(m.transferencias_saldo), t("pp_saldo")) : ""}
+      ${m._abst != null ? cel(PCT(m._abst), t("pp_abstencao")) : ""}
+      ${cel("#" + (m._rankNac || "—"), t("pp_pais"))}
     </div>
     ${badges(m) === "—" ? "" : `<div class="pp-badges">${badges(m)}</div>`}
-    <button class="pp-btn" onclick="abrirCidadeCod('${m.cd_ibge}')">Ver perfil completo →</button>
+    <button class="pp-btn" onclick="abrirCidadeCod('${m.cd_ibge}')">${t("pp_ver")}</button>
   </div>`;
 }
 function abrirCidadeCod(cd) { if (MAP) MAP.closePopup(); const m = munById.get(cd); if (m) abrirCidade(m); }
@@ -715,7 +738,7 @@ function initMapa() {
       style: styleUF,
       onEachFeature: (f, lyr) => {
         const sg = codToSigla[_pad(f)];
-        lyr.bindTooltip(`<b>${sg}</b> · ${MAP_INDS[mapInd].label.toLowerCase()} ${MAP_INDS[mapInd].fmt(UF_AGG[sg])}`, { sticky: true });
+        lyr.bindTooltip(`<b>${sg}</b> · ${t(MAP_INDS[mapInd].label).toLowerCase()} ${MAP_INDS[mapInd].fmt(UF_AGG[sg])}`, { sticky: true });
         lyr.on("mouseover", () => { lyr.setStyle({ weight: 2.5, color: temaClaro() ? "#111827" : "#fff", fillOpacity: 1 }); lyr.bringToFront(); });
         lyr.on("mouseout", () => ufLayer.resetStyle(lyr));
         lyr.on("click", () => zoomParaUF(_pad(f), sg));
@@ -740,7 +763,7 @@ function recolorMapa() {
   UF_AGG = ufAggMap(ind);
   if (ufLayer) {
     ufLayer.setStyle(styleUF);
-    ufLayer.eachLayer((l) => l.setTooltipContent(`<b>${codToSigla[_pad(l.feature)]}</b> · ${ind.label.toLowerCase()} ${ind.fmt(UF_AGG[codToSigla[_pad(l.feature)]])}`));
+    ufLayer.eachLayer((l) => l.setTooltipContent(`<b>${codToSigla[_pad(l.feature)]}</b> · ${t(ind.label).toLowerCase()} ${ind.fmt(UF_AGG[codToSigla[_pad(l.feature)]])}`));
   }
   if (munLayer) munLayer.setStyle(styleMun);
   legend();
@@ -762,10 +785,10 @@ function atualizarDetalhe() {
       }
     });
     document.getElementById("mapaDica").textContent =
-      z >= Z_LABEL ? "Clique num município para detalhes." : "Aproxime mais para ver os nomes das cidades.";
+      z >= Z_LABEL ? t("map_dica_click") : t("map_dica_zoom");
   } else if (loadedUFs.size) {       // zoom-out: limpa para aliviar e voltar ao mapa de UFs
     munLayer.clearLayers(); loadedUFs.clear(); labeled = new Set();
-    document.getElementById("mapaDica").textContent = "Dê zoom (scroll) ou clique num estado para ver os municípios.";
+    document.getElementById("mapaDica").textContent = t("map_dica_default");
   }
   document.getElementById("mapaVoltar").hidden = z <= zBrasil + 0.05;
   atualizarRotulos();
@@ -802,7 +825,7 @@ function voltarBrasil() {
   ufSel = ""; document.getElementById("uf").value = "";
   render(); renderRanking();
   document.getElementById("mapaVoltar").hidden = true;
-  document.getElementById("mapaDica").textContent = "Dê zoom (scroll) ou clique num estado para ver os municípios.";
+  document.getElementById("mapaDica").textContent = t("map_dica_default");
   if (ufLayer) MAP.flyToBounds(ufLayer.getBounds(), { padding: [10, 10], duration: 0.6 });
 }
 
@@ -812,11 +835,11 @@ function legend() {
     ? "linear-gradient(90deg, rgb(56,135,255), rgb(232,236,245), rgb(255,77,61))"
     : "linear-gradient(90deg,#1d3b4a,#46e0c0,#ffd23f,#ff7b3d)";
   const fim = ind.div ? ind.leg[2] : ind.leg[1];
-  const pivo = ind.div ? ` · vira em <b>${ind.leg[1]}</b>` : "";
-  const realce = destaque === "todos" ? "" : ` · realçando ${destaque === "cem" ? ">100%" : "atípicos"}`;
+  const pivo = ind.div ? ` · ${t("leg_vira")} <b>${ind.leg[1]}</b>` : "";
+  const realce = destaque === "todos" ? "" : ` · ${t("leg_realcando", { q: destaque === "cem" ? ">100%" : t("map_f_atip") })}`;
   document.getElementById("mapaLegenda").innerHTML =
     `<span>${ind.leg[0]}</span><span class="grad" style="background:${grad}"></span><span>${fim}</span>` +
-    ` &nbsp;·&nbsp; <b>${ind.label}</b>${pivo}${realce}`;
+    ` &nbsp;·&nbsp; <b>${t(ind.label)}</b>${pivo}${realce}`;
 }
 
 /* ---------------- TABELA ---------------- */
@@ -827,10 +850,11 @@ function preencherUFs(ufs) {
 
 function badges(m) {
   const limBR = DADOS.limiar_estatistico_nacional;
+  const _ti = (k) => t(k).replace(/<[^>]+>/g, "").replace(/"/g, "&quot;");
   let s = "";
-  if (m.mais_eleitores_que_pop) s += `<span class="badge b100" title="Mais eleitores que habitantes estimados">&gt;100%</span>`;
-  if (m.acima_limiar_tse) s += `<span class="badge btse" title="Eleitorado acima de 80% da população — apenas o 3º dos TRÊS critérios cumulativos da Res. TSE 23.659/2021 (art. 105). Sozinho NÃO enseja revisão de eleitorado.">&gt;80%</span>`;
-  if (m.outlier_nacional) s += `<span class="badge bnac" title="Outlier estatístico nacional: acima de ${PCT(limBR)} (Tukey Q3+1,5·IQR no Brasil)">atípico</span>`;
+  if (m.mais_eleitores_que_pop) s += `<span class="badge b100" title="${_ti("bdg_100_t")}">${t("bdg_100")}</span>`;
+  if (m.acima_limiar_tse) s += `<span class="badge btse" title="${_ti("bdg_80_t")}">${t("bdg_80")}</span>`;
+  if (m.outlier_nacional) s += `<span class="badge bnac" title="${t("bdg_atip_t", { lim: PCT(limBR) }).replace(/"/g, "&quot;")}">${t("bdg_atip")}</span>`;
   return s || "—";
 }
 const temFlag = (m) => m.mais_eleitores_que_pop || m.acima_limiar_tse || m.outlier_nacional || m.outlier_uf;
@@ -867,8 +891,8 @@ function render() {
       </tr>`;
   }).join("");
 
-  const trunc = todas.length > LIMITE_LINHAS ? ` (mostrando ${LIMITE_LINHAS} — refine)` : "";
-  document.getElementById("contagem").textContent = `${todas.length} de ${LINHAS.length} municípios${trunc}`;
+  const trunc = todas.length > LIMITE_LINHAS ? t("tbl_trunc", { n: fmt(LIMITE_LINHAS) }) : "";
+  document.getElementById("contagem").textContent = t("tbl_contagem", { x: fmt(todas.length), y: fmt(LINHAS.length), trunc });
   document.querySelectorAll("th[data-k]").forEach((th) => {
     th.removeAttribute("aria-sort");
     if (th.dataset.k === ordenarPor) th.setAttribute("aria-sort", ordemDesc ? "descending" : "ascending");
@@ -919,11 +943,11 @@ function bind() {
 }
 let _toastT = null;
 function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg || "Link copiado ✓";
-  t.hidden = false;
+  const el = document.getElementById("toast");
+  el.textContent = msg || t("toast_copied");
+  el.hidden = false;
   clearTimeout(_toastT);
-  _toastT = setTimeout(() => { t.hidden = true; }, 2200);
+  _toastT = setTimeout(() => { el.hidden = true; }, 2200);
 }
 
 function renderFontes() {
@@ -932,10 +956,10 @@ function renderFontes() {
   // agrupa por órgão e condensa famílias (as 28 malhas viram 1, anos juntos)
   const grupos = {};   // orgao -> { base -> Set(anos) }
   fontes.forEach((f) => {
-    const org = (f.publisher || "").replace(/\s*—.*/, "").trim() || "Fonte";
+    const org = (f.publisher || "").replace(/\s*—.*/, "").trim() || t("font_fonte");
     let base;
-    if (/Malha/i.test(f.dataset)) base = "Malhas de UF e municípios (GeoJSON)";
-    else if (/Códigos oficiais/i.test(f.dataset)) base = "Crosswalk oficial TSE↔IBGE";
+    if (/Malha/i.test(f.dataset)) base = t("font_malhas");
+    else if (/Códigos oficiais/i.test(f.dataset)) base = t("font_crosswalk");
     else base = f.dataset.replace(/\s*[-–]\s*\d{4}\s*$/, "").replace(/^IBGE\s+/, "").trim();
     const g = grupos[org] || (grupos[org] = {});
     const anos = g[base] || (g[base] = new Set());
@@ -951,13 +975,14 @@ function renderFontes() {
     html += `<div class="fonte-grp"><b>${org}</b><ul>${itens}</ul></div>`;
   }
   const data = fontes.map((f) => f.extraido_em).filter(Boolean).sort().pop() || "";
-  html += `<p class="fonte-nota">Extraído em ${data.replace("T", " ").slice(0, 16)} — URL, data e <b>hash SHA-256</b> de cada arquivo em <code>manifest/provenance.json</code>.</p>`;
+  html += `<p class="fonte-nota">${t("font_extraido", { data: data.replace("T", " ").slice(0, 16) })}</p>`;
   document.getElementById("fontes").innerHTML = html;
-  const r16 = META.indicadores && META.indicadores.razao_16mais;
-  document.getElementById("metanota").textContent = r16 ? r16.metodo : "";
+  document.getElementById("metanota").textContent = t("metanota_metodo");
 }
 
 carregar().catch((e) => {
-  document.getElementById("lede").textContent = "Erro ao carregar os dados. Rode o pipeline (python -m eleitoral.build) para gerar docs/data/brasil.json.";
+  document.getElementById("lede").textContent = (I18N.pt && I18N.pt.load_err)
+    ? t("load_err")
+    : "Erro ao carregar os dados. Rode o pipeline (python -m eleitoral.build) para gerar docs/data/brasil.json.";
   console.error(e);
 });

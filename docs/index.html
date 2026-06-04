@@ -8,7 +8,12 @@
   <meta property="og:title" content="Quantos eleitores cabem num município?">
   <meta property="og:description" content="739 municípios têm mais eleitores registrados que habitantes estimados. Veja o cruzamento oficial TSE × IBGE, município a município.">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:locale:alternate" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" hreflang="pt-BR" href="https://pablonora.github.io/transparencia-eleitoral-municipios/?lang=pt">
+  <link rel="alternate" hreflang="en" href="https://pablonora.github.io/transparencia-eleitoral-municipios/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://pablonora.github.io/transparencia-eleitoral-municipios/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -112,78 +117,78 @@
   <section class="bloco" id="mapaBloco">
     <div class="mapa-head">
       <div>
-        <h2>O mapa</h2>
-        <p class="sub">Colorir por
+        <h2 data-i18n="map_h2">O mapa</h2>
+        <p class="sub"><span data-i18n="map_color_by">Colorir por</span>
           <select id="mapaInd" aria-label="Indicador do mapa">
-            <option value="razao">Eleitores ÷ população</option>
-            <option value="razao16">Razão 16+</option>
-            <option value="idoso">% eleitorado 70+</option>
-            <option value="escol">% até fundamental</option>
-            <option value="saldo">Saldo de transferências</option>
-            <option value="cresc">Crescimento populacional</option>
-            <option value="abst24">% abstenção (2024)</option>
-            <option value="abst22">% abstenção (2022)</option>
-            <option value="gasto">Gasto de campanha / eleitor</option>
+            <option value="razao" data-i18n="mi_razao">Eleitores ÷ população</option>
+            <option value="razao16" data-i18n="mi_razao16">Razão 16+</option>
+            <option value="idoso" data-i18n="mi_idoso">% eleitorado 70+</option>
+            <option value="escol" data-i18n="mi_escol">% até fundamental</option>
+            <option value="saldo" data-i18n="mi_saldo">Saldo de transferências</option>
+            <option value="cresc" data-i18n="mi_cresc">Crescimento populacional</option>
+            <option value="abst24" data-i18n="mi_abst24">% abstenção (2024)</option>
+            <option value="abst22" data-i18n="mi_abst22">% abstenção (2022)</option>
+            <option value="gasto" data-i18n="mi_gasto">Gasto de campanha / eleitor</option>
           </select>
-          · realçar
+          · <span data-i18n="map_highlight">realçar</span>
           <span class="seg" id="mapaFiltro" role="group" aria-label="Destaque">
-            <button data-f="todos" class="on" type="button">todos</button>
-            <button data-f="cem" type="button">&gt;100%</button>
-            <button data-f="atip" type="button">atípicos</button>
+            <button data-f="todos" class="on" type="button" data-i18n="map_f_todos">todos</button>
+            <button data-f="cem" type="button" data-i18n="map_f_cem">&gt;100%</button>
+            <button data-f="atip" type="button" data-i18n="map_f_atip">atípicos</button>
           </span>
-          <br><span id="mapaDica">Dê zoom (scroll) ou clique num estado para ver os municípios.</span>
+          <br><span id="mapaDica" data-i18n="map_dica_default">Dê zoom (scroll) ou clique num estado para ver os municípios.</span>
         </p>
       </div>
-      <button class="btn ghost" id="mapaVoltar" type="button" hidden>← Voltar ao Brasil</button>
+      <button class="btn ghost" id="mapaVoltar" type="button" hidden data-i18n="map_back">← Voltar ao Brasil</button>
     </div>
     <div id="mapa" role="img" aria-label="Mapa coroplético do Brasil"></div>
     <div class="mapa-legenda" id="mapaLegenda"></div>
   </section>
 
   <section class="bloco">
-    <h2>A foto do Brasil</h2>
-    <p class="sub">Razão eleitores ÷ população estimada, distribuída entre os <span id="nMun">—</span> municípios. Cada barra é uma faixa de razão.</p>
+    <h2 data-i18n="foto_h2">A foto do Brasil</h2>
+    <p class="sub" data-i18n="foto_sub">Razão eleitores ÷ população estimada, distribuída entre os <span id="nMun">—</span> municípios. Cada barra é uma faixa de razão.</p>
     <div id="histograma" class="histograma" aria-label="Histograma da razão eleitores/população"></div>
     <div class="hist-legenda" id="histLegenda"></div>
   </section>
 
   <section class="bloco" id="rankBloco">
-    <h2>Quem se destaca</h2>
+    <h2 data-i18n="rank_h2">Quem se destaca</h2>
     <div class="tabs" id="rankTabs" role="tablist">
-      <button class="tab on" data-rk="razao">Maior razão</button>
-      <button class="tab" data-rk="saldo">Entrada líquida de eleitores</button>
-      <button class="tab" data-rk="idoso">Eleitorado mais idoso</button>
-      <button class="tab" data-rk="jovem">Mais jovem</button>
-      <button class="tab" data-rk="escol">Menor escolaridade</button>
-      <button class="tab" data-rk="facult">% voto facultativo</button>
-      <button class="tab" data-rk="abst">Maior abstenção</button>
-      <button class="tab" data-rk="margem">Entrada &gt; margem (2024)</button>
-      <button class="tab" data-rk="gasto">Gasto de campanha por eleitor</button>
-      <button class="tab" data-rk="rev3">Atende aos 3 critérios (TSE)</button>
+      <button class="tab on" data-rk="razao" data-i18n="rank_tab_razao">Maior razão</button>
+      <button class="tab" data-rk="saldo" data-i18n="rank_tab_saldo">Entrada líquida de eleitores</button>
+      <button class="tab" data-rk="idoso" data-i18n="rank_tab_idoso">Eleitorado mais idoso</button>
+      <button class="tab" data-rk="jovem" data-i18n="rank_tab_jovem">Mais jovem</button>
+      <button class="tab" data-rk="escol" data-i18n="rank_tab_escol">Menor escolaridade</button>
+      <button class="tab" data-rk="facult" data-i18n="rank_tab_facult">% voto facultativo</button>
+      <button class="tab" data-rk="abst" data-i18n="rank_tab_abst">Maior abstenção</button>
+      <button class="tab" data-rk="margem" data-i18n="rank_tab_margem">Entrada &gt; margem (2024)</button>
+      <button class="tab" data-rk="gasto" data-i18n="rank_tab_gasto">Gasto de campanha por eleitor</button>
+      <button class="tab" data-rk="rev3" data-i18n="rank_tab_rev3">Atende aos 3 critérios (TSE)</button>
     </div>
     <p class="sub" id="rankSub"></p>
     <div id="ranking" class="ranking"></div>
   </section>
 
   <section class="bloco" id="compararBloco">
-    <h2>Compare duas cidades</h2>
-    <p class="sub">Coloque dois municípios lado a lado — bom pra resolver aquela discussão.</p>
+    <h2 data-i18n="cmp_h2">Compare duas cidades</h2>
+    <p class="sub" data-i18n="cmp_sub">Coloque dois municípios lado a lado — bom pra resolver aquela discussão.</p>
     <div class="compare-inputs">
-      <div class="cmp-field"><input type="search" id="cmpA" placeholder="Cidade A…" autocomplete="off"><div class="ac" id="acA" hidden></div></div>
-      <div class="cmp-field"><input type="search" id="cmpB" placeholder="Cidade B…" autocomplete="off"><div class="ac" id="acB" hidden></div></div>
+      <div class="cmp-field"><input type="search" id="cmpA" placeholder="Cidade A…" data-i18n-ph="cmp_a_ph" autocomplete="off"><div class="ac" id="acA" hidden></div></div>
+      <div class="cmp-field"><input type="search" id="cmpB" placeholder="Cidade B…" data-i18n-ph="cmp_b_ph" autocomplete="off"><div class="ac" id="acB" hidden></div></div>
     </div>
     <div id="compareOut" class="compare-out"></div>
   </section>
 
   <section class="bloco" id="explorar">
-    <h2>Explore todos os municípios</h2>
+    <h2 data-i18n="expl_h2">Explore todos os municípios</h2>
     <div class="controles">
-      <input type="search" id="busca" placeholder="Buscar município…" autocomplete="off">
-      <select id="uf" aria-label="Filtrar por UF"><option value="">Todas as UFs</option></select>
+      <input type="search" id="busca" placeholder="Buscar município…" data-i18n-ph="expl_search_ph" autocomplete="off">
+      <select id="uf" aria-label="Filtrar por UF"><option value="" data-i18n="expl_all_ufs">Todas as UFs</option></select>
       <div class="chips" id="chips" role="group" aria-label="Filtrar por marcador">
-        <button class="chip" data-flag="mais_eleitores_que_pop">Mais eleitores que habitantes (&gt;100%)</button>
-        <button class="chip" data-flag="acima_limiar_tse" title="Eleitorado > 80% da população — apenas o 3º dos três critérios cumulativos da Res. TSE 23.659/2021. Sozinho não enseja revisão.">Eleitorado &gt; 80% da pop.</button>
-        <button class="chip" data-flag="outlier_nacional" title="“Atípico” = a razão foge bem do padrão do país (acima de Q3 + 1,5×IQR, a regra estatística de Tukey). É raro, não é irregularidade.">Atípico (foge do padrão)</button>
+        <button class="chip" data-flag="mais_eleitores_que_pop" data-i18n="chip_cem" data-i18n-title="chip_cem_t">Mais eleitores que habitantes (&gt;100%)</button>
+        <button class="chip" data-flag="acima_limiar_tse" data-i18n="chip_tse" data-i18n-title="chip_tse_t" title="Eleitorado > 80% da população — apenas o 3º dos três critérios cumulativos da Res. TSE 23.659/2021. Sozinho não enseja revisão.">Eleitorado &gt; 80% da pop.</button>
+        <button class="chip" data-flag="outlier_nacional" data-i18n="chip_atip" data-i18n-title="chip_atip_t" title="“Atípico” = a razão foge bem do padrão do país (acima de Q3 + 1,5×IQR, a regra estatística de Tukey). É raro, não é irregularidade.">Atípico (foge do padrão)</button>
       </div>
       <span class="contagem" id="contagem"></span>
     </div>
@@ -192,78 +197,78 @@
       <table id="tabela">
         <thead>
           <tr>
-            <th data-k="nome">Município</th>
-            <th data-k="uf">UF</th>
-            <th data-k="eleitores" class="num">Eleitores</th>
-            <th data-k="pop_total_estimada" class="num">População <span id="th-anopop"></span></th>
-            <th data-k="razao_total" class="num">Razão <span class="ajuda" title="Eleitores ÷ população estimada, em %. 100% = tantos eleitores quanto habitantes.">ⓘ</span></th>
-            <th data-k="razao_16mais" class="num">Razão 16+ <span class="ajuda" title="Eleitores ÷ população em idade de votar (16+) estimada — proporção do Censo 2022 aplicada à estimativa do ano. Passa de 100% com facilidade (divisor menor); leia junto da razão total.">ⓘ</span></th>
-            <th data-k="_flags">Marcadores</th>
+            <th data-k="nome" data-i18n="th_mun">Município</th>
+            <th data-k="uf" data-i18n="th_uf">UF</th>
+            <th data-k="eleitores" class="num" data-i18n="th_eleitores">Eleitores</th>
+            <th data-k="pop_total_estimada" class="num"><span data-i18n="th_pop">População</span> <span id="th-anopop"></span></th>
+            <th data-k="razao_total" class="num"><span data-i18n="th_razao">Razão</span> <span class="ajuda" data-i18n-title="th_razao_t" title="Eleitores ÷ população estimada, em %. 100% = tantos eleitores quanto habitantes.">ⓘ</span></th>
+            <th data-k="razao_16mais" class="num"><span data-i18n="th_razao16">Razão 16+</span> <span class="ajuda" data-i18n-title="th_razao16_t" title="Eleitores ÷ população em idade de votar (16+) estimada — proporção do Censo 2022 aplicada à estimativa do ano. Passa de 100% com facilidade (divisor menor); leia junto da razão total.">ⓘ</span></th>
+            <th data-k="_flags" data-i18n="th_marcadores">Marcadores</th>
           </tr>
         </thead>
         <tbody id="corpo"></tbody>
       </table>
     </div>
-    <p class="dica">Toque em qualquer município para abrir o perfil completo (transferências, abstenção, demografia, eleição 2024 e mais).</p>
+    <p class="dica" data-i18n="expl_dica">Toque em qualquer município para abrir o perfil completo (transferências, abstenção, demografia, eleição 2024 e mais).</p>
   </section>
 
   <section class="bloco" id="metodologia">
     <details>
-      <summary><h2>Metodologia e limites</h2><span class="abrir">ler ▾</span></summary>
+      <summary><h2 data-i18n="met_summary">Metodologia e limites</h2><span class="abrir" data-i18n="met_ler">ler ▾</span></summary>
       <div class="meto">
-        <h3>Fontes e anos de referência</h3>
+        <h3 data-i18n="met_h3_fontes">Fontes e anos de referência</h3>
         <ul>
-          <li><b>Eleitorado</b> — TSE, “Eleitorado Atual” <span id="meto-ger"></span> (mais recente).</li>
-          <li><b>População total</b> — IBGE, estimativa anual (tabela 6579), <b id="meto-anopop"></b>.</li>
-          <li><b>Idade (16+)</b> — IBGE, Censo 2022 (tabela 9514).</li>
-          <li><b>Gastos e arrecadação de campanha</b> — TSE, “Prestação de contas eleitorais — candidatos”, eleição municipal 2024 (receitas e despesas contratadas).</li>
-          <li><b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.</li>
+          <li data-i18n="met_li_eleitorado"><b>Eleitorado</b> — TSE, “Eleitorado Atual” <span id="meto-ger"></span> (mais recente).</li>
+          <li data-i18n="met_li_pop"><b>População total</b> — IBGE, estimativa anual (tabela 6579), <b id="meto-anopop"></b>.</li>
+          <li data-i18n="met_li_idade"><b>Idade (16+)</b> — IBGE, Censo 2022 (tabela 9514).</li>
+          <li data-i18n="met_li_gastos"><b>Gastos e arrecadação de campanha</b> — TSE, “Prestação de contas eleitorais — candidatos”, eleição municipal 2024 (receitas e despesas contratadas).</li>
+          <li data-i18n="met_li_codigos"><b>Correspondência de códigos</b> — crosswalk oficial TSE↔IBGE.</li>
         </ul>
-        <p class="aviso-anos">⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.</p>
+        <p class="aviso-anos" data-i18n="met_aviso_anos">⚠️ Os três dados são de <b>anos diferentes</b> (eleitorado mais recente, estimativa de população e Censo 2022). Eles são o melhor disponível, mas a comparação não é do mesmo instante.</p>
 
-        <h3>Como calculamos</h3>
+        <h3 data-i18n="met_h3_calc">Como calculamos</h3>
         <ul>
-          <li><b>Razão total</b> = eleitores ÷ população total estimada.</li>
-          <li><b>Razão 16+</b> = eleitores ÷ população em idade de votar <i>estimada</i>.
+          <li data-i18n="met_li_razao_total"><b>Razão total</b> = eleitores ÷ população total estimada.</li>
+          <li data-i18n="met_li_razao16"><b>Razão 16+</b> = eleitores ÷ população em idade de votar <i>estimada</i>.
           Como a estimativa anual não traz idade, aplicamos a <b>proporção de 16+ do
           Censo 2022</b> à estimativa do ano. É uma <b>extrapolação</b> (assume que a
           estrutura etária do município se manteve igual à de 2022).</li>
-          <li><b>Outlier estatístico</b> = razão acima de Q3 + 1,5·IQR (regra de Tukey),
+          <li data-i18n="met_li_outlier"><b>Outlier estatístico</b> = razão acima de Q3 + 1,5·IQR (regra de Tukey),
           calculado no Brasil; a leitura por UF aparece no detalhe.</li>
         </ul>
 
-        <h3>O marcador de 80% e a revisão de eleitorado (o que a lei diz)</h3>
-        <p>Pela <b>Resolução TSE nº 23.659/2021, art. 105</b>, a revisão de eleitorado
+        <h3 data-i18n="met_h3_80">O marcador de 80% e a revisão de eleitorado (o que a lei diz)</h3>
+        <p data-i18n="met_p_80a">Pela <b>Resolução TSE nº 23.659/2021, art. 105</b>, a revisão de eleitorado
         de ofício depende de <b>três critérios CUMULATIVOS</b> (todos juntos), e ainda
         assim é discricionária:</p>
         <ol>
-          <li>transferências no ano ≥ 10% acima do ano anterior;</li>
-          <li>eleitorado superior ao <b>dobro</b> da população de 10–15 anos somada à de 70+;</li>
-          <li>eleitorado superior a <b>80%</b> da população projetada pelo IBGE.</li>
+          <li data-i18n="met_ol_1">transferências no ano ≥ 10% acima do ano anterior;</li>
+          <li data-i18n="met_ol_2">eleitorado superior ao <b>dobro</b> da população de 10–15 anos somada à de 70+;</li>
+          <li data-i18n="met_ol_3">eleitorado superior a <b>80%</b> da população projetada pelo IBGE.</li>
         </ol>
-        <p>Mostramos apenas o 3º critério (&gt;80%) como um <b>marcador</b> — <b>ele
+        <p data-i18n="met_p_80b">Mostramos apenas o 3º critério (&gt;80%) como um <b>marcador</b> — <b>ele
         sozinho NÃO enseja revisão</b>. O próprio TSE afirma que <i>“a desproporção
         entre o número de eleitores e a população, por si só, não enseja a revisão”</i>.
         Por isso ~58% dos municípios passam de 80% e isso, isolado, não significa nada
         de irregular.</p>
 
-        <h3>Limites que você deve saber</h3>
+        <h3 data-i18n="met_h3_limites">Limites que você deve saber</h3>
         <ul>
-          <li>A população do IBGE é <b>estimativa</b>, não contagem exata.</li>
-          <li>A <b>razão 16+ passa de 100% por construção</b> em boa parte do país
+          <li data-i18n="met_li_lim1">A população do IBGE é <b>estimativa</b>, não contagem exata.</li>
+          <li data-i18n="met_li_lim2">A <b>razão 16+ passa de 100% por construção</b> em boa parte do país
           (divisor menor) — não a leia como anomalia isolada.</li>
-          <li>Eleitores no <b>exterior</b> (≈917 mil) são excluídos (sem população IBGE).</li>
-          <li>A malha do mapa é simplificada — um ponto na divisa pode cair no vizinho.</li>
-          <li>Razão alta é <b>comum e majoritariamente legítima</b> (domicílio eleitoral,
+          <li data-i18n="met_li_lim3">Eleitores no <b>exterior</b> (≈917 mil) são excluídos (sem população IBGE).</li>
+          <li data-i18n="met_li_lim4">A malha do mapa é simplificada — um ponto na divisa pode cair no vizinho.</li>
+          <li data-i18n="met_li_lim5">Razão alta é <b>comum e majoritariamente legítima</b> (domicílio eleitoral,
           migração). Isto sinaliza onde <i>olhar</i>, não onde há irregularidade.</li>
-          <li><b>Gastos de campanha</b> são valores <b>declarados</b> na prestação de contas
+          <li data-i18n="met_li_lim6"><b>Gastos de campanha</b> são valores <b>declarados</b> na prestação de contas
           de 2024 — não refletem o julgamento das contas pelo TSE e não indicam, por si
           sós, irregularidade. <b>Gasto maior não significa compra de votos</b>: o voto é
           secreto. Usamos as <i>despesas contratadas</i> (gasto total declarado) e as
           <i>receitas</i> (arrecadação); “despesas pagas” e doadores não entram.</li>
         </ul>
 
-        <p class="repro">Tudo é reproduzível a partir dos dados brutos oficiais; cada
+        <p class="repro" data-i18n="met_repro">Tudo é reproduzível a partir dos dados brutos oficiais; cada
         arquivo tem URL, data e hash em <code>manifest/provenance.json</code>.</p>
       </div>
     </details>
@@ -272,14 +277,14 @@
 
 <footer class="rodape">
   <div class="wrap">
-    <h2>Fontes e procedência</h2>
+    <h2 data-i18n="foot_h2">Fontes e procedência</h2>
     <div id="fontes"></div>
     <p class="baixar">
-      <a class="btn ghost" href="data/brasil.json" download>⬇ Baixar os dados (JSON)</a>
-      <a class="btn ghost" href="#metodologia">Metodologia e limites</a>
+      <a class="btn ghost" href="data/brasil.json" download data-i18n="foot_baixar">⬇ Baixar os dados (JSON)</a>
+      <a class="btn ghost" href="#metodologia" data-i18n="foot_meto">Metodologia e limites</a>
     </p>
     <p class="meta-nota" id="metanota"></p>
-    <p class="licenca">
+    <p class="licenca" data-i18n="foot_licenca">
       Código sob licença MIT · dados derivados sob CC-BY 4.0 · fontes originais:
       TSE (CC-BY) e IBGE. Cada número é reproduzível a partir dos brutos
       (<code>manifest/provenance.json</code>). População sempre <strong>estimada</strong>.
