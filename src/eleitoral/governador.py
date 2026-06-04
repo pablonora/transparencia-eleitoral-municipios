@@ -1,4 +1,4 @@
-"""Governador eleito por UF (TSE, eleição de 2022) e seu partido/espectro.
+"""Governador eleito por UF (TSE, eleição de 2022) e seu partido.
 
 A votação por candidato de 2022 é um ZIP grande (~630 MB), com CSVs por-UF. Como
 só precisamos do cargo Governador (27 unidades), lemos por HTTP Range apenas os
@@ -6,8 +6,7 @@ membros por-UF (reusando a infra do módulo `contas`), filtramos o cargo e
 agregamos o vencedor do turno decisivo. Resultado (27 entradas) é cacheado em
 data/interim — e, sendo 2022 uma eleição passada, NÃO muda mais.
 
-ENQUADRAMENTO igual ao do prefeito: é o partido do ELEITO, não a ideologia da
-população. Ver config.NOTA_POLITICA.
+Mostramos apenas o PARTIDO do eleito (factual). Não classificamos ideologia.
 """
 from __future__ import annotations
 
@@ -76,8 +75,7 @@ def agregar(manifest: Manifest, *, offline: bool = False, ano: int = 2022) -> di
         if not ranked:
             continue
         v = ranked[0]
-        out[uf] = {"governador": v["nome"], "partido": v["partido"], "turno": turno,
-                   "espectro": config.espectro_partido(v["partido"])}
+        out[uf] = {"governador": v["nome"], "partido": v["partido"], "turno": turno}
 
     notes = (f"Cargo Governador, eleição {ano}, lido por HTTP Range (membros por-UF; "
              f"_BRASIL excluído); {len(out)} UFs; bytes_trafegados={baixado}")

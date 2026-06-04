@@ -76,6 +76,9 @@ def main(offline: bool = False) -> None:
     # governador eleito por UF (2022) + espectro — só no escopo Brasil
     print("[governador] governador eleito por UF (2022)...")
     governadores = governador.agregar(manifest, offline=offline) if config.UF_SIGLA is None else {}
+    # mantemos apenas o PARTIDO (factual); espectro ideológico foi removido
+    governadores = {uf: {"governador": g["governador"], "partido": g["partido"], "turno": g["turno"]}
+                    for uf, g in governadores.items()}
 
     # 5d) prestação de contas (receitas/despesas de campanha) por município ----
     print("[contas] prestação de contas eleitorais 2024...")
@@ -130,7 +133,6 @@ def main(offline: bool = False) -> None:
             d["eleicao2024"] = {
                 "cargo": "Prefeito", "turno": p["turno"], "vencedor": p["vencedor"],
                 "partido": p.get("partido", ""),
-                "espectro": config.espectro_partido(p.get("partido", "")),
                 "votos_venc": p["votos_venc"], "votos_2o": p["votos_2o"],
                 "margem": p["margem"], "total": p["total"],
                 "n_cand": p["n_cand"], "n_cand_1t": p["n_cand_1t"],
@@ -227,8 +229,6 @@ def main(offline: bool = False) -> None:
         "ano_contas": config.TSE_CONTAS_ANO,
         "nota_orcamento": config.NOTA_ORCAMENTO,
         "ano_orcamento": config.ORCAMENTO_ANO,
-        "nota_politica": config.NOTA_POLITICA,
-        "partido_fonte": config.PARTIDO_FONTE,
         "governadores": governadores,
         "resumo": {
             "n_municipios": len(registros),
