@@ -1,20 +1,29 @@
 "use strict";
 
-const NF = new Intl.NumberFormat("pt-BR");
-const PCT = (x) => (x == null ? "—" : (x * 100).toFixed(1).replace(".", ",") + "%");
+// Formatação locale-aware: muda com o idioma (pt-BR ↔ en-US). Ver bloco I18N.
+let LANG = "pt";
+const _loc = () => (LANG === "en" ? "en-US" : "pt-BR");
+const _dec = () => (LANG === "en" ? "." : ",");
+let NF = new Intl.NumberFormat(_loc());
+let BRL2 = new Intl.NumberFormat(_loc(), { style: "currency", currency: "BRL" });
+let BRL0 = new Intl.NumberFormat(_loc(), { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+function refmtLocale() {
+  NF = new Intl.NumberFormat(_loc());
+  BRL2 = new Intl.NumberFormat(_loc(), { style: "currency", currency: "BRL" });
+  BRL0 = new Intl.NumberFormat(_loc(), { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+const PCT = (x) => (x == null ? "—" : (x * 100).toFixed(1).replace(".", _dec()) + "%");
 const PCT0 = (x) => (x == null ? "—" : Math.round(x * 100) + "%");
 const fmt = (x) => (x == null ? "—" : NF.format(x));
-const sig = (x) => (x == null ? "—" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + "%");
+const sig = (x) => (x == null ? "—" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", _dec()) + "%");
 const sig0 = (x) => (x == null ? "—" : (x > 0 ? "+" : "") + fmt(x));
-const BRL2 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const BRL0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-// valor compacto: R$ 1,2 bi / R$ 340 mi / R$ 27 mil / R$ 912
+// valor compacto: R$ 1,2 bi / R$ 340 mi / R$ 27 mil / R$ 912 (sufixos via t())
 function moeda(x) {
   if (x == null) return "—";
   const a = Math.abs(x);
-  if (a >= 1e9) return "R$ " + (x / 1e9).toFixed(1).replace(".", ",") + " bi";
-  if (a >= 1e6) return "R$ " + (x / 1e6).toFixed(1).replace(".", ",") + " mi";
-  if (a >= 1e4) return "R$ " + Math.round(x / 1e3) + " mil";
+  if (a >= 1e9) return "R$ " + (x / 1e9).toFixed(1).replace(".", _dec()) + " " + t("suf_bi");
+  if (a >= 1e6) return "R$ " + (x / 1e6).toFixed(1).replace(".", _dec()) + " " + t("suf_mi");
+  if (a >= 1e4) return "R$ " + Math.round(x / 1e3) + " " + t("suf_mil");
   return BRL0.format(x);
 }
 const REPO_URL = "https://github.com/pablonora/transparencia-eleitoral-municipios";
@@ -51,11 +60,74 @@ function initTema() {
     setTimeout(() => root.classList.remove("theme-anim"), 250);
   });
 }
-const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MESES_PT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MESES_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function dataEleit() {
   const s = (DADOS && DADOS.ano_eleitorado) || "";
   const m = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  return m ? `${MESES[+m[2] - 1]}/${m[3]}` : s;
+  if (!m) return s;
+  const mes = (LANG === "en" ? MESES_EN : MESES_PT)[+m[2] - 1];
+  return LANG === "en" ? `${mes} ${m[3]}` : `${mes}/${m[3]}`;
+}
+
+/* ---------------- I18N (sem biblioteca; espelha o toggle de tema) ---------------- */
+let I18N = { pt: {}, en: {} };
+function t(key, vars) {
+  const d = I18N[LANG] || {};
+  let s = (d[key] != null) ? d[key] : (I18N.pt[key] != null ? I18N.pt[key] : key);
+  if (vars) for (const k in vars) s = s.split("{" + k + "}").join(vars[k]);
+  return s;
+}
+async function carregarI18n() {
+  try {
+    const [pt, en] = await Promise.all([
+      fetch("i18n/pt.json", { cache: "no-store" }).then((r) => r.json()),
+      fetch("i18n/en.json", { cache: "no-store" }).then((r) => r.json()),
+    ]);
+    I18N = { pt, en };
+  } catch (e) { console.warn("i18n: falha ao carregar dicionários", e); }
+}
+// devolve a tradução SÓ se existir (pt ou idioma atual); senão null — assim o
+// texto de fallback já presente no HTML é preservado caso o dicionário falhe.
+function _tr(key) {
+  const d = I18N[LANG] || {};
+  if (d[key] != null) return d[key];
+  if (I18N.pt && I18N.pt[key] != null) return I18N.pt[key];
+  return null;
+}
+function aplicarI18nDOM() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const v = _tr(el.dataset.i18n); if (v != null) el.innerHTML = v;
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+    const v = _tr(el.dataset.i18nPh); if (v != null) el.placeholder = v;
+  });
+}
+function aplicarIdioma(lang) {
+  LANG = (lang === "en") ? "en" : "pt";
+  refmtLocale();
+  document.documentElement.lang = (LANG === "en") ? "en-US" : "pt-BR";
+  const _ti = _tr("title"); if (_ti) document.title = _ti;
+  const md = document.querySelector('meta[name="description"]'); const _md = _tr("meta_desc"); if (md && _md) md.content = _md;
+  const btn = document.getElementById("idiomaBtn");
+  if (btn) {
+    btn.textContent = (LANG === "en") ? "🇺🇸" : "🇧🇷";
+    btn.setAttribute("aria-label", LANG === "en" ? "Mudar para português" : "Switch to English");
+  }
+  aplicarI18nDOM();
+  // re-render das partes dinâmicas já traduzidas (slice: hero + textos)
+  if (DADOS) { preencherTextos(); renderHero(); }
+}
+function initIdioma() {
+  let saved = null; try { saved = localStorage.getItem("idioma"); } catch (_) {}
+  const nav = (navigator.language || "pt").toLowerCase();
+  aplicarIdioma(saved || (nav.startsWith("en") ? "en" : "pt"));
+  const btn = document.getElementById("idiomaBtn");
+  if (btn) btn.addEventListener("click", () => {
+    const novo = (LANG === "pt") ? "en" : "pt";
+    aplicarIdioma(novo);
+    try { localStorage.setItem("idioma", novo); } catch (_) {}
+  });
 }
 
 const LIMITE_LINHAS = 800;
@@ -73,10 +145,12 @@ async function carregar() {
     fetch("data/meta.json", { cache: "no-store" }).then((r) => r.json()).catch(() => null),
   ]);
   DADOS = a; META = b; LINHAS = a.municipios;
+  await carregarI18n();
   document.getElementById("th-anopop").textContent = "(" + a.ano_populacao + ")";
   document.getElementById("nMun").textContent = fmt(a.resumo.n_municipios);
   initTema();
   initChrome();
+  initIdioma();
   computeRanks();
   preencherTextos();
   renderHero();
@@ -110,27 +184,22 @@ function preencherTextos() {
 function renderHero() {
   const r = DADOS.resumo;
   const top = LINHAS[0]; // já vem ordenado por razão desc
-  document.getElementById("lede").innerHTML =
-    `<b>${fmt(r.n_mais_eleitores_que_pop)}</b> municípios têm mais eleitores registrados (TSE) ` +
-    `do que habitantes estimados (IBGE). Veja o cruzamento oficial, município a município.`;
+  document.getElementById("lede").innerHTML = t("lede", { n: fmt(r.n_mais_eleitores_que_pop) });
 
   const stats = [
-    { v: fmt(r.n_mais_eleitores_que_pop), l: "municípios com >100% (mais eleitores que habitantes)", alt: false },
-    { v: PCT0(r.razao_total_max), l: `maior razão do país (${top.nome}-${top.uf})`, alt: true },
-    { v: fmt(r.n_outlier_nacional), l: "outliers estatísticos (acima do padrão nacional)", alt: false },
-    { v: fmt(r.n_municipios), l: "municípios analisados, em 27 UFs", alt: true },
+    { v: fmt(r.n_mais_eleitores_que_pop), l: t("stat_100"), alt: false },
+    { v: PCT0(r.razao_total_max), l: t("stat_maior", { local: `${top.nome}-${top.uf}` }), alt: true },
+    { v: fmt(r.n_outlier_nacional), l: t("stat_outlier"), alt: false },
+    { v: fmt(r.n_municipios), l: t("stat_total"), alt: true },
   ];
   document.getElementById("heroStats").innerHTML = stats.map((s) =>
     `<div class="stat ${s.alt ? "alt" : ""}"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join("");
 
-  const txt = encodeURIComponent(
-    `${fmt(r.n_mais_eleitores_que_pop)} municípios brasileiros têm mais eleitores registrados (TSE) que habitantes estimados (IBGE) — e quase sempre é legítimo. Veja o cruzamento oficial, município a município:`);
+  const txt = encodeURIComponent(t("tweet_hero", { n: fmt(r.n_mais_eleitores_que_pop) }));
   document.getElementById("btnTweet").href =
     `https://twitter.com/intent/tweet?text=${txt}&url=${encodeURIComponent(location.href)}`;
 
-  document.getElementById("anosRef").innerHTML =
-    `Razão “atual” = eleitorado <b>TSE</b> (geração ${dataEleit()}) ÷ população <b>estimativa IBGE ${DADOS.ano_populacao}</b> ` +
-    `— o mais recente de cada, com ~1 ano de diferença. O número mais rigoroso é a razão de 2022 (base Censo), no perfil de cada cidade.`;
+  document.getElementById("anosRef").innerHTML = t("anos_ref", { ger: dataEleit(), ano: DADOS.ano_populacao });
 }
 
 /* ---------------- HISTOGRAMA ---------------- */

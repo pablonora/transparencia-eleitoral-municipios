@@ -32,35 +32,36 @@
   <a id="ghLink" class="tb-btn" href="#" target="_blank" rel="noopener" aria-label="Código no GitHub" title="Código no GitHub">
     <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
   </a>
+  <button id="idiomaBtn" class="tb-btn" type="button" aria-label="Switch language">🇧🇷</button>
   <button id="temaBtn" class="tb-btn" type="button" aria-label="Alternar tema">☀️</button>
 </div>
 <button id="topoBtn" class="topo-btn" type="button" aria-label="Voltar ao topo">↑</button>
 
 <header class="hero">
   <div class="wrap">
-    <p class="eyebrow">Transparência eleitoral · dados oficiais <strong>TSE</strong> + <strong>IBGE</strong></p>
-    <h1>Quantos eleitores cabem<br>num município?</h1>
+    <p class="eyebrow" data-i18n="eyebrow">Transparência eleitoral · dados oficiais <strong>TSE</strong> + <strong>IBGE</strong></p>
+    <h1 data-i18n="h1">Quantos eleitores cabem<br>num município?</h1>
     <p class="lede" id="lede">Carregando os dados oficiais…</p>
     <p class="anos-ref" id="anosRef"></p>
 
     <div class="citysearch">
-      <input type="search" id="buscaCidade" placeholder="🔎 Encontre sua cidade…" autocomplete="off" aria-label="Encontre sua cidade">
+      <input type="search" id="buscaCidade" placeholder="🔎 Encontre sua cidade…" data-i18n-ph="search_ph" autocomplete="off" aria-label="Encontre sua cidade">
       <div class="ac" id="acCidade" hidden></div>
     </div>
-    <button class="btn ghost geo" id="btnGeo" type="button">📍 Mostrar minha cidade</button>
-    <p class="geo-nota">Sua localização é usada só no seu navegador — não enviamos a lugar nenhum.</p>
+    <button class="btn ghost geo" id="btnGeo" type="button" data-i18n="geo_btn">📍 Mostrar minha cidade</button>
+    <p class="geo-nota" data-i18n="geo_nota">Sua localização é usada só no seu navegador — não enviamos a lugar nenhum.</p>
 
     <div class="ticker" id="ticker" aria-live="polite"></div>
 
     <div class="hero-stats" id="heroStats"></div>
 
     <div class="hero-actions">
-      <button class="btn" id="btnExplorar" type="button">Explorar os municípios ↓</button>
-      <button class="btn ghost" id="btnShare" type="button">Compartilhar</button>
-      <a class="btn ghost" id="btnTweet" target="_blank" rel="noopener">Postar no X</a>
+      <button class="btn" id="btnExplorar" type="button" data-i18n="btn_explorar">Explorar os municípios ↓</button>
+      <button class="btn ghost" id="btnShare" type="button" data-i18n="btn_share">Compartilhar</button>
+      <a class="btn ghost" id="btnTweet" target="_blank" rel="noopener" data-i18n="btn_tweet">Postar no X</a>
     </div>
 
-    <p class="disclaimer">
+    <p class="disclaimer" data-i18n="disclaimer">
       <strong>Importante.</strong> Razão alta — inclusive acima de 100% — é
       <em>comum e majoritariamente legítima</em>: o domicílio eleitoral não é o
       mesmo que o civil, há migração com manutenção do título, e a população do
@@ -73,35 +74,35 @@
 <main class="wrap">
 
   <section class="bloco" id="entenda">
-    <h2>Entenda em 1 minuto</h2>
+    <h2 data-i18n="entenda_h2">Entenda em 1 minuto</h2>
     <div class="explica">
       <div class="ex">
         <div class="n">1</div>
-        <h3>O que é a razão?</h3>
-        <p>Dividimos o número de <b>eleitores com título</b> no município (TSE) pela
+        <h3 data-i18n="entenda_c1_h">O que é a razão?</h3>
+        <p data-i18n="entenda_c1_p">Dividimos o número de <b>eleitores com título</b> no município (TSE) pela
         <b>população estimada</b> (IBGE). Uma razão de <b>120%</b> significa 120
         eleitores registrados para cada 100 habitantes estimados.</p>
       </div>
       <div class="ex">
         <div class="n">2</div>
-        <h3>Por que passa de 100%? <span class="ok">é normal</span></h3>
-        <p>O título fica onde a pessoa <b>registrou</b>, não onde mora. Quem se mudou
+        <h3 data-i18n="entenda_c2_h">Por que passa de 100%? <span class="ok">é normal</span></h3>
+        <p data-i18n="entenda_c2_p">O título fica onde a pessoa <b>registrou</b>, não onde mora. Quem se mudou
         e não transferiu continua contando ali. E a população do IBGE é uma
         <b>estimativa</b>. Por isso <b id="ex-n100">739</b> municípios têm mais
         eleitores que habitantes — e quase sempre de forma legítima.</p>
       </div>
       <div class="ex">
         <div class="n">3</div>
-        <h3>Razão 16+ <span class="warn">leia com cuidado</span></h3>
-        <p>Aqui o denominador é só quem tem <b>idade de votar</b> (16+), cerca de 80%
+        <h3 data-i18n="entenda_c3_h">Razão 16+ <span class="warn">leia com cuidado</span></h3>
+        <p data-i18n="entenda_c3_p">Aqui o denominador é só quem tem <b>idade de votar</b> (16+), cerca de 80%
         da população. Como o divisor é menor, esse número é <b>quase sempre maior</b>:
         <b id="ex-r16pct">64%</b> dos municípios já passam de 100% só por isso. Use a <b>razão
         total</b> como referência principal.</p>
       </div>
       <div class="ex">
         <div class="n">4</div>
-        <h3>O que isto <b>não</b> é</h3>
-        <p>Não é um detector de fraude. É um <b>ponto de partida</b> para investigar —
+        <h3 data-i18n="entenda_c4_h">O que isto <b>não</b> é</h3>
+        <p data-i18n="entenda_c4_p">Não é um detector de fraude. É um <b>ponto de partida</b> para investigar —
         sempre com as explicações oficiais ao lado. Razão alta, sozinha, não indica
         irregularidade.</p>
       </div>
