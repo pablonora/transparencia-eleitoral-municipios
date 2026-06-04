@@ -641,31 +641,43 @@ function renderCompare() {
   const A = cmpAsel, B = cmpBsel, ano = DADOS.ano_populacao;
   const anoT = A.transferencias_ano || B.transferencias_ano;
   const orcF = (chave) => (m) => (m.orcamento && m.orcamento[chave] != null && m.orcamento.despesa) ? m.orcamento[chave] / m.orcamento.despesa : null;
+  const orcHab = (chave) => (m) => (m.orcamento && m.orcamento[chave] != null && m.pop_total_estimada) ? m.orcamento[chave] / m.pop_total_estimada : null;
+  const abst = (m, y) => (m.comparecimento && m.comparecimento[y]) ? m.comparecimento[y].abst_pct : null;
+  const _moedaK = (v) => (v == null ? "—" : moeda(v));
   // cada linha: {lab, f(acessor), fm(célula), d(magnitude do Δ, opcional)}; ou {grp}
   const rows = [
     { grp: t("cmp_g_proporcao") },
     { lab: t("cmp_r_razao"), f: (m) => m.razao_total, fm: PCT, d: _ppF },
     { lab: t("cmp_r_razao16"), f: (m) => m.razao_16mais, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_razao22"), f: (m) => (m.comparecimento && m.comparecimento["2022"]) ? m.comparecimento["2022"].razao_epoca : null, fm: PCT, d: _ppF },
     { lab: t("cmp_r_eleitores"), f: (m) => m.eleitores, fm: fmt },
     { lab: t("cmp_r_pop", { ano }), f: (m) => m.pop_total_estimada, fm: fmt },
     { grp: t("cmp_g_demografia") },
     { lab: t("cmp_r_1617"), f: (m) => m.pct_16_17, fm: PCT, d: _ppF },
     { lab: t("cmp_r_70"), f: (m) => m.pct_70mais, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_facult"), f: (m) => (m.eleitores ? m.eleitores_facultativo / m.eleitores : null), fm: PCT, d: _ppF },
     { lab: t("cmp_r_mulheres"), f: (m) => m.pct_feminino, fm: PCT, d: _ppF },
     { lab: t("cmp_r_superior"), f: (m) => m.pct_superior, fm: PCT, d: _ppF },
     { lab: t("cmp_r_fundamental"), f: (m) => m.pct_ate_fundamental, fm: PCT, d: _ppF },
-    { grp: t("cmp_g_dinamica") },
+    { grp: t("cmp_g_participacao") },
     { lab: t("cmp_r_cresc"), f: (m) => m.crescimento_pop_pct, fm: sig, d: _ppN },
     { lab: t("cmp_r_entradas", { ano: anoT }), f: (m) => m.transferencias_qtd, fm: fmt },
     { lab: t("cmp_r_saldo"), f: (m) => m.transferencias_saldo, fm: sig0, d: fmt },
-    { lab: t("cmp_r_abst"), f: (m) => m._abst, fm: PCT, d: _ppF },
-    { lab: t("cmp_r_margem"), f: (m) => (m.eleicao2024 ? m.eleicao2024.margem : null), fm: fmt },
+    { lab: t("cmp_r_abst24"), f: (m) => abst(m, "2024"), fm: PCT, d: _ppF },
+    { lab: t("cmp_r_abst22"), f: (m) => abst(m, "2022"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_bn"), f: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), fm: PCT, d: _ppF },
-    { grp: t("cmp_g_dinheiro") },
+    { lab: t("cmp_r_ncand"), f: (m) => (m.eleicao2024 ? m.eleicao2024.n_cand_1t : null), fm: fmt },
+    { lab: t("cmp_r_margem"), f: (m) => (m.eleicao2024 ? m.eleicao2024.margem : null), fm: fmt },
+    { grp: t("cmp_g_dinheiro_camp") },
+    { lab: t("cmp_r_receita_camp"), f: (m) => (m.contas ? m.contas.receita_total : null), fm: _moedaK },
+    { lab: t("cmp_r_despesa_camp"), f: (m) => (m.contas ? m.contas.despesa_total : null), fm: _moedaK },
     { lab: t("cmp_r_gasto"), f: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), fm: _moedaC },
-    { lab: t("cmp_r_orc_despesa_hab"), f: (m) => (m.orcamento && m.orcamento.despesa && m.pop_total_estimada) ? m.orcamento.despesa / m.pop_total_estimada : null, fm: _moedaH },
+    { grp: t("cmp_g_dinheiro_orc") },
+    { lab: t("cmp_r_orc_receita_hab"), f: orcHab("receita"), fm: _moedaH },
+    { lab: t("cmp_r_orc_despesa_hab"), f: orcHab("despesa"), fm: _moedaH },
     { lab: t("cmp_r_orc_saude"), f: orcF("saude"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_orc_educ"), f: orcF("educacao"), fm: PCT, d: _ppF },
+    { lab: t("cmp_r_orc_seg"), f: orcF("seguranca"), fm: PCT, d: _ppF },
   ];
   const dcell = (va, vb, dmag) => {
     if (va == null || vb == null) return `<td class="dlt">—</td>`;
@@ -683,7 +695,10 @@ function renderCompare() {
     body += `<tr><td class="lab">${r.lab}</td><td class="${aw}">${r.fm(va)}</td><td class="${bw}">${r.fm(vb)}</td>${dcell(va, vb, r.d || r.fm)}</tr>`;
   }
   out.innerHTML = `<table class="cmp-table">
-    <thead><tr><th></th><th>${A.nome}<br><small>${A.uf}</small></th><th>${B.nome}<br><small>${B.uf}</small></th><th class="dlt-h">${t("cmp_delta")}</th></tr></thead>
+    <thead><tr><th></th>
+      <th>${A.nome}<br><small>${A.uf} · ${t("cmp_id_rank", { r: A._rankNac || "—" })}</small></th>
+      <th>${B.nome}<br><small>${B.uf} · ${t("cmp_id_rank", { r: B._rankNac || "—" })}</small></th>
+      <th class="dlt-h">${t("cmp_delta")}</th></tr></thead>
     <tbody>${body}</tbody></table>
     <p class="cmp-nota">${t("cmp_delta_nota")}</p>`;
 }
@@ -933,11 +948,20 @@ function badges(m) {
 }
 const temFlag = (m) => m.mais_eleitores_que_pop || m.acima_limiar_tse || m.outlier_nacional || m.outlier_uf;
 
+// predicados dos chips (booleanos simples no município OU campos aninhados/derivados)
+const CHIP_PREDS = {
+  mais_eleitores_que_pop: (m) => m.mais_eleitores_que_pop,
+  acima_limiar_tse: (m) => m.acima_limiar_tse,
+  outlier_nacional: (m) => m.outlier_nacional,
+  entrada_margem: (m) => m.eleicao2024 && m.eleicao2024.entrada_maior_que_margem,
+  rev3: (m) => m.revisao && m.revisao.atende_3,
+  turno2: (m) => m.eleicao2024 && m.eleicao2024.turno === "2",
+};
 function filtrar() {
   return LINHAS.filter((m) => {
     if (ufSel && m.uf !== ufSel) return false;
     if (busca && !m.nome.toLowerCase().includes(busca)) return false;
-    for (const f of flagsAtivas) if (!m[f]) return false;
+    for (const f of flagsAtivas) { const p = CHIP_PREDS[f]; if (p ? !p(m) : !m[f]) return false; }
     return true;
   });
 }

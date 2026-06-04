@@ -79,6 +79,7 @@ class TestResultadosPrefeito(unittest.TestCase):
         csv = self.HEAD + (
             "1;SP;71072;Prefeito;1;A;1000\n"
             "1;SP;71072;Prefeito;2;B;900\n"
+            "1;SP;71072;Prefeito;3;C;300\n"          # 3 candidatos no 1º turno
             "2;SP;71072;Prefeito;1;A;1100\n"          # 2º turno decide
             "2;SP;71072;Prefeito;2;B;1050\n"
         )
@@ -86,6 +87,8 @@ class TestResultadosPrefeito(unittest.TestCase):
         e = r["71072"]
         self.assertEqual(e["turno"], "2")
         self.assertEqual(e["margem"], 50)            # 1100 − 1050 (2º turno)
+        self.assertEqual(e["n_cand"], 2)             # turno decisivo (2º)
+        self.assertEqual(e["n_cand_1t"], 3)          # concorrência real (1º turno)
 
 
 class TestBrancosNulos(unittest.TestCase):

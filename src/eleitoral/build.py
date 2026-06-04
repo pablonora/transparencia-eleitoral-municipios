@@ -128,6 +128,7 @@ def main(offline: bool = False) -> None:
                 "cargo": "Prefeito", "turno": p["turno"], "vencedor": p["vencedor"],
                 "votos_venc": p["votos_venc"], "votos_2o": p["votos_2o"],
                 "margem": p["margem"], "total": p["total"],
+                "n_cand": p["n_cand"], "n_cand_1t": p["n_cand_1t"],
                 "transf_saldo": saldo24,
                 "entrada_maior_que_margem": bool(
                     saldo24 is not None and saldo24 > 0

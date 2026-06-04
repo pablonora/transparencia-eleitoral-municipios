@@ -73,7 +73,8 @@ def agregar_prefeito(zip_path: Path, uf: str | None = config.UF_SIGLA) -> dict[s
             "margem": venc["votos"] - segundo["votos"],
             "total": sum(x["votos"] for x in ranked),
             "turno": turno,
-            "n_cand": len(ranked),
+            "n_cand": len(ranked),                  # candidatos no turno decisivo
+            "n_cand_1t": len(turnos.get("1", {})),  # candidatos no 1º turno (concorrência real)
         }
     return out
 
