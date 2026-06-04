@@ -14,8 +14,8 @@ from __future__ import annotations
 import argparse
 import json
 
-from . import (config, comparecimento, contas, crosswalk, eleitorado, ibge,
-               indicators, malhas, orcamento, resultados, transferencia)
+from . import (config, comparecimento, contas, crosswalk, eleitorado, governador,
+               ibge, indicators, malhas, orcamento, resultados, transferencia)
 from .download import baixar_tudo
 from .provenance import Manifest, utc_now_iso
 
@@ -73,6 +73,9 @@ def main(offline: bool = False) -> None:
     transf_eleicao = transferencia.agregar_uf(paths["transferencia_eleicao"], uf=config.UF_SIGLA)
     # votos válidos/brancos/nulos do prefeito (1º turno) — fonte: detalhe da votação
     brancos_nulos = resultados.agregar_brancos_nulos(paths["detalhe_votacao"], uf=config.UF_SIGLA)
+    # governador eleito por UF (2022) + espectro — só no escopo Brasil
+    print("[governador] governador eleito por UF (2022)...")
+    governadores = governador.agregar(manifest, offline=offline) if config.UF_SIGLA is None else {}
 
     # 5d) prestação de contas (receitas/despesas de campanha) por município ----
     print("[contas] prestação de contas eleitorais 2024...")
@@ -226,6 +229,7 @@ def main(offline: bool = False) -> None:
         "ano_orcamento": config.ORCAMENTO_ANO,
         "nota_politica": config.NOTA_POLITICA,
         "partido_fonte": config.PARTIDO_FONTE,
+        "governadores": governadores,
         "resumo": {
             "n_municipios": len(registros),
             "n_mais_eleitores_que_pop": n_acima_100,

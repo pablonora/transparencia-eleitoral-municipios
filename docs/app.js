@@ -395,6 +395,13 @@ function eleicaoBlock(m) {
     ${bn}
     ${cruz}${espNota}</div>`;
 }
+function govBlock(m) {
+  const g = DADOS.governadores && DADOS.governadores[m.uf];
+  if (!g) return "";
+  return `<div class="comp-blk"><div class="cb-tit">${t("gov_tit", { uf: m.uf })}</div>
+    <div class="cb-row"><span class="cb-ano">${t("el_governador")}</span><b>${g.governador}</b> · ${g.partido} ${espectroChip(g.espectro)}</div>
+    <div class="cb-fonte">${t("nota_politica")}</div></div>`;
+}
 function contasBlock(m) {
   const c = m.contas;
   if (!c) return "";
@@ -581,6 +588,7 @@ function cityCardHTML(m) {
     ${demoGrid(m)}
     ${compBlock(m)}
     ${eleicaoBlock(m)}
+    ${govBlock(m)}
     ${contasBlock(m)}
     ${orcamentoBlock(m)}
     ${criteriosBlock(m)}
@@ -773,6 +781,7 @@ const MAP_INDS = {
   orceduc: { label: "mi_orc_educ", val: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null, seq: [0.18, 0.42], fmt: (v) => PCT(v), leg: ["≤18%", "≥42%"] },
   bn:      { label: "mi_bn", val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), seq: [0.02, 0.10], fmt: (v) => PCT(v), leg: ["≤2%", "≥10%"] },
   espectro:{ label: "mi_espectro", cat: true, val: (m) => (m.eleicao2024 ? m.eleicao2024.espectro : null), colors: ESP_COR, fmt: (v) => (v ? t(ESP_KEY[v]) : "—") },
+  espectro_gov:{ label: "mi_espectro_gov", cat: true, val: (m) => (DADOS.governadores && DADOS.governadores[m.uf]) ? DADOS.governadores[m.uf].espectro : null, colors: ESP_COR, fmt: (v) => (v ? t(ESP_KEY[v]) : "—") },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];
