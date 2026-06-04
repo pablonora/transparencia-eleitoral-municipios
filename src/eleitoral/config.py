@@ -107,6 +107,56 @@ def tse_detalhe_url(ano: int) -> str:
         f"detalhe_votacao_munzona/detalhe_votacao_munzona_{ano}.zip"
     )
 
+# ---------------------------------------------------------------------------
+# Espectro ideológico dos partidos (esquerda/centro/direita)
+# ---------------------------------------------------------------------------
+# Derivado da classificação ACADÊMICA de Bolognesi, Ribeiro & Codato (2023),
+# "Uma Nova Classificação Ideológica dos Partidos Políticos Brasileiros",
+# revista Dados 66(2) — survey com 519 cientistas políticos, escala 0 (esquerda)
+# a 10 (direita). Mapeado para as siglas ATUAIS do TSE (fusões/renomeações
+# anotadas). Cortes: <4,5 esquerda; 4,5–5,5 centro; >5,5 direita.
+#
+# ⚠️ NÃO é classificação oficial do TSE. É o partido do governante ELEITO — não a
+# ideologia da população (o voto é secreto). Partidos são heterogêneos e mudam de
+# nome/se fundem. Ver NOTA_POLITICA. Cores no front: esquerda=vermelho,
+# centro=branco, direita=azul.
+PARTIDO_FONTE = ("Bolognesi, Ribeiro & Codato (2023), “Uma Nova Classificação "
+                 "Ideológica dos Partidos Políticos Brasileiros”, Dados 66(2)")
+# média do survey (0..10), por sigla atual do TSE (legado entre parênteses)
+PARTIDO_SCORE = {
+    "PSTU": 0.51, "PCO": 0.61, "PCB": 0.91, "PSOL": 1.28,
+    "PCdoB": 1.92, "PC do B": 1.92, "PT": 2.97, "PDT": 3.92, "PSB": 4.05,
+    "REDE": 4.77, "CIDADANIA": 4.92,            # CIDADANIA ex-PPS
+    "PV": 5.29,
+    "PTB": 6.10, "AVANTE": 6.32, "SOLIDARIEDADE": 6.50, "MOBILIZA": 6.88,  # MOBILIZA ex-PMN
+    "PMB": 6.90, "MDB": 7.01, "PSD": 7.09, "PSDB": 7.10,
+    "PODE": 7.24, "PODEMOS": 7.24, "PRTB": 7.45, "PROS": 7.47,
+    "REPUBLICANOS": 7.78,                        # ex-PRB
+    "PL": 7.78,                                  # ex-PR
+    "AGIR": 7.86,                                # ex-PTC
+    "DC": 8.10, "PSL": 8.10, "NOVO": 8.13, "PP": 8.20, "PROGRESSISTAS": 8.20,
+    "PSC": 8.33, "PRD": 8.55,                    # PRD ex-Patriota(+PTB)
+    "UNIÃO": 8.57, "UNIAO": 8.57, "UNIÃO BRASIL": 8.57, "DEM": 8.57,  # UNIÃO ex-DEM(+PSL)
+}
+_SCORE_NORM = {k.strip().upper().replace(" ", ""): v for k, v in PARTIDO_SCORE.items()}
+
+
+def espectro_partido(sigla: str | None) -> str | None:
+    """'esq' | 'centro' | 'dir' | None (sem classificação na fonte)."""
+    sc = _SCORE_NORM.get((sigla or "").strip().upper().replace(" ", ""))
+    if sc is None:
+        return None
+    return "esq" if sc < 4.5 else ("centro" if sc <= 5.5 else "dir")
+
+
+NOTA_POLITICA = (
+    "Espectro (esquerda/centro/direita) do PARTIDO do governante ELEITO, segundo a "
+    "classificação acadêmica de Bolognesi, Ribeiro & Codato (2023, revista Dados) — "
+    "um survey com cientistas políticos. É uma simplificação: NÃO é classificação "
+    "oficial, NÃO representa a ideologia da população (o voto é secreto), e os "
+    "partidos são heterogêneos e mudam de nome/se fundem."
+)
+
 # TSE — Crosswalk OFICIAL TSE <-> IBGE (fonte autoritativa da correspondência).
 TSE_CROSSWALK_URL = (
     "https://cdn.tse.jus.br/estatistica/sead/odsele/"

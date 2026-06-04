@@ -126,6 +126,8 @@ def main(offline: bool = False) -> None:
             saldo24 = (transf_eleicao.get(cd0) or {}).get("saldo")
             d["eleicao2024"] = {
                 "cargo": "Prefeito", "turno": p["turno"], "vencedor": p["vencedor"],
+                "partido": p.get("partido", ""),
+                "espectro": config.espectro_partido(p.get("partido", "")),
                 "votos_venc": p["votos_venc"], "votos_2o": p["votos_2o"],
                 "margem": p["margem"], "total": p["total"],
                 "n_cand": p["n_cand"], "n_cand_1t": p["n_cand_1t"],
@@ -222,6 +224,8 @@ def main(offline: bool = False) -> None:
         "ano_contas": config.TSE_CONTAS_ANO,
         "nota_orcamento": config.NOTA_ORCAMENTO,
         "ano_orcamento": config.ORCAMENTO_ANO,
+        "nota_politica": config.NOTA_POLITICA,
+        "partido_fonte": config.PARTIDO_FONTE,
         "resumo": {
             "n_municipios": len(registros),
             "n_mais_eleitores_que_pop": n_acima_100,

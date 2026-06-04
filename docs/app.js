@@ -365,6 +365,12 @@ function compBlock(m) {
         <div class="cb-fonte">${t("comp_fonte", { fonte: fonteTxt(c[y].razao_epoca_fonte) })}</div>
       </div>`).join("")}</div></div>`;
 }
+// espectro ideológico (Bolognesi/Codato) — esquerda=vermelho, centro=branco, direita=azul
+const ESP_COR = { esq: "#d6453c", centro: "#cfd3da", dir: "#3b6fd4" };
+const ESP_KEY = { esq: "esp_esq", centro: "esp_centro", dir: "esp_dir" };
+function espectroChip(esp) {
+  return esp ? `<span class="esp"><span class="esp-dot" style="background:${ESP_COR[esp]}"></span>${t(ESP_KEY[esp])}</span>` : "";
+}
 function eleicaoBlock(m) {
   const e = m.eleicao2024;
   if (!e) return "";
@@ -380,11 +386,14 @@ function eleicaoBlock(m) {
     bn = `<div class="cb-row"><span class="cb-ano">${t("el_brancos")}</span>${fmt(e.brancos)} <small>(${PCT(e.pct_brancos)})</small></div>
     <div class="cb-row"><span class="cb-ano">${t("el_nulos")}</span>${fmt(e.nulos)} <small>(${PCT(e.pct_nulos)})</small></div>`;
   }
+  const part = e.partido ? `<div class="cb-row"><span class="cb-ano">${t("el_partido")}</span><b>${e.partido}</b> ${espectroChip(e.espectro)}</div>` : "";
+  const espNota = e.espectro ? `<div class="cb-fonte">${t("nota_politica")}</div>` : "";
   return `<div class="comp-blk"><div class="cb-tit">${t("el_tit", { turno })}</div>
     <div class="cb-row"><span class="cb-ano">${t("el_vencedor")}</span><b>${e.vencedor}</b> · ${fmt(e.votos_venc)} ${t("el_votos_suf")}</div>
+    ${part}
     <div class="cb-row"><span class="cb-ano">${t("el_margem_lab")}</span><b>${fmt(e.margem)}</b> ${t("el_votos_suf")}</div>
     ${bn}
-    ${cruz}</div>`;
+    ${cruz}${espNota}</div>`;
 }
 function contasBlock(m) {
   const c = m.contas;
@@ -676,6 +685,7 @@ function renderCompare() {
     { lab: t("cmp_r_abst22"), f: (m) => abst(m, "2022"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_bn"), f: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), fm: PCT, d: _ppF },
     { lab: t("cmp_r_ncand"), f: (m) => (m.eleicao2024 ? m.eleicao2024.n_cand_1t : null), fm: fmt },
+    { lab: t("cmp_r_partido"), f: (m) => (m.eleicao2024 ? m.eleicao2024.partido : null), fm: (v, m) => v ? `${v} ${espectroChip(m && m.eleicao2024 ? m.eleicao2024.espectro : null)}` : "—" },
     { lab: t("cmp_r_margem"), f: (m) => (m.eleicao2024 ? m.eleicao2024.margem : null), fm: fmt },
     { grp: t("cmp_g_dinheiro_camp") },
     { lab: t("cmp_r_receita_camp"), f: (m) => (m.contas ? m.contas.receita_total : null), fm: _moedaK },
@@ -689,7 +699,7 @@ function renderCompare() {
     { lab: t("cmp_r_orc_seg"), f: orcF("seguranca"), fm: PCT, d: _ppF },
   ];
   const dcell = (va, vb, dmag) => {
-    if (va == null || vb == null) return `<td class="dlt">—</td>`;
+    if (va == null || vb == null || typeof va !== "number" || typeof vb !== "number") return `<td class="dlt">—</td>`;
     const dd = va - vb;
     if (Math.abs(dd) < 1e-9) return `<td class="dlt">=</td>`;
     return `<td class="dlt ${dd > 0 ? "da" : "db"}">${dd > 0 ? "+" : "−"}${dmag(Math.abs(dd))}</td>`;
@@ -699,9 +709,10 @@ function renderCompare() {
     if (r.grp) { body += `<tr class="cmp-grp"><td colspan="4">${r.grp}</td></tr>`; continue; }
     const va = r.f(A), vb = r.f(B);
     if (va == null && vb == null) continue;   // ambos sem dado: pula a linha
-    const aw = va != null && vb != null && va > vb ? "win" : "";
-    const bw = va != null && vb != null && vb > va ? "win" : "";
-    body += `<tr><td class="lab">${r.lab}</td><td class="${aw}">${r.fm(va)}</td><td class="${bw}">${r.fm(vb)}</td>${dcell(va, vb, r.d || r.fm)}</tr>`;
+    const num = typeof va === "number" && typeof vb === "number";
+    const aw = num && va > vb ? "win" : "";
+    const bw = num && vb > va ? "win" : "";
+    body += `<tr><td class="lab">${r.lab}</td><td class="${aw}">${r.fm(va, A)}</td><td class="${bw}">${r.fm(vb, B)}</td>${dcell(va, vb, r.d || r.fm)}</tr>`;
   }
   out.innerHTML = `<table class="cmp-table">
     <thead><tr><th></th>
@@ -761,6 +772,7 @@ const MAP_INDS = {
   orcsaude:{ label: "mi_orc_saude", val: (m) => (m.orcamento && m.orcamento.saude != null && m.orcamento.despesa) ? m.orcamento.saude / m.orcamento.despesa : null, seq: [0.15, 0.32], fmt: (v) => PCT(v), leg: ["≤15%", "≥32%"] },
   orceduc: { label: "mi_orc_educ", val: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null, seq: [0.18, 0.42], fmt: (v) => PCT(v), leg: ["≤18%", "≥42%"] },
   bn:      { label: "mi_bn", val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), seq: [0.02, 0.10], fmt: (v) => PCT(v), leg: ["≤2%", "≥10%"] },
+  espectro:{ label: "mi_espectro", cat: true, val: (m) => (m.eleicao2024 ? m.eleicao2024.espectro : null), colors: ESP_COR, fmt: (v) => (v ? t(ESP_KEY[v]) : "—") },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const DIV_LO = [56, 135, 255], DIV_MID = [232, 236, 245], DIV_HI = [255, 77, 61];
@@ -769,14 +781,23 @@ function corDiv(t) {
   return t <= 0.5 ? `rgb(${_lerp(DIV_LO, DIV_MID, t / 0.5).join(",")})` : `rgb(${_lerp(DIV_MID, DIV_HI, (t - 0.5) / 0.5).join(",")})`;
 }
 function corInd(ind, v) {
-  if (v == null) return temaClaro() ? "#d4dae3" : "#262b36";   // sem dado
+  const semdado = temaClaro() ? "#d4dae3" : "#262b36";
+  if (ind.cat) return (v != null && ind.colors[v]) ? ind.colors[v] : semdado;
+  if (v == null) return semdado;   // sem dado
   if (ind.div) { const [lo, mid, hi] = ind.div; const t = v <= mid ? 0.5 * (v - lo) / (mid - lo) : 0.5 + 0.5 * (v - mid) / (hi - mid); return corDiv(t); }
   const [mn, mx] = ind.seq; return cor(Math.max(0, Math.min(1, (v - mn) / (mx - mn))));
 }
 const _pad = (f) => String(f.properties.codarea).padStart(2, "0");
 function ufAggMap(ind) {
   const g = {}; LINHAS.forEach((m) => { const v = ind.val(m); if (v != null) (g[m.uf] || (g[m.uf] = [])).push(v); });
-  const out = {}; for (const uf in g) out[uf] = mediana(g[uf]); return out;
+  const out = {};
+  for (const uf in g) {
+    if (ind.cat) {                       // categórico: moda (espectro mais frequente na UF)
+      const c = {}; g[uf].forEach((x) => { c[x] = (c[x] || 0) + 1; });
+      out[uf] = Object.keys(c).sort((a, b) => c[b] - c[a])[0];
+    } else out[uf] = mediana(g[uf]);
+  }
+  return out;
 }
 const DEST_PREDS = {
   cem: (m) => m.mais_eleitores_que_pop,
@@ -935,6 +956,12 @@ function voltarBrasil() {
 
 function legend() {
   const ind = MAP_INDS[mapInd];
+  const realceTxt = destaque === "todos" ? "" : ` · ${t("leg_realcando", { q: t(DEST_LABELS[destaque] || "map_f_todos") })}`;
+  if (ind.cat) {
+    const sw = Object.keys(ind.colors).map((k) => `<span><span class="sw" style="background:${ind.colors[k]}"></span>${t(ESP_KEY[k] || k)}</span>`).join(" ");
+    document.getElementById("mapaLegenda").innerHTML = `${sw} &nbsp;·&nbsp; <b>${t(ind.label)}</b>${realceTxt}`;
+    return;
+  }
   const grad = ind.div
     ? "linear-gradient(90deg, rgb(56,135,255), rgb(232,236,245), rgb(255,77,61))"
     : "linear-gradient(90deg,#1d3b4a,#46e0c0,#ffd23f,#ff7b3d)";

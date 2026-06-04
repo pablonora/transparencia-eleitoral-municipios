@@ -37,6 +37,7 @@ def agregar_prefeito(zip_path: Path, uf: str | None = config.UF_SIGLA) -> dict[s
             i_turno, i_uf, i_cd = c["NR_TURNO"], c["SG_UF"], c["CD_MUNICIPIO"]
             i_cargo, i_sq = c["DS_CARGO"], c["SQ_CANDIDATO"]
             i_nm = c.get("NM_URNA_CANDIDATO", c.get("NM_CANDIDATO"))
+            i_part = c.get("SG_PARTIDO")
             i_qt = c["QT_VOTOS_NOMINAIS"]
             for linha in leitor:
                 if linha[i_cargo].strip().lower() != CARGO_PREFEITO:
@@ -50,7 +51,10 @@ def agregar_prefeito(zip_path: Path, uf: str | None = config.UF_SIGLA) -> dict[s
                 cd = linha[i_cd].strip().lstrip("0")
                 key = (cd, linha[i_turno].strip())
                 cands = acc.setdefault(key, {})
-                cand = cands.setdefault(linha[i_sq], {"votos": 0, "nome": linha[i_nm].strip()})
+                cand = cands.setdefault(linha[i_sq], {
+                    "votos": 0, "nome": linha[i_nm].strip(),
+                    "partido": (linha[i_part].strip() if i_part is not None else ""),
+                })
                 cand["votos"] += qt
 
     # escolhe o turno decisivo e calcula a margem
@@ -68,6 +72,7 @@ def agregar_prefeito(zip_path: Path, uf: str | None = config.UF_SIGLA) -> dict[s
         segundo = ranked[1] if len(ranked) > 1 else {"votos": 0}
         out[cd] = {
             "vencedor": venc["nome"],
+            "partido": venc.get("partido", ""),
             "votos_venc": venc["votos"],
             "votos_2o": segundo["votos"],
             "margem": venc["votos"] - segundo["votos"],

@@ -1,5 +1,5 @@
 {
-  "gerado_em": "2026-06-04T01:58:21Z",
+  "gerado_em": "2026-06-04T04:57:43Z",
   "uf": null,
   "indicadores": {
     "razao_total": {
@@ -43,7 +43,7 @@
       "dataset": "Eleitorado Atual",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_ATUAL.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "atual",
       "sha256": "4f5774e6d051b0518031c3667a28f26e06415a296ed9e41e8bda08d0eca5ee02"
     },
@@ -51,7 +51,7 @@
       "dataset": "Códigos oficiais de UF e municípios segundo o TSE e o IBGE",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/municipio_tse_ibge/municipio_tse_ibge.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "atual",
       "sha256": "2e1fdd99ec4eaa4105d54a481a573a1f441fbc58b224cabf58ea8cb1b86b9e8f"
     },
@@ -59,7 +59,7 @@
       "dataset": "Transferência do eleitorado",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitor_transferencia/perfil_eleitorado_transferencia_2025.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "2025",
       "sha256": "3b23eb807debdf0e820baf91e7e29f9c1d9c8ac5c11f3b02c0c3d4bf1e68b62e"
     },
@@ -67,7 +67,7 @@
       "dataset": "Comparecimento e Abstenção - 2022",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2022.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "2022",
       "sha256": "fb4e03d95a9e8f4981cbe32aeca9e77facf9e5f83e7b882f0f8c1610f350a7df"
     },
@@ -75,7 +75,7 @@
       "dataset": "Comparecimento e Abstenção - 2024",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_comparecimento_abstencao/perfil_comparecimento_abstencao_2024.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "2024",
       "sha256": "0d79bbea5b0cdce78feca66ce56ad91f50d7bb84d85e1aae049a53e2260d53df"
     },
@@ -83,7 +83,7 @@
       "dataset": "Votação nominal por município e zona - 2024",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2024.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "2024",
       "sha256": "31903a4617aee1f7dd916bd03945b4c1fac0d4388ae002f183ed9a34cb6f83b7"
     },
@@ -91,7 +91,7 @@
       "dataset": "Detalhe da votação por município e zona - 2024",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2024.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "2024",
       "sha256": "07518503dc55afbff338e0482d8808b381e2d5946610e86443c0441c8adc6198"
     },
@@ -99,7 +99,7 @@
       "dataset": "Transferência do eleitorado",
       "publisher": "TSE — Portal de Dados Abertos",
       "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitor_transferencia/perfil_eleitorado_transferencia_2024.zip",
-      "extraido_em": "2026-06-04T01:57:07Z",
+      "extraido_em": "2026-06-04T04:56:03Z",
       "periodo": "2024",
       "sha256": "089dc0151907a1d07325dc3b7d64e9123c59751649c1c66dcd0653fe608a07d4"
     },
@@ -107,7 +107,7 @@
       "dataset": "IBGE Estimativas (tabela 6579)",
       "publisher": "IBGE — API de Agregados v3",
       "url": "https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/2019,2020,2021,2024,2025/variaveis/9324?localidades=N6",
-      "extraido_em": "2026-06-04T01:57:27Z",
+      "extraido_em": "2026-06-04T04:56:37Z",
       "periodo": "2019-2025",
       "sha256": "95d0e1e28e05e8180544f51489babfaed903586fdaa31afff40c0f0d4ff5fa99"
     },
@@ -115,7 +115,7 @@
       "dataset": "IBGE Censo 2022 — população por idade (tabela 9514)",
       "publisher": "IBGE — API de Agregados v3",
       "url": "https://servicodados.ibge.gov.br/api/v3/agregados/9514/periodos/2022/variaveis/93 (por UF; classificacao=287[100362,93070,93084,93085,6572,93097,93098,49108,49109,60040,60041,6653]|2[6794]|286[113635])",
-      "extraido_em": "2026-06-04T01:57:30Z",
+      "extraido_em": "2026-06-04T04:56:51Z",
       "periodo": "2022",
       "sha256": "f1c1673bd46a5eedc47d41c4320f7c02b48ef01c64b5a82c71a8f7fea5f5b07f"
     },
@@ -139,7 +139,7 @@
       "dataset": "IBGE Malha das UFs (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?formato=application/vnd.geo+json&intrarregiao=UF&qualidade=intermediaria",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "09bc90c2391229ed1b07f11bbde0986180139f64b5e882379d8926c21eff0052"
     },
@@ -147,7 +147,7 @@
       "dataset": "IBGE Malha municipal — UF 11 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/11?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "81353e8d543840013fc2b52f680bed1832a3854d68065de149fcbbee02e2c1cb"
     },
@@ -155,7 +155,7 @@
       "dataset": "IBGE Malha municipal — UF 12 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/12?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "b4c9b49e2d9bad785402127043f1d4a0f5c5efa4ed63b6a2aceba89e2a374383"
     },
@@ -163,7 +163,7 @@
       "dataset": "IBGE Malha municipal — UF 13 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/13?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "e6a91d70cdea0b8e464f126309acb4d18ce5ef143ddb2bda25a5d945d4654a77"
     },
@@ -171,7 +171,7 @@
       "dataset": "IBGE Malha municipal — UF 14 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/14?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "5870db93b5de206482594d3c1ae5682a8eb79a53511765b66b5c55675e054471"
     },
@@ -179,7 +179,7 @@
       "dataset": "IBGE Malha municipal — UF 15 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/15?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "075c1b29656380bd04be983bc0c50143610c093786fb9cbe6264c8d6bc702f01"
     },
@@ -187,7 +187,7 @@
       "dataset": "IBGE Malha municipal — UF 16 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/16?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "5f3ecd0b50a8869f5165d85272956759f94b6be99a9cda0ad4ce03928e6cf3b2"
     },
@@ -195,7 +195,7 @@
       "dataset": "IBGE Malha municipal — UF 17 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/17?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "093f68ab8a3bbf8840dba0e32a3f26d31261120167621fa769b6cfa044430a2e"
     },
@@ -203,7 +203,7 @@
       "dataset": "IBGE Malha municipal — UF 21 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/21?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "06c90356dde32b07e68783a31c8aa4068de8a9ca866e71a2a3623f5b93609cb6"
     },
@@ -211,7 +211,7 @@
       "dataset": "IBGE Malha municipal — UF 22 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/22?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "c2c97227ee35bea48e7449f4f549273da6055e1400c587a0eab320e6517dc9b4"
     },
@@ -219,7 +219,7 @@
       "dataset": "IBGE Malha municipal — UF 23 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/23?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "c7d893b8e7c4daca7f064485c56c3a1ad7a9fa532a0145cd402ea7765bd43ceb"
     },
@@ -227,7 +227,7 @@
       "dataset": "IBGE Malha municipal — UF 24 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/24?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "0e8632a2c7921e34c986a9e9252cb17a092c7b7dd5804ff3e8e747c6d5969fcd"
     },
@@ -235,7 +235,7 @@
       "dataset": "IBGE Malha municipal — UF 25 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/25?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "7d40078216561fccfeecffa648a2ea89e215c31c39f0e961b49854cc6e858a86"
     },
@@ -243,7 +243,7 @@
       "dataset": "IBGE Malha municipal — UF 26 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/26?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "eb69d97fdc22ab263e38a8410dc606c2e58cd2c42c7ef0c6f731f93dfa38ff2e"
     },
@@ -251,7 +251,7 @@
       "dataset": "IBGE Malha municipal — UF 27 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/27?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "1476940149238567109933a5e1d91fbc5a3234dbff4256a572f65caf28b15342"
     },
@@ -259,7 +259,7 @@
       "dataset": "IBGE Malha municipal — UF 28 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/28?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "52decf97a53ac7ae45952d07c92500c59caa7a466b6bd587a0a5faf7cbff0b87"
     },
@@ -267,7 +267,7 @@
       "dataset": "IBGE Malha municipal — UF 29 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/29?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "ebbaf1ae8a374f47953dac1fe9c3b87d4415839a5fcfcbcbcf905b790d5b0c25"
     },
@@ -275,7 +275,7 @@
       "dataset": "IBGE Malha municipal — UF 31 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/31?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "b7befa63a1dfac3386535468c6213ea69e05cdd858a805babcc632d59c121b79"
     },
@@ -283,7 +283,7 @@
       "dataset": "IBGE Malha municipal — UF 32 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/32?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "ae5cbf7ce4093191e65b31a728ace0a84d0b22b7bd6c5863d3921d986d0e6fd7"
     },
@@ -291,7 +291,7 @@
       "dataset": "IBGE Malha municipal — UF 33 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/33?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "e40ff0e8b87be8e95cc88b1197c28e0c831a9c825baa6b4e99a9ced063631be8"
     },
@@ -299,7 +299,7 @@
       "dataset": "IBGE Malha municipal — UF 35 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/35?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "7db0d263e8930e581223181f4c009d139b0a14a5398a332c130cab6bd7e90dff"
     },
@@ -307,7 +307,7 @@
       "dataset": "IBGE Malha municipal — UF 41 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/41?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "6654eb9420304ef4102757023e055ec441cd0ca0853a397ff57256ba66111b3b"
     },
@@ -315,7 +315,7 @@
       "dataset": "IBGE Malha municipal — UF 42 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/42?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "73546f7172c53221e023dd9dd7430484d890da059c49f33063569ed637261c4c"
     },
@@ -323,7 +323,7 @@
       "dataset": "IBGE Malha municipal — UF 43 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/43?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "1e9de26467d1cb24b7299967383d2dc5155ba493a94771a4b286a62d55c15515"
     },
@@ -331,7 +331,7 @@
       "dataset": "IBGE Malha municipal — UF 50 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/50?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "701db8a5d1ecd43d9d58539a8b15c897e595b8176f59621624b66c1c5b1a0f03"
     },
@@ -339,7 +339,7 @@
       "dataset": "IBGE Malha municipal — UF 51 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/51?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "35a6dccfe49e078ff2b9f5cedd3e96ebb936031528121388a93070cabbe47305"
     },
@@ -347,7 +347,7 @@
       "dataset": "IBGE Malha municipal — UF 52 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/52?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "d73b419ae68447077d63744f86850e8442312206ecef8ecbf173386eaeada08e"
     },
@@ -355,7 +355,7 @@
       "dataset": "IBGE Malha municipal — UF 53 (GeoJSON)",
       "publisher": "IBGE — API de Malhas",
       "url": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/53?formato=application/vnd.geo+json&intrarregiao=municipio&qualidade=minima",
-      "extraido_em": "2026-06-04T01:58:21Z",
+      "extraido_em": "2026-06-04T04:57:42Z",
       "periodo": "2022",
       "sha256": "4e80727fdb17458113d381eb232dbc1d786d3846feac81743cb3b78d3717cd36"
     }

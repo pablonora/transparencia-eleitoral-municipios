@@ -122,5 +122,19 @@ class TestBrancosNulos(unittest.TestCase):
         self.assertEqual(r["6041"]["comparecimento"], 100)   # contado UMA vez
 
 
+class TestEspectroPartido(unittest.TestCase):
+    def test_cortes(self):
+        from eleitoral import config
+        self.assertEqual(config.espectro_partido("PT"), "esq")      # 2,97
+        self.assertEqual(config.espectro_partido("PSB"), "esq")     # 4,05 (<4,5)
+        self.assertEqual(config.espectro_partido("REDE"), "centro") # 4,77
+        self.assertEqual(config.espectro_partido("PV"), "centro")   # 5,29
+        self.assertEqual(config.espectro_partido("MDB"), "dir")     # 7,01 (>5,5)
+        self.assertEqual(config.espectro_partido("PL"), "dir")      # ex-PR 7,78
+        self.assertEqual(config.espectro_partido("UNIÃO"), "dir")   # ex-DEM 8,57
+        self.assertIsNone(config.espectro_partido("PARTIDO_INEXISTENTE"))
+        self.assertIsNone(config.espectro_partido(""))
+
+
 if __name__ == "__main__":
     unittest.main()
