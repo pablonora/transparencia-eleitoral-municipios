@@ -618,28 +618,62 @@ function initComparar() {
   attachAutocomplete(document.getElementById("cmpA"), document.getElementById("acA"), (m) => { cmpAsel = m; renderCompare(); });
   attachAutocomplete(document.getElementById("cmpB"), document.getElementById("acB"), (m) => { cmpBsel = m; renderCompare(); });
 }
+// formatadores tolerantes a null para o comparador
+const _moedaC = (v) => (v == null ? "—" : BRL2.format(v));
+const _moedaH = (v) => (v == null ? "—" : BRL0.format(v));
+const _ppsuf = () => (LANG === "en" ? " pp" : " p.p.");
+const _ppF = (x) => (x * 100).toFixed(1).replace(".", _dec()) + _ppsuf();  // x é fração (0.108 → 10,8 p.p.)
+const _ppN = (x) => x.toFixed(1).replace(".", _dec()) + _ppsuf();          // x já em pontos % (crescimento)
 function renderCompare() {
   const out = document.getElementById("compareOut");
   if (!cmpAsel || !cmpBsel) { out.innerHTML = ""; return; }
   const A = cmpAsel, B = cmpBsel, ano = DADOS.ano_populacao;
+  const anoT = A.transferencias_ano || B.transferencias_ano;
+  const orcF = (chave) => (m) => (m.orcamento && m.orcamento[chave] != null && m.orcamento.despesa) ? m.orcamento[chave] / m.orcamento.despesa : null;
+  // cada linha: {lab, f(acessor), fm(célula), d(magnitude do Δ, opcional)}; ou {grp}
   const rows = [
-    [t("cmp_r_razao"), (m) => m.razao_total, PCT],
-    [t("cmp_r_razao16"), (m) => m.razao_16mais, PCT],
-    [t("cmp_r_eleitores"), (m) => m.eleitores, fmt],
-    [t("cmp_r_pop", { ano }), (m) => m.pop_total_estimada, fmt],
-    [t("cmp_r_1617"), (m) => m.pct_16_17, PCT],
-    [t("cmp_r_70"), (m) => m.pct_70mais, PCT],
-    [t("cmp_r_mulheres"), (m) => m.pct_feminino, PCT],
-    [t("cmp_r_superior"), (m) => m.pct_superior, PCT],
-    [t("cmp_r_saldo"), (m) => m.transferencias_saldo, sig0],
+    { grp: t("cmp_g_proporcao") },
+    { lab: t("cmp_r_razao"), f: (m) => m.razao_total, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_razao16"), f: (m) => m.razao_16mais, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_eleitores"), f: (m) => m.eleitores, fm: fmt },
+    { lab: t("cmp_r_pop", { ano }), f: (m) => m.pop_total_estimada, fm: fmt },
+    { grp: t("cmp_g_demografia") },
+    { lab: t("cmp_r_1617"), f: (m) => m.pct_16_17, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_70"), f: (m) => m.pct_70mais, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_mulheres"), f: (m) => m.pct_feminino, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_superior"), f: (m) => m.pct_superior, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_fundamental"), f: (m) => m.pct_ate_fundamental, fm: PCT, d: _ppF },
+    { grp: t("cmp_g_dinamica") },
+    { lab: t("cmp_r_cresc"), f: (m) => m.crescimento_pop_pct, fm: sig, d: _ppN },
+    { lab: t("cmp_r_entradas", { ano: anoT }), f: (m) => m.transferencias_qtd, fm: fmt },
+    { lab: t("cmp_r_saldo"), f: (m) => m.transferencias_saldo, fm: sig0, d: fmt },
+    { lab: t("cmp_r_abst"), f: (m) => m._abst, fm: PCT, d: _ppF },
+    { lab: t("cmp_r_margem"), f: (m) => (m.eleicao2024 ? m.eleicao2024.margem : null), fm: fmt },
+    { grp: t("cmp_g_dinheiro") },
+    { lab: t("cmp_r_gasto"), f: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), fm: _moedaC },
+    { lab: t("cmp_r_orc_despesa_hab"), f: (m) => (m.orcamento && m.orcamento.despesa && m.pop_total_estimada) ? m.orcamento.despesa / m.pop_total_estimada : null, fm: _moedaH },
+    { lab: t("cmp_r_orc_saude"), f: orcF("saude"), fm: PCT, d: _ppF },
+    { lab: t("cmp_r_orc_educ"), f: orcF("educacao"), fm: PCT, d: _ppF },
   ];
-  out.innerHTML = `<table class="cmp-table"><thead><tr><th></th><th>${A.nome}<br><small>${A.uf}</small></th><th>${B.nome}<br><small>${B.uf}</small></th></tr></thead><tbody>${
-    rows.map(([lab, f, fm]) => {
-      const va = f(A), vb = f(B);
-      const aw = va != null && vb != null && va > vb ? "win" : "";
-      const bw = va != null && vb != null && vb > va ? "win" : "";
-      return `<tr><td class="lab">${lab}</td><td class="${aw}">${fm(va)}</td><td class="${bw}">${fm(vb)}</td></tr>`;
-    }).join("")}</tbody></table>`;
+  const dcell = (va, vb, dmag) => {
+    if (va == null || vb == null) return `<td class="dlt">—</td>`;
+    const dd = va - vb;
+    if (Math.abs(dd) < 1e-9) return `<td class="dlt">=</td>`;
+    return `<td class="dlt ${dd > 0 ? "da" : "db"}">${dd > 0 ? "+" : "−"}${dmag(Math.abs(dd))}</td>`;
+  };
+  let body = "";
+  for (const r of rows) {
+    if (r.grp) { body += `<tr class="cmp-grp"><td colspan="4">${r.grp}</td></tr>`; continue; }
+    const va = r.f(A), vb = r.f(B);
+    if (va == null && vb == null) continue;   // ambos sem dado: pula a linha
+    const aw = va != null && vb != null && va > vb ? "win" : "";
+    const bw = va != null && vb != null && vb > va ? "win" : "";
+    body += `<tr><td class="lab">${r.lab}</td><td class="${aw}">${r.fm(va)}</td><td class="${bw}">${r.fm(vb)}</td>${dcell(va, vb, r.d || r.fm)}</tr>`;
+  }
+  out.innerHTML = `<table class="cmp-table">
+    <thead><tr><th></th><th>${A.nome}<br><small>${A.uf}</small></th><th>${B.nome}<br><small>${B.uf}</small></th><th class="dlt-h">${t("cmp_delta")}</th></tr></thead>
+    <tbody>${body}</tbody></table>
+    <p class="cmp-nota">${t("cmp_delta_nota")}</p>`;
 }
 
 /* ---------------- MAPA ---------------- */
