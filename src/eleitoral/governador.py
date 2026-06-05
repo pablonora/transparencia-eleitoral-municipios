@@ -22,7 +22,7 @@ _RE_UF = re.compile(r"votacao_candidato_munzona_(\d{4})_([A-Z]{2})\.csv$")
 
 
 def agregar(manifest: Manifest, *, offline: bool = False, ano: int = 2022) -> dict[str, dict]:
-    """Retorna {SG_UF -> {governador, partido, turno, espectro}}."""
+    """Retorna {SG_UF -> {governador, partido, turno}} (só o partido, sem ideologia)."""
     interim = config.INTERIM / f"governadores_{ano}.json"
     url = config.tse_votos_url(ano)
     if offline and interim.exists():
