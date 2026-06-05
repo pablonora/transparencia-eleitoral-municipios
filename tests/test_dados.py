@@ -108,7 +108,7 @@ class TestDadosBrasil(unittest.TestCase):
             bad = []
             if o.get("despesa") is not None and o["despesa"] <= 0:
                 bad.append("despesa<=0")
-            for f in ("saude", "educacao", "seguranca", "assistencia", "urbanismo"):
+            for f in ("saude", "educacao", "seguranca", "assistencia", "urbanismo", "pessoal"):
                 v = o.get(f)
                 if v is not None and o.get("despesa") and v > o["despesa"] * 1.05:
                     bad.append(f"{f}>despesa")

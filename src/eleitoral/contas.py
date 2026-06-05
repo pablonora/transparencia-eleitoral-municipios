@@ -176,7 +176,7 @@ def _novo() -> dict:
     return {"receita": 0.0, "despesa": 0.0,
             "receita_prefeito": 0.0, "despesa_prefeito": 0.0,
             "receita_vereador": 0.0, "despesa_vereador": 0.0,
-            "_cands": set(), "_cands_pref": set()}
+            "_cands": set(), "_cands_pref": set(), "_cands_ver": set()}
 
 
 def _agregar_membro(reader, prefixo: str, acc: dict[str, dict],
@@ -209,6 +209,8 @@ def _agregar_membro(reader, prefixo: str, acc: dict[str, dict],
             d["_cands"].add(sq)
             if b == "prefeito":
                 d["_cands_pref"].add(sq)
+            elif b == "vereador":
+                d["_cands_ver"].add(sq)
         n += 1
     return n
 
@@ -225,6 +227,7 @@ def _finalizar(acc: dict[str, dict]) -> dict[str, dict]:
             "despesa_vereador": round(d["despesa_vereador"], 2),
             "n_candidatos": len(d["_cands"]),
             "n_cand_prefeito": len(d["_cands_pref"]),
+            "n_cand_vereador": len(d["_cands_ver"]),
         }
     return out
 

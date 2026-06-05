@@ -69,6 +69,16 @@ def parse_despesa_funcao(items: list[dict]) -> tuple[float | None, dict[str, flo
     return total, funcs
 
 
+def parse_pessoal(items: list[dict]) -> float | None:
+    """Folha de PESSOAL (R$) do Anexo I-D: linha 3.1 - Pessoal e Encargos Sociais
+    (exceto intra), coluna 'Despesas Empenhadas'. Valor absoluto."""
+    for i in items:
+        if i.get("cod_conta") == config.ORCAMENTO_PESSOAL_COD and i.get("coluna") == config.ORCAMENTO_PESSOAL_COLUNA:
+            v = i.get("valor")
+            return v if isinstance(v, (int, float)) else None
+    return None
+
+
 def parse_receita(items: list[dict]) -> tuple[float | None, float | None]:
     """(receita_bruta, receita_liquida) do Anexo I-C (linha TOTAL DAS RECEITAS)."""
     bruta = ded_fundeb = ded_outras = None
@@ -103,7 +113,15 @@ def _municipio(cod: str, ano: int) -> dict | None:
     bruta, liquida = parse_receita(ic)
     if total is None and bruta is None and not funcs:
         return None
-    out = {"despesa": _r(total), "receita": _r(bruta), "receita_liquida": _r(liquida)}
+    # folha de pessoal (Anexo I-D, por natureza) — tolerante: se faltar, não derruba
+    pessoal = None
+    try:
+        idd = _get(f"{base}?an_exercicio={ano}&no_anexo={config.ORCAMENTO_ANEXO_NATUREZA.replace(' ', '+')}&id_ente={cod}")["items"]
+        pessoal = parse_pessoal(idd)
+    except Exception:
+        pessoal = None
+    out = {"despesa": _r(total), "receita": _r(bruta), "receita_liquida": _r(liquida),
+           "pessoal": _r(pessoal)}
     soma = 0.0
     for codf, chave in config.ORCAMENTO_FUNCOES.items():
         v = funcs.get(codf)
@@ -136,7 +154,7 @@ def agregar(manifest: Manifest, cods: list[str], *, offline: bool = False,
 
     cods = list(dict.fromkeys(cods))  # únicos, ordem preservada
     print(f"[orcamento] SICONFI DCA {ano}: consultando {len(cods)} municípios "
-          f"(2 anexos, {config.ORCAMENTO_WORKERS} conexões)…")
+          f"(3 anexos: I-E/I-C/I-D, {config.ORCAMENTO_WORKERS} conexões)…")
     municipios: dict[str, dict] = {}
     feito = 0
     with ThreadPoolExecutor(max_workers=config.ORCAMENTO_WORKERS) as ex:
@@ -147,8 +165,8 @@ def agregar(manifest: Manifest, cods: list[str], *, offline: bool = False,
             if feito % 500 == 0:
                 print(f"[orcamento]   {feito}/{len(cods)} (com dados: {len(municipios)})")
 
-    notes = (f"DCA Anexo I-E (despesa por função) + I-C (receita), exercício {ano}; "
-             f"API por ente; {len(municipios)}/{len(cods)} com dados.")
+    notes = (f"DCA Anexo I-E (despesa por função) + I-C (receita) + I-D (pessoal), "
+             f"exercício {ano}; API por ente; {len(municipios)}/{len(cods)} com dados.")
     proc = {"lido_em": utc_now_iso(), "url": config.SICONFI_DCA_URL, "ano": ano,
             "n_consultados": len(cods), "n_com_dados": len(municipios), "notes": notes}
     interim.parent.mkdir(parents=True, exist_ok=True)

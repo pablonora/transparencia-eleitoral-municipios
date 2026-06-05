@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604h";
+const ASSET_V = "20260604i";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -500,11 +500,19 @@ function contasBlock(m) {
   const c = m.contas;
   if (!c) return "";
   const dpe = c.despesa_por_eleitor != null ? ` <small>(${t("ct_por_eleitor", { v: BRL2.format(c.despesa_por_eleitor) })})</small>` : "";
+  // por cargo: total gasto + médias por candidato (gasto e arrecadação)
+  const medias = (desp, rec, n) => {
+    if (!n) return "";
+    const partes = [t("ct_cand_n", { n: fmt(n) })];
+    if (desp != null) partes.push(t("ct_media_gasto", { v: moeda(desp / n) }));
+    if (rec != null) partes.push(t("ct_media_arrec", { v: moeda(rec / n) }));
+    return ` <small>(${partes.join(" · ")})</small>`;
+  };
   return `<div class="comp-blk"><div class="cb-tit">${t("ct_tit", { ano: DADOS.ano_contas })}</div>
     <div class="cb-row"><span class="cb-ano">${t("ct_arrecadado")}</span><b>${moeda(c.receita_total)}</b></div>
     <div class="cb-row"><span class="cb-ano">${t("ct_gasto")}</span><b>${moeda(c.despesa_total)}</b>${dpe}</div>
-    <div class="cb-row"><span class="cb-ano">${t("ct_prefeito")}</span>${moeda(c.despesa_prefeito)} <small>(${t("ct_cand_n", { n: fmt(c.n_cand_prefeito) })})</small></div>
-    <div class="cb-row"><span class="cb-ano">${t("ct_vereadores")}</span>${moeda(c.despesa_vereador)}</div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_prefeito")}</span>${moeda(c.despesa_prefeito)}${medias(c.despesa_prefeito, c.receita_prefeito, c.n_cand_prefeito)}</div>
+    <div class="cb-row"><span class="cb-ano">${t("ct_vereadores")}</span>${moeda(c.despesa_vereador)}${medias(c.despesa_vereador, c.receita_vereador, c.n_cand_vereador)}</div>
     <div class="cb-row"><span class="cb-ano">${t("ct_candidatos")}</span>${fmt(c.n_candidatos)}</div>
     <div class="cb-fonte">${t("nota_contas")}</div>
   </div>`;
@@ -520,6 +528,7 @@ function orcamentoBlock(m) {
   return `<div class="comp-blk"><div class="cb-tit">${t("orc_tit", { ano: DADOS.ano_orcamento })}</div>
     <div class="cb-row"><span class="cb-ano">${t("orc_receita")}</span><b>${moeda(o.receita)}</b></div>
     <div class="cb-row"><span class="cb-ano">${t("orc_despesa")}</span><b>${moeda(o.despesa)}</b>${pop ? ` <small>(${BRL0.format(o.despesa / pop)}${t("orc_hab")})</small>` : ""}</div>
+    ${linha(t("orc_pessoal"), o.pessoal)}
     ${linha(t("orc_saude"), o.saude)}
     ${linha(t("orc_educacao"), o.educacao)}
     ${linha(t("orc_seguranca"), o.seguranca)}
@@ -929,6 +938,7 @@ function renderCompare() {
     { lab: t("cmp_r_orc_saude"), f: orcF("saude"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_orc_educ"), f: orcF("educacao"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_orc_seg"), f: orcF("seguranca"), fm: PCT, d: _ppF },
+    { lab: t("cmp_r_pessoal"), f: orcF("pessoal"), fm: PCT, d: _ppF },
   ];
   const dcell = (va, vb, dmag) => {
     if (va == null || vb == null || typeof va !== "number" || typeof vb !== "number") return `<td class="dlt">—</td>`;

@@ -182,6 +182,12 @@ SICONFI_PUBLISHER = "Tesouro Nacional — SICONFI"
 SICONFI_DATASET = "SICONFI — Declaração de Contas Anuais (DCA) dos municípios"
 ORCAMENTO_ANO = 2024
 ORCAMENTO_WORKERS = 12  # requisições concorrentes (educado, com retries)
+# Anexo I-D = Despesa por NATUREZA. Usamos só para extrair a FOLHA DE PESSOAL
+# (categoria "3.1 - Pessoal e Encargos Sociais", exceto intraorçamentárias, p/
+# ser comparável à despesa total que também é "exceto intra"). Valor absoluto em R$.
+ORCAMENTO_ANEXO_NATUREZA = "DCA-Anexo I-D"
+ORCAMENTO_PESSOAL_COD = "DO3.1.00.00.00.00"   # Pessoal e Encargos Sociais (exceto intra)
+ORCAMENTO_PESSOAL_COLUNA = "Despesas Empenhadas"
 # Funções orçamentárias que destacamos (código → chave interna). O total e as
 # demais funções entram em "outras".
 ORCAMENTO_FUNCOES = {
