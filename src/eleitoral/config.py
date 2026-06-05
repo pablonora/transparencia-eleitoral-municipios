@@ -222,6 +222,10 @@ SICONFI_RREO_PERIODO = 6  # 6º bimestre = consolidado do ano
 SICONFI_RREO_DATASET = "SICONFI — RREO Anexo 14 (Demonstrativo Simplificado)"
 PISOS_ANO = 2024
 PISOS_COLUNA = "% Aplicado Até o Bimestre"
+# Coluna do MÍNIMO (15%/25%): usada para CALIBRAR a unidade do ente, porque a API
+# devolve o percentual de forma inconsistente — uns em fração (0,15 / 0,14), outros
+# em ponto percentual (15 / 24,11), e alguns entes lançam valor em R$ por engano.
+PISOS_COLUNA_MIN = "% Mínimo a Aplicar no Exercício"
 PISOS_COD_SAUDE = "AplicacaoTotalDasDespesasComAcoesEServicosPublicosDeSaude"
 PISOS_COD_EDUCACAO = (
     "MinimoAnualDasReceitasDeImpostosNaManutencaoEDesenvolvimento"

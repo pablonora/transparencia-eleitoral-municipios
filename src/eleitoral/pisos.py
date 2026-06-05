@@ -43,25 +43,59 @@ def _get(url: str, tentativas: int = 3, timeout: int = 60) -> dict:
     raise RuntimeError(f"falha em {url}: {erro}")
 
 
-def parse_pisos(items: list[dict]) -> dict:
-    """{saude_pct, educacao_pct} do RREO Anexo 14 (coluna '% Aplicado Até o Bimestre').
+def normalizar_pct(aplicado, minimo=None) -> float | None:
+    """Normaliza o % aplicado para PONTO PERCENTUAL (ex.: 14.0), lidando com a
+    inconsistência da API do SICONFI:
 
-    Lê só as duas linhas-chave pelo cod_conta; ignora o resto do demonstrativo.
+    - alguns entes reportam em FRAÇÃO (mínimo 0,15 e aplicado 0,14 = 14%);
+    - outros em PONTO PERCENTUAL (mínimo 15 e aplicado 24,11);
+    - alguns lançam VALOR EM R$ por engano na coluna de % (lixo, ex.: 50 milhões).
+
+    Calibra a unidade pelo MÍNIMO conhecido (15%/25%, que vem como 0,15 ou 15);
+    sem o mínimo, cai num palpite pelo próprio aplicado (< 1,5 → fração). Aplica
+    plausibilidade: descarta (None) o que sai fora de 0–100 pontos percentuais.
     """
-    saude = educacao = None
+    if not isinstance(aplicado, (int, float)):
+        return None
+    if isinstance(minimo, (int, float)) and minimo > 0:
+        fracao = minimo < 1.5           # mínimo 0,15/0,25 → ente reporta em fração
+    else:
+        fracao = aplicado < 1.5         # fallback (sem o mínimo)
+    pct = round(aplicado * 100 if fracao else aplicado, 2)
+    if pct < 0 or pct > 100:            # fora da faixa plausível → lixo
+        return None
+    return pct
+
+
+def parse_pisos(items: list[dict]) -> dict:
+    """{saude_pct, educacao_pct} do RREO Anexo 14, já normalizados em ponto percentual.
+
+    Lê, por função (saúde ASPS / educação MDE), o '% Aplicado' E o '% Mínimo'
+    (este calibra a unidade); ignora o resto do demonstrativo. Valores implausíveis
+    são descartados (ver normalizar_pct).
+    """
+    raw: dict[str, dict] = {}
     for i in items:
-        if i.get("coluna") != config.PISOS_COLUNA:
-            continue
         cod = i.get("cod_conta")
-        if cod == config.PISOS_COD_SAUDE:
-            saude = i.get("valor")
-        elif cod == config.PISOS_COD_EDUCACAO:
-            educacao = i.get("valor")
+        if cod not in (config.PISOS_COD_SAUDE, config.PISOS_COD_EDUCACAO):
+            continue
+        col = i.get("coluna")
+        d = raw.setdefault(cod, {})
+        if col == config.PISOS_COLUNA:
+            d["ap"] = i.get("valor")
+        elif col == config.PISOS_COLUNA_MIN:
+            d["min"] = i.get("valor")
     out: dict = {}
-    if isinstance(saude, (int, float)):
-        out["saude_pct"] = round(float(saude), 2)
-    if isinstance(educacao, (int, float)):
-        out["educacao_pct"] = round(float(educacao), 2)
+    s = raw.get(config.PISOS_COD_SAUDE)
+    if s and "ap" in s:
+        v = normalizar_pct(s.get("ap"), s.get("min"))
+        if v is not None:
+            out["saude_pct"] = v
+    e = raw.get(config.PISOS_COD_EDUCACAO)
+    if e and "ap" in e:
+        v = normalizar_pct(e.get("ap"), e.get("min"))
+        if v is not None:
+            out["educacao_pct"] = v
     return out
 
 
