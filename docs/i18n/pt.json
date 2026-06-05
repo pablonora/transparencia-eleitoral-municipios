@@ -328,6 +328,7 @@
   "foot_baixar": "⬇ Baixar os dados (JSON)",
   "foot_meto": "Metodologia e limites",
   "foot_licenca": "Código sob licença MIT · dados derivados sob CC-BY 4.0 · fontes originais: TSE (CC-BY) e IBGE. Cada número é reproduzível a partir dos brutos (<code>manifest/provenance.json</code>). População sempre <strong>estimada</strong>.",
+  "foot_metricas": "Métricas de acesso anônimas e sem cookies via <a href=\"https://www.goatcounter.com/\" rel=\"noopener\" target=\"_blank\">GoatCounter</a> — sem identificar visitantes e respeitando o <em>Do Not Track</em> do navegador.",
   "orc_tit": "Orçamento da prefeitura — {ano} (SICONFI/Tesouro)",
   "orc_receita": "Receita",
   "orc_despesa": "Despesa total",

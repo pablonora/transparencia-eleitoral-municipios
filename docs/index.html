@@ -41,7 +41,7 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260604n">
+  <link rel="stylesheet" href="style.css?v=20260605a">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -422,6 +422,11 @@
       TSE (CC-BY) e IBGE. Cada número é reproduzível a partir dos brutos
       (<code>manifest/provenance.json</code>). População sempre <strong>estimada</strong>.
     </p>
+    <p class="licenca" data-i18n="foot_metricas">
+      Métricas de acesso anônimas e sem cookies via
+      <a href="https://www.goatcounter.com/" rel="noopener" target="_blank">GoatCounter</a> —
+      sem identificar visitantes e respeitando o <em>Do Not Track</em> do navegador.
+    </p>
   </div>
 </footer>
 
@@ -432,6 +437,26 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js?v=20260604n"></script>
+<script src="app.js?v=20260605a"></script>
+
+<!-- Métricas anônimas (GoatCounter): sem cookies, sem PII. Não carrega em dev,
+     nem quando o navegador sinaliza Do Not Track. Troque GC_CODE pelo subdomínio
+     criado em goatcounter.com (ex.: "eleitoral" para eleitoral.goatcounter.com). -->
+<script>
+  (function () {
+    var GC_CODE = "petaflop"; // subdomínio em goatcounter.com → petaflop.goatcounter.com
+    if (GC_CODE === "GC_CODE") return;                       // placeholder não configurado
+    var dnt = navigator.doNotTrack == "1" || window.doNotTrack == "1" ||
+              navigator.msDoNotTrack == "1";
+    if (dnt) return;                                          // respeita Do Not Track
+    var h = location.hostname;
+    if (!h || h === "localhost" || h === "127.0.0.1" || h.endsWith(".local")) return; // dev
+    var s = document.createElement("script");
+    s.async = true;
+    s.src = "//gc.zgo.at/count.js";
+    s.setAttribute("data-goatcounter", "https://" + GC_CODE + ".goatcounter.com/count");
+    document.head.appendChild(s);
+  })();
+</script>
 </body>
 </html>

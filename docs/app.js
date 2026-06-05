@@ -3,7 +3,18 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604n";
+const ASSET_V = "20260605a";
+
+// Métricas de interação: eventos custom do GoatCounter. No-op quando o count.js
+// não carregou (localhost / Do Not Track → window.goatcounter ausente). Nunca lança,
+// para nunca quebrar a UI por causa de uma métrica. Dados agregados, sem PII.
+function track(nome) {
+  try {
+    if (window.goatcounter && typeof window.goatcounter.count === "function") {
+      window.goatcounter.count({ path: "evt-" + nome, title: "evt: " + nome, event: true });
+    }
+  } catch (_) { /* métrica nunca interrompe a interação */ }
+}
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -64,6 +75,7 @@ function initTema() {
     root.classList.add("theme-anim");                 // liga a transição suave
     const novo = temaClaro() ? "dark" : "light";
     aplicarTema(novo);
+    track("tema-" + novo);
     try { localStorage.setItem("tema", novo); } catch (_) {}
     if (MAP && ufLayer) recolorMapa();                // repinta cores do mapa (calculadas em JS)
     setTimeout(() => root.classList.remove("theme-anim"), 250);
@@ -178,6 +190,7 @@ function initIdioma() {
   if (btn) btn.addEventListener("click", () => {
     const novo = (LANG === "pt") ? "en" : "pt";
     aplicarIdioma(novo);
+    track("idioma-" + novo);
     try { localStorage.setItem("idioma", novo); } catch (_) {}
   });
 }
@@ -831,6 +844,7 @@ function abrirCidade(m) {
   // guarda quem tinha o foco, para devolver ao fechar (a11y)
   if (!window._cidadeAberta) window._lastFocus = document.activeElement;
   window._cidadeAberta = m;
+  track("perfil");
   const card = document.getElementById("modalCard");
   card.innerHTML = cityCardHTML(m);
   // rotula o diálogo pelo nome da cidade (aria-labelledby)
@@ -845,12 +859,14 @@ function abrirCidade(m) {
   document.getElementById("pf-x").href =
     `https://twitter.com/intent/tweet?text=${encodeURIComponent(t("city_tweet", { local: `${m.nome}-${m.uf}`, per100 }))}&url=${encodeURIComponent(link)}`;
   document.getElementById("pf-share").addEventListener("click", async () => {
+    track("perfil-link");
     try {
       if (navigator.share) { await navigator.share({ title: `${m.nome}-${m.uf}`, url: link }); return; }
       await navigator.clipboard.writeText(link); toast();
     } catch (_) { /* cancelado */ }
   });
   document.getElementById("pf-img").addEventListener("click", () => {
+    track("baixar-imagem");
     try { baixarImagemCidade(m); toast(t("city_img_ok")); } catch (_) {}
   });
 }
@@ -916,6 +932,7 @@ function initComparar() {
   attachAutocomplete(document.getElementById("cmpB"), document.getElementById("acB"), (m) => { cmpBsel = m; renderCompare(); });
   const sw = document.getElementById("cmpSwap");
   if (sw) sw.addEventListener("click", () => {
+    track("comparar-swap");
     const ia = document.getElementById("cmpA"), ib = document.getElementById("cmpB");
     [cmpAsel, cmpBsel] = [cmpBsel, cmpAsel];        // troca A↔B (e o Δ inverte junto)
     const tmp = ia.value; ia.value = ib.value; ib.value = tmp;
@@ -924,6 +941,7 @@ function initComparar() {
   const sh = document.getElementById("cmpShare");
   if (sh) sh.addEventListener("click", async () => {
     if (!cmpAsel || !cmpBsel) return;
+    track("comparar-link");
     const link = linkCompare(cmpAsel, cmpBsel);
     try {
       if (navigator.share) { await navigator.share({ title: `${cmpAsel.nome} × ${cmpBsel.nome}`, url: link }); return; }
@@ -1491,14 +1509,15 @@ function render() {
 function bind() {
   document.getElementById("busca").addEventListener("input", (e) => { busca = e.target.value.trim().toLowerCase(); render(); });
   document.querySelectorAll("select.uf-sync").forEach((s) =>
-    s.addEventListener("change", (e) => setUF(e.target.value)));
+    s.addEventListener("change", (e) => { track("filtro-uf"); setUF(e.target.value); }));
   const porteEl = document.getElementById("porte");
-  if (porteEl) porteEl.addEventListener("change", (e) => { porteSel = e.target.value; render(); });
+  if (porteEl) porteEl.addEventListener("change", (e) => { porteSel = e.target.value; track("filtro-porte" + (porteSel ? "-" + porteSel : "-todos")); render(); });
   const partidoEl = document.getElementById("partido");
-  if (partidoEl) partidoEl.addEventListener("change", (e) => { partidoSel = e.target.value; render(); });
+  if (partidoEl) partidoEl.addEventListener("change", (e) => { partidoSel = e.target.value; track("filtro-partido"); render(); });
   const colEl = document.getElementById("colInd");
   if (colEl) colEl.addEventListener("change", (e) => {
     colInd = e.target.value;
+    track("coluna-" + colInd);
     ordenarPor = "_colind"; ordemDesc = true;   // escolher um indicador já ordena por ele
     render();
   });
@@ -1508,12 +1527,12 @@ function bind() {
   });
   const histSel = document.getElementById("histInd");
   if (histSel) histSel.addEventListener("change", (e) => { histInd = e.target.value; renderHistograma(); });
-  document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; recolorMapa(); sincronizarURLExplorador(); });
+  document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; track("mapa-" + mapInd); recolorMapa(); sincronizarURLExplorador(); });
   document.querySelectorAll("#mapaFiltro button").forEach((b) => {
     b.setAttribute("aria-pressed", b.classList.contains("on") ? "true" : "false");
     b.addEventListener("click", () => {
       document.querySelectorAll("#mapaFiltro button").forEach((x) => { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); });
-      b.classList.add("on"); b.setAttribute("aria-pressed", "true"); destaque = b.dataset.f; recolorMapa();
+      b.classList.add("on"); b.setAttribute("aria-pressed", "true"); destaque = b.dataset.f; track("mapa-destaque-" + destaque); recolorMapa();
     });
   });
   document.getElementById("mapaVoltar").addEventListener("click", voltarBrasil);
@@ -1521,6 +1540,7 @@ function bind() {
     c.setAttribute("aria-pressed", "false");
     c.addEventListener("click", () => {
       const f = c.dataset.flag;
+      track("chip-" + f);
       if (flagsAtivas.has(f)) { flagsAtivas.delete(f); c.setAttribute("aria-pressed", "false"); }
       else { flagsAtivas.add(f); c.setAttribute("aria-pressed", "true"); }
       render();
@@ -1540,15 +1560,22 @@ function bind() {
     const m = munById && munById.get(tr.dataset.cd);
     if (m) abrirCidade(m);
   });
-  document.getElementById("btnExplorar").addEventListener("click", () =>
-    document.getElementById("explorar").scrollIntoView({ behavior: scrollBehavior() }));
+  document.getElementById("btnExplorar").addEventListener("click", () => {
+    track("explorar");
+    document.getElementById("explorar").scrollIntoView({ behavior: scrollBehavior() });
+  });
   document.getElementById("btnShare").addEventListener("click", async () => {
+    track("compartilhar");
     const url = location.href;
     try {
       if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
       await navigator.clipboard.writeText(url); toast();
     } catch (_) { /* cancelado */ }
   });
+  const dlJson = document.querySelector('a[href="data/brasil.json"]');
+  if (dlJson) dlJson.addEventListener("click", () => track("baixar-json"));
+  const meto = document.querySelector("#metodologia details");
+  if (meto) meto.addEventListener("toggle", () => { if (meto.open) track("metodologia"); });
 }
 let _toastT = null;
 function toast(msg) {

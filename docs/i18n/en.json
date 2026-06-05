@@ -328,6 +328,7 @@
   "foot_baixar": "⬇ Download the data (JSON)",
   "foot_meto": "Methodology and limits",
   "foot_licenca": "Code under the MIT license · derived data under CC-BY 4.0 · original sources: TSE (CC-BY) and IBGE. Every figure is reproducible from the raw files (<code>manifest/provenance.json</code>). Population is always <strong>estimated</strong>.",
+  "foot_metricas": "Anonymous, cookie-free visitor metrics via <a href=\"https://www.goatcounter.com/\" rel=\"noopener\" target=\"_blank\">GoatCounter</a> — visitors are never identified and the browser's <em>Do Not Track</em> is respected.",
   "orc_tit": "City government budget — {ano} (SICONFI/Treasury)",
   "orc_receita": "Revenue",
   "orc_despesa": "Total spending",
