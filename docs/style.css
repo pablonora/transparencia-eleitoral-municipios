@@ -301,9 +301,9 @@ h1, h2, h3 { font-family: "Sora", system-ui, sans-serif; letter-spacing: -0.02em
 #busca, #uf { padding: .6rem .75rem; border: 1px solid var(--line); border-radius: 9px; font-size: .92rem; background: var(--panel); color: var(--ink); }
 #busca { flex: 1 1 200px; }
 /* foco consistente em TODOS os inputs/selects (igual à busca do hero e ao comparador) */
-#busca:focus, #uf:focus, #mapaInd:focus, #ordcampo:focus, #histInd:focus, #porte:focus, #partido:focus, select.uf-sync:focus { outline: none; border-color: var(--accent); }
+#busca:focus, #uf:focus, #mapaInd:focus, #ordcampo:focus, #histInd:focus, #porte:focus, #partido:focus, #colInd:focus, select.uf-sync:focus { outline: none; border-color: var(--accent); }
 /* selects: chevron próprio, com respiro à direita (o nativo fica colado na borda) */
-#uf, #mapaInd, #ordcampo, #histInd, #porte, #partido, select.uf-sync {
+#uf, #mapaInd, #ordcampo, #histInd, #porte, #partido, #colInd, select.uf-sync {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2 4.5l4 4 4-4' fill='none' stroke='%239aa3b2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat; background-position: right .7rem center; background-size: .7rem;
@@ -312,7 +312,7 @@ h1, h2, h3 { font-family: "Sora", system-ui, sans-serif; letter-spacing: -0.02em
 :root[data-theme="light"] #uf, :root[data-theme="light"] #mapaInd,
 :root[data-theme="light"] #ordcampo, :root[data-theme="light"] #histInd,
 :root[data-theme="light"] #porte, :root[data-theme="light"] #partido,
-:root[data-theme="light"] select.uf-sync {
+:root[data-theme="light"] #colInd, :root[data-theme="light"] select.uf-sync {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2 4.5l4 4 4-4' fill='none' stroke='%235b6470' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 .chips { display: flex; gap: .4rem; flex-wrap: wrap; }
@@ -414,8 +414,9 @@ code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; f
 .cmp-nota { margin-top: .6rem; font-size: .78rem; color: var(--muted); }
 .bloco-uf { margin: .2rem 0 1rem; font-size: .85rem; color: var(--muted); }
 .bloco-uf select { margin-left: .4rem; padding: .35rem 1.9rem .35rem .6rem; background-color: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; font-size: .9rem; }
-#ordcampo, #porte, #partido { padding: .5rem 1.9rem .5rem .7rem; background-color: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; font-size: .9rem; }
+#ordcampo, #porte, #partido, #colInd { padding: .5rem 1.9rem .5rem .7rem; background-color: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; font-size: .9rem; }
 #partido { max-width: 13rem; }
+.col-pick { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; color: var(--muted); }
 .ordv { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* perfil / cartões reutilizáveis */

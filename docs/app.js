@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604l";
+const ASSET_V = "20260604m";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -225,6 +225,7 @@ async function carregar() {
   initComparar();
   preencherUFs(a.ufs || []);
   preencherPartidos();
+  preencherColInd();
   renderFontes();
   bind();
   restaurarExploradorDaURL();   // aplica UF/busca/ordenação/marcadores/mapa da URL
@@ -1268,6 +1269,17 @@ function preencherPartidos() {
   const ps = [...new Set(LINHAS.map((m) => m.eleicao2024 && m.eleicao2024.partido).filter(Boolean))].sort();
   ps.forEach((p) => { const o = document.createElement("option"); o.value = p; o.textContent = p; sel.appendChild(o); });
 }
+// opções da coluna escolhível (a partir de COL_INDS; rótulo i18n)
+function preencherColInd() {
+  const sel = document.getElementById("colInd");
+  if (!sel) return;
+  Object.entries(COL_INDS).forEach(([k, ci]) => {
+    const o = document.createElement("option");
+    o.value = k; o.dataset.i18n = ci.label; o.textContent = t(ci.label);
+    sel.appendChild(o);
+  });
+  sel.value = colInd;
+}
 // filtro de UF unificado: sincroniza todos os seletores e re-renderiza tabela,
 // ranking e histograma (assim o filtro vale "em todo lugar", de forma consistente).
 function setUF(uf) {
@@ -1288,6 +1300,13 @@ function badges(m) {
 const temFlag = (m) => m.mais_eleitores_que_pop || m.acima_limiar_tse || m.outlier_nacional || m.outlier_uf;
 
 // predicados dos chips (booleanos simples no município OU campos aninhados/derivados)
+// 27 capitais (códigos IBGE) — para o chip "só capitais"
+const CAPITAIS = new Set([
+  "1200401", "2704302", "1600303", "1302603", "2927408", "2304400", "5300108",
+  "3205309", "5208707", "2111300", "5103403", "5002704", "3106200", "1501402",
+  "2507507", "4106902", "2611606", "2211001", "3304557", "2408102", "4314902",
+  "1100205", "1400100", "4205407", "3550308", "2800308", "1721000",
+]);
 const CHIP_PREDS = {
   mais_eleitores_que_pop: (m) => m.mais_eleitores_que_pop,
   acima_limiar_tse: (m) => m.acima_limiar_tse,
@@ -1295,7 +1314,34 @@ const CHIP_PREDS = {
   entrada_margem: (m) => m.eleicao2024 && m.eleicao2024.entrada_maior_que_margem,
   rev3: (m) => m.revisao && m.revisao.atende_3,
   turno2: (m) => m.eleicao2024 && m.eleicao2024.turno === "2",
+  encolheu: (m) => { const c = crescEleit(m); return c != null && c < 0; },
+  capital: (m) => CAPITAIS.has(m.cd_ibge),
 };
+// Indicadores que a coluna escolhível ("Eleitorado 2014–24" por padrão) pode exibir
+// e por que ordenar. 'tend' = sparkline da série; os demais mostram o valor.
+const COL_INDS = {
+  tend: { label: "th_tend", spark: true },
+  razao: { label: "mi_razao", val: (m) => m.razao_total, fmt: PCT },
+  razao16: { label: "mi_razao16", val: (m) => m.razao_16mais, fmt: PCT },
+  eleitcresc: { label: "mi_eleitcresc", val: crescEleit, fmt: (v) => (v == null ? "—" : sig(v * 100)) },
+  abst24: { label: "mi_abst24", val: (m) => m._abst, fmt: PCT },
+  bn: { label: "mi_bn", val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), fmt: PCT },
+  idoso: { label: "mi_idoso", val: (m) => m.pct_70mais, fmt: PCT },
+  jovem: { label: "demo_1617", val: (m) => m.pct_16_17, fmt: PCT },
+  superior: { label: "demo_superior", val: (m) => m.pct_superior, fmt: PCT },
+  escol: { label: "mi_escol", val: (m) => m.pct_ate_fundamental, fmt: PCT },
+  mulheres: { label: "demo_mulheres", val: (m) => m.pct_feminino, fmt: PCT },
+  saldo: { label: "mi_saldo", val: (m) => m.transferencias_saldo, fmt: sig0 },
+  cresc: { label: "mi_cresc", val: (m) => m.crescimento_pop_pct, fmt: sig },
+  gasto: { label: "mi_gasto", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), fmt: (v) => (v == null ? "—" : BRL2.format(v)) },
+  orc_hab: { label: "ord_orc_hab", val: (m) => (m.orcamento && m.orcamento.despesa && m.pop_total_estimada) ? m.orcamento.despesa / m.pop_total_estimada : null, fmt: (v) => (v == null ? "—" : BRL0.format(v)) },
+  orcsaude: { label: "mi_orc_saude", val: (m) => (m.orcamento && m.orcamento.saude != null && m.orcamento.despesa) ? m.orcamento.saude / m.orcamento.despesa : null, fmt: PCT },
+  orceduc: { label: "mi_orc_educ", val: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null, fmt: PCT },
+  pessoal: { label: "orc_pessoal", val: (m) => (m.orcamento && m.orcamento.pessoal != null && m.orcamento.despesa) ? m.orcamento.pessoal / m.orcamento.despesa : null, fmt: PCT },
+  margem: { label: "cmp_r_margem", val: (m) => (m.eleicao2024 ? m.eleicao2024.margem : null), fmt: fmt },
+};
+let colInd = "tend";
+const colAcc = (m) => { const ci = COL_INDS[colInd]; return ci.spark ? crescEleit(m) : ci.val(m); };
 // porte por população: p < 20 mil, m 20–100 mil, g > 100 mil
 function porteMatch(m) {
   if (!porteSel) return true;
@@ -1328,7 +1374,7 @@ const ORD_FMT = {
 };
 function ordenar(linhas) {
   const k = ordenarPor;
-  const acc = ORD_ACC[k];
+  const acc = k === "_colind" ? colAcc : ORD_ACC[k];   // coluna escolhível
   return linhas.slice().sort((a, b) => {
     if (!acc && (k === "nome" || k === "uf")) return ordemDesc ? String(b[k]).localeCompare(a[k]) : String(a[k]).localeCompare(b[k]);
     let va = acc ? acc(a) : a[k], vb = acc ? acc(b) : b[k];
@@ -1347,6 +1393,7 @@ function sincronizarURLExplorador() {
     setDel("q", busca);
     setDel("porte", porteSel);
     setDel("partido", partidoSel);
+    setDel("col", (colInd && colInd !== "tend") ? colInd : "");
     if (ordenarPor && ordenarPor !== "razao_total") { sp.set("ord", ordenarPor); sp.set("dir", ordemDesc ? "desc" : "asc"); }
     else { sp.delete("ord"); sp.delete("dir"); }
     setDel("flags", [...flagsAtivas].join(","));
@@ -1367,6 +1414,8 @@ function restaurarExploradorDaURL() {
   if (["p", "m", "g"].includes(porte)) { porteSel = porte; const e = document.getElementById("porte"); if (e) e.value = porte; }
   const part = sp.get("partido");
   if (part) { const e = document.getElementById("partido"); if (e && [...e.options].some((o) => o.value === part)) { partidoSel = part; e.value = part; } }
+  const col = sp.get("col");
+  if (col && COL_INDS[col]) { colInd = col; const e = document.getElementById("colInd"); if (e) e.value = col; }
   const ord = sp.get("ord");
   if (ord) {
     ordenarPor = ord; ordemDesc = sp.get("dir") !== "asc";
@@ -1387,6 +1436,10 @@ function render() {
   const todas = ordenar(filtrar());
   const linhas = todas.slice(0, LIMITE_LINHAS);
   const accOrd = ORD_ACC[ordenarPor], fmtOrd = ORD_FMT[ordenarPor] || fmt;
+  const ci = COL_INDS[colInd];                 // coluna escolhível
+  const colCell = (m) => ci.spark ? sparklineSerie(m, 60, 18)
+    : (() => { const v = ci.val(m); return v == null ? "—" : `<span class="ordv">${ci.fmt(v)}</span>`; })();
+  const lbl = document.getElementById("colLabel"); if (lbl) lbl.textContent = t(ci.label);
   document.getElementById("corpo").innerHTML = linhas.map((m) => {
     const forte = m.razao_total != null && m.razao_total > 1 ? "razao-forte" : "";
     const ov = accOrd ? accOrd(m) : null;
@@ -1397,7 +1450,7 @@ function render() {
         <td class="num">${fmt(m.pop_total_estimada)}</td>
         <td class="num ${forte}">${PCT(m.razao_total)}</td>
         <td class="num">${PCT(m.razao_16mais)}</td>
-        <td class="spark-cell">${sparklineSerie(m, 60, 18)}</td>
+        <td class="spark-cell">${colCell(m)}</td>
         <td class="mk">${badges(m)}</td>
       </tr>`;
   }).join("");
@@ -1420,6 +1473,12 @@ function bind() {
   if (porteEl) porteEl.addEventListener("change", (e) => { porteSel = e.target.value; render(); });
   const partidoEl = document.getElementById("partido");
   if (partidoEl) partidoEl.addEventListener("change", (e) => { partidoSel = e.target.value; render(); });
+  const colEl = document.getElementById("colInd");
+  if (colEl) colEl.addEventListener("change", (e) => {
+    colInd = e.target.value;
+    ordenarPor = "_colind"; ordemDesc = true;   // escolher um indicador já ordena por ele
+    render();
+  });
   const ordSel = document.getElementById("ordcampo");
   if (ordSel) ordSel.addEventListener("change", (e) => {
     ordenarPor = e.target.value || "razao_total"; ordemDesc = true; render();
