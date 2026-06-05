@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604d";
+const ASSET_V = "20260604e";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -439,6 +439,21 @@ function eleitoradoEvolBlock(m) {
     <div class="cb-fonte">${t("evo_nota")}</div>
   </div>`;
 }
+// Tendência da abstenção em cada eleição (2014→2024), do TSE. Mesma fonte da série
+// do eleitorado; barras âmbar (abstenção = metade "alerta" da participação).
+function abstencaoEvolBlock(m) {
+  const s = m.abstencao_serie;
+  if (!s || s.length < 2) return "";
+  const max = Math.max(...s.map((p) => p.abst_pct)) || 1;
+  const barras = s.map((p) => `<div class="evo-item">
+      <div class="evo-track"><div class="evo-bar" style="height:${Math.max(5, (p.abst_pct / max) * 100)}%;background:linear-gradient(180deg,#e8833a,#7a3a12)"></div></div>
+      <div class="evo-v">${PCT0(p.abst_pct)}</div><div class="evo-l">${p.ano}</div>
+    </div>`).join("");
+  return `<div class="comp-blk"><div class="cb-tit">${t("abst_evo_tit")}</div>
+    <div class="evo-chart">${barras}</div>
+    <div class="cb-fonte">${t("abst_evo_nota")}</div>
+  </div>`;
+}
 function compBlock(m) {
   const c = m.comparecimento || {};
   const anos = ["2022", "2024"].filter((y) => c[y]);
@@ -716,6 +731,7 @@ function cityCardHTML(m) {
     ${demoGrid(m)}
     ${eleitoradoEvolBlock(m)}
     ${compBlock(m)}
+    ${abstencaoEvolBlock(m)}
     ${eleicaoBlock(m)}
     ${govBlock(m)}
     ${contasBlock(m)}
@@ -1013,6 +1029,24 @@ function crescEleit(m) {
 }
 const pisoSaude = (m) => (m.pisos && m.pisos.saude_pct != null) ? m.pisos.saude_pct : null;
 const pisoEduc = (m) => (m.pisos && m.pisos.educacao_pct != null) ? m.pisos.educacao_pct : null;
+// sparkline SVG inline da série do eleitorado (6 pontos), teal se cresceu / âmbar se caiu
+function sparklineSerie(m, w, h) {
+  const s = m.eleitorado_serie;
+  if (!s || s.length < 2) return "";
+  const ys = s.map((p) => p.aptos), mn = Math.min(...ys), mx = Math.max(...ys), rng = (mx - mn) || 1;
+  const n = s.length;
+  const pts = s.map((p, i) => {
+    const x = (i / (n - 1)) * (w - 2) + 1;
+    const y = h - 1 - ((p.aptos - mn) / rng) * (h - 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  const up = ys[n - 1] >= ys[0];
+  const col = up ? "var(--accent2)" : "var(--b100)";
+  const lastX = (w - 2) + 1, lastY = h - 1 - ((ys[n - 1] - mn) / rng) * (h - 2);
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">` +
+    `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="1.7" fill="${col}"/></svg>`;
+}
 
 /* indicadores que o mapa pode mostrar (recolorem UF e município) */
 let mapInd = "razao", destaque = "todos", UF_AGG = {};
@@ -1080,6 +1114,7 @@ function popupHTML(m) {
       ${m._abst != null ? cel(PCT(m._abst), t("pp_abstencao")) : ""}
       ${cel("#" + (m._rankNac || "—"), t("pp_pais"))}
     </div>
+    ${m.eleitorado_serie ? `<div class="pp-spark">${sparklineSerie(m, 116, 26)}<span>${t("pp_tend", { de: m.eleitorado_serie[0].ano, ate: m.eleitorado_serie[m.eleitorado_serie.length - 1].ano })}</span></div>` : ""}
     ${badges(m) === "—" ? "" : `<div class="pp-badges">${badges(m)}</div>`}
     <button class="pp-btn" onclick="abrirCidadeCod('${m.cd_ibge}')">${t("pp_ver")}</button>
   </div>`;
@@ -1340,6 +1375,7 @@ function render() {
         <td class="num">${fmt(m.pop_total_estimada)}</td>
         <td class="num ${forte}">${PCT(m.razao_total)}</td>
         <td class="num">${PCT(m.razao_16mais)}</td>
+        <td class="spark-cell">${sparklineSerie(m, 60, 18)}</td>
         <td class="mk">${badges(m)}</td>
       </tr>`;
   }).join("");

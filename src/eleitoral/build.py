@@ -133,15 +133,19 @@ def main(offline: bool = False) -> None:
                     "razao_epoca_fonte": "Censo 2022" if ano == config.IBGE_CENSO_ANO_INT else f"estimativa {ano}",
                 }
         d["comparecimento"] = comp
-        # série histórica do TAMANHO do eleitorado: eleitorado APTO (QT_APTOS) em
-        # cada eleição disponível (definição consistente entre os pontos).
+        # série histórica do TAMANHO do eleitorado (eleitorado APTO, QT_APTOS) e da
+        # ABSTENÇÃO em cada eleição disponível (definição consistente entre os pontos).
         serie = []
+        abst_serie = []
         for ano in config.TSE_ELEITORADO_SERIE_ANOS:
             c = comp_por_ano.get(ano, {}).get(ind.cd_tse.lstrip("0"))
             if c and c.get("aptos"):
                 serie.append({"ano": ano, "aptos": c["aptos"]})
+                abst_serie.append({"ano": ano, "abst_pct": round(c["abstencao"] / c["aptos"], 4)})
         if len(serie) >= 2:
             d["eleitorado_serie"] = serie
+        if len(abst_serie) >= 2:
+            d["abstencao_serie"] = abst_serie
         # eleição 2024 (prefeito) — cruzamento FACTUAL com transferências do ano
         cd0 = ind.cd_tse.lstrip("0")
         p = prefeito.get(cd0)

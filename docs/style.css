@@ -325,7 +325,10 @@ h1, h2, h3 { font-family: "Sora", system-ui, sans-serif; letter-spacing: -0.02em
    indicadores abre no perfil ao clicar na linha. Em telas menores escondemos
    colunas secundárias progressivamente — nunca há rolagem lateral. */
 @media (max-width: 680px) {
-  #tabela th:nth-child(6), #tabela td:nth-child(6) { display: none; }   /* razão 16+ */
+  #tabela th:nth-child(6), #tabela td:nth-child(6),   /* razão 16+ */
+  #tabela th:nth-child(7), #tabela td:nth-child(7) {  /* tendência (sparkline) */
+    display: none;
+  }
 }
 @media (max-width: 520px) {
   #tabela th:nth-child(3), #tabela td:nth-child(3),   /* eleitores */
@@ -433,6 +436,11 @@ code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; f
 .evo-var { font-family: "Sora"; font-weight: 700; font-size: .82rem; margin-top: .2rem; }
 .evo-var.up { color: var(--accent2); }
 .evo-var.down { color: var(--b100); }
+/* sparkline da série do eleitorado (tabela + popup do mapa) */
+.spark { vertical-align: middle; }
+.spark-cell { text-align: center; padding: .3rem .5rem; }
+.pp-spark { display: flex; align-items: center; gap: .45rem; margin: .5rem 0 .1rem; }
+.pp-spark span { color: var(--muted); font-size: .72rem; }
 .cb-cols { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
 .cb-col { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: .6rem .75rem; }
 .cb-ano-tit { font-family: "Sora"; font-weight: 700; font-size: .82rem; margin-bottom: .45rem; }
