@@ -41,7 +41,6 @@
   "suf_bi": "bi",
   "suf_mi": "mi",
   "suf_mil": "mil",
-
   "map_h2": "O mapa",
   "map_color_by": "Colorir por",
   "map_highlight": "realçar",
@@ -66,13 +65,11 @@
   "mi_gasto": "Gasto de campanha / eleitor",
   "leg_vira": "vira em",
   "leg_realcando": "realçando {q}",
-
   "foto_h2": "A foto do Brasil",
   "foto_sub": "Distribuição dos <span id='nMun'>—</span> municípios pelo indicador escolhido (abaixo). Cada barra é uma faixa de valores.",
   "hist_tip": "{faixa}: {n} municípios",
   "hist_leg_le": "<b>{n}</b> cidades até 100% da população",
   "hist_leg_gt": "<b>{n}</b> acima de 100% (mais eleitores que habitantes)",
-
   "rank_h2": "Quem se destaca",
   "rank_tab_razao": "Maior razão",
   "rank_tab_saldo": "Entrada líquida de eleitores",
@@ -94,7 +91,6 @@
   "rank_t_margem": "Municípios onde a entrada líquida de eleitores em 2024 superou a margem de vitória do prefeito. É um FATO (comparação de dois números) — não diz como esses eleitores votaram nem que decidiram a eleição.",
   "rank_t_rev3": "Municípios que atendem aos TRÊS critérios cumulativos da Res. TSE 23.659/2021 (art. 105) — o conjunto legalmente definido. Atender NÃO é irregularidade nem revisão: a revisão é discricionária do TSE.",
   "rank_t_gasto": "Maior gasto de campanha DECLARADO por eleitor em {ano} (despesa contratada ÷ eleitores). São valores declarados ao TSE — não indicam irregularidade nem compra de votos; o voto é secreto. Normalizado por eleitor para não ser só um ranking de cidade grande.",
-
   "cmp_h2": "Compare duas cidades",
   "cmp_sub": "Coloque dois municípios lado a lado — bom pra resolver aquela discussão.",
   "cmp_share": "🔗 Compartilhar esta comparação",
@@ -144,7 +140,6 @@
   "chip_rev3_t": "Atende aos TRÊS critérios cumulativos da Res. TSE 23.659/2021 (art. 105). Não é irregularidade nem revisão — a revisão é discricionária do TSE.",
   "chip_turno2": "Teve 2º turno",
   "chip_turno2_t": "Municípios cuja eleição para prefeito em 2024 foi decidida em 2º turno (mais de 200 mil eleitores).",
-
   "expl_h2": "Explore todos os municípios",
   "expl_search_ph": "Buscar município…",
   "expl_all_ufs": "Todas as UFs",
@@ -177,13 +172,11 @@
   "expl_dica": "Toque em qualquer município para abrir o perfil completo (transferências, abstenção, demografia, eleição 2024 e mais). A coluna “Eleitorado 2014–24” traz um mini-gráfico da evolução do eleitorado apto (verde = cresceu, âmbar = caiu).",
   "tbl_contagem": "{x} de {y} municípios{trunc}",
   "tbl_trunc": " (mostrando {n} — refine)",
-
   "demo_1617": "jovens 16–17",
   "demo_70": "70+ anos",
   "demo_mulheres": "mulheres",
   "demo_superior": "ensino superior",
   "demo_fundamental": "até fundamental",
-
   "comp_tit": "Na época de cada eleição (1º turno)",
   "comp_2022": "Eleição geral 2022",
   "comp_2024": "Eleição municipal 2024",
@@ -193,7 +186,6 @@
   "comp_fonte": "eleitorado apto ÷ população {fonte}",
   "fonte_censo": "Censo 2022",
   "fonte_estim": "estimativa {ano}",
-
   "el_turno2": "2º turno",
   "el_turno1": "1º turno",
   "el_tit": "Eleição 2024 — prefeito ({turno})",
@@ -218,9 +210,6 @@
   "rank_tab_eleitcresc": "Crescimento do eleitorado (2014→2024)",
   "rank_t_eleitcresc": "Maior crescimento do eleitorado APTO entre 2014 e 2024 (eleitorado da última eleição ÷ da primeira − 1). É um FATO — reflete novos eleitores, migração e o domicílio eleitoral; não diz nada sobre como votaram.",
   "cmp_r_eleitcresc": "Crescimento do eleitorado (2014→2024)",
-  "cmp_r_piso_saude": "Aplicação em saúde (ASPS, piso 15%)",
-  "cmp_r_piso_educ": "Aplicação em educação (MDE, piso 25%)",
-
   "ct_tit": "Prestação de contas — campanha {ano}",
   "ct_arrecadado": "Arrecadado",
   "ct_gasto": "Gasto declarado",
@@ -229,7 +218,6 @@
   "ct_candidatos": "Candidatos",
   "ct_por_eleitor": "{v}/eleitor",
   "ct_cand_n": "{n} candidatos",
-
   "cr_tit": "Critérios legais de revisão de eleitorado",
   "cr_1": "Transferências do ano +10% vs. ano anterior",
   "cr_2": "Eleitorado &gt; 2× (pop. 10–15 anos + 70+)",
@@ -237,7 +225,6 @@
   "cr_sim": "<b>Atende aos 3 critérios.</b> Ainda assim, a revisão é <b>discricionária</b> do TSE — isto não é uma revisão nem indica irregularidade.",
   "cr_nao": "Não atende aos 3 critérios cumulativos.",
   "cr_fonte": "Res. TSE 23.659/2021, art. 105 — os três são cumulativos. Critério 1 compara transferências 2025 × 2024.",
-
   "city_frase": "São <b>{per100}</b> eleitores registrados (TSE, {data}) para cada <b>100</b> habitantes estimados (IBGE, {ano}).",
   "city_rank_pais": "<b>#{r}</b> de {tot}<br>no país",
   "city_rank_uf": "<b>#{r}</b> de {tot}<br>no {uf}",
@@ -259,7 +246,6 @@
   "city_img_nota": "Não é detector de fraude · dados oficiais TSE × IBGE",
   "city_img_ok": "Imagem baixada ✓",
   "city_tweet": "Em {local}: {per100} eleitores registrados (TSE) para cada 100 habitantes estimados (IBGE). Razão alta é comum e não indica irregularidade — veja o contexto oficial:",
-
   "pp_razao": "razão",
   "pp_razao16": "razão 16+",
   "pp_eleitores": "eleitores",
@@ -268,20 +254,17 @@
   "pp_abstencao": "abstenção",
   "pp_pais": "no país",
   "pp_ver": "Ver perfil completo →",
-
   "bdg_100": "&gt;100%",
   "bdg_100_t": "Mais eleitores que habitantes estimados",
   "bdg_80": "&gt;80%",
   "bdg_80_t": "Eleitorado acima de 80% da população — apenas o 3º dos TRÊS critérios cumulativos da Res. TSE 23.659/2021 (art. 105). Sozinho NÃO enseja revisão de eleitorado.",
   "bdg_atip": "atípico",
   "bdg_atip_t": "Outlier estatístico nacional: acima de {lim} (Tukey Q3+1,5·IQR no Brasil)",
-
   "ins_1": "Em <b>{local}</b> há <b>{pct}</b> de eleitores em relação à população estimada.",
   "ins_2": "<b>{n}</b> municípios têm mais eleitores registrados que habitantes estimados.",
   "ins_3": "<b>{local}</b> teve a maior entrada líquida: <b>{saldo}</b> eleitores por transferência em {ano}.",
   "ins_4": "O eleitorado mais idoso está em <b>{local}</b>: <b>{pct}</b> têm 70+ anos.",
   "ins_5": "No <b>{uf}</b>, <b>{pct}</b> dos municípios têm mais eleitores que habitantes.",
-
   "font_extraido": "Extraído em {data} — URL, data e <b>hash SHA-256</b> de cada arquivo em <code>manifest/provenance.json</code>.",
   "font_malhas": "Malhas de UF e municípios (GeoJSON)",
   "font_crosswalk": "Crosswalk oficial TSE↔IBGE",
@@ -289,7 +272,6 @@
   "metanota_metodo": "A proporção de pessoas com 16+ por município vem do Censo 2022 (tabela 9514). Como as estimativas anuais (6579) não trazem recorte etário e não cobrem 2022, aplicamos essa proporção do Censo 2022 à estimativa do ano para obter a população 16+ ESTIMADA. É uma extrapolação: assume que a estrutura etária do município se manteve igual à de 2022.",
   "nota_neutra": "Diferenças podem decorrer de domicílio eleitoral (≠ domicílio civil), migração com manutenção do título e do fato de a população do IBGE ser uma estimativa. Razão alta não indica irregularidade por si só.",
   "nota_contas": "Valores declarados na prestação de contas eleitorais de 2024 (candidatos). São o que cada campanha informou ao TSE — não refletem o julgamento das contas e não indicam, por si sós, irregularidade. Gasto maior não significa compra de votos: o voto é secreto.",
-
   "met_summary": "Metodologia e limites",
   "met_ler": "ler ▾",
   "met_h3_fontes": "Fontes e anos de referência",
@@ -321,12 +303,10 @@
   "met_li_lim6": "<b>Gastos de campanha</b> são valores <b>declarados</b> na prestação de contas de 2024 — não refletem o julgamento das contas pelo TSE e não indicam, por si sós, irregularidade. <b>Gasto maior não significa compra de votos</b>: o voto é secreto. Usamos as <i>despesas contratadas</i> (gasto total declarado) e as <i>receitas</i> (arrecadação); “despesas pagas” e doadores não entram.",
   "met_li_lim7": "<b>Orçamento público</b> (SICONFI) é dinheiro da <b>prefeitura</b>, não de campanha. São despesas <i>empenhadas</i> e receitas realizadas declaradas pelo próprio município; a <b>cobertura depende do envio</b> de cada um e os valores não refletem julgamento de contas. <b>Segurança pública</b> é majoritariamente função estadual — muitos municípios gastam pouco ou nada.",
   "met_repro": "Tudo é reproduzível a partir dos dados brutos oficiais; cada arquivo tem URL, data e hash em <code>manifest/provenance.json</code>.",
-
   "foot_h2": "Fontes e procedência",
   "foot_baixar": "⬇ Baixar os dados (JSON)",
   "foot_meto": "Metodologia e limites",
   "foot_licenca": "Código sob licença MIT · dados derivados sob CC-BY 4.0 · fontes originais: TSE (CC-BY) e IBGE. Cada número é reproduzível a partir dos brutos (<code>manifest/provenance.json</code>). População sempre <strong>estimada</strong>.",
-
   "orc_tit": "Orçamento da prefeitura — {ano} (SICONFI/Tesouro)",
   "orc_receita": "Receita",
   "orc_despesa": "Despesa total",
@@ -342,15 +322,6 @@
   "mi_orc_saude": "% do orçamento em saúde",
   "mi_orc_educ": "% do orçamento em educação",
   "nota_orcamento": "Orçamento público da PREFEITURA declarado ao SICONFI/Tesouro Nacional. São despesas empenhadas e receitas realizadas informadas pelo próprio município — a cobertura depende do envio de cada prefeitura e os valores não refletem julgamento de contas. Não confundir com gasto de campanha (TSE): aqui é dinheiro público. Segurança pública é majoritariamente função estadual — muitos municípios gastam pouco ou nada nessa função.",
-  "orc_piso_nota": "Percentuais de aplicação constitucional: saúde (ASPS, piso de 15%) e educação (MDE, piso de 25%), calculados sobre a RECEITA DE IMPOSTOS e transferências — não sobre a despesa total. Fonte: RREO Anexo 14 (6º bimestre), SICONFI/Tesouro Nacional. Disponível apenas onde o município enviou o RREO de 2024 (cobertura parcial). Cumprir o piso é a regra; ficar abaixo pode ter justificativas e é avaliado no julgamento de contas, não aqui.",
-  "piso_tit": "Pisos constitucionais (saúde e educação)",
-  "piso_saude": "Saúde (ASPS)",
-  "piso_educacao": "Educação (MDE)",
-  "piso_min": "mín. {min}%",
-  "piso_suspeito": "dado parece parcial",
-  "piso_suspeito_nota": "⚠️ Um ou mais percentuais acima estão MUITO abaixo do piso (menos de 2/3 dele) — quase sempre sinal de RREO incompleto/inconsistente, e não de descumprimento real. Por isso não damos veredito aqui e a cidade fica fora do ranking. Confira na fonte (SICONFI).",
-  "rank_tab_piso_saude": "Aplicação em saúde abaixo do piso (15%)",
-  "rank_t_piso_saude": "Municípios com MENOR aplicação em saúde (ASPS) sobre a receita de impostos — o piso constitucional é 15%. Excluímos declarações claramente parciais/inconsistentes (abaixo de 2/3 do piso). Ficar abaixo pode ter justificativas e é avaliado no julgamento de contas, NÃO aqui. Cobertura parcial (RREO 2024).",
   "evo_tit": "Evolução do eleitorado",
   "evo_var": "{pct} entre {de} e {ate}",
   "evo_nota": "Tamanho do eleitorado APTO a votar em cada eleição (1º turno), do TSE: 2014/2018/2022 são eleições gerais e 2016/2020/2024, municipais. Mostra a tendência do eleitorado ao longo do tempo — apto a votar naquele pleito.",

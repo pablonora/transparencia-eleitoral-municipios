@@ -115,27 +115,6 @@ class TestDadosBrasil(unittest.TestCase):
             return bad or None
         self._viol(pred, "orçamento incoerente")
 
-    # --- PISOS: o invariante que pega o bug do Itabaiana ---
-    def test_pisos_faixa(self):
-        def pred(m):
-            p = m.get("pisos")
-            if not p:
-                return None
-            bad = []
-            for k in ("saude_pct", "educacao_pct"):
-                v = p.get(k)
-                if v is not None and not (0 <= v <= 100):
-                    bad.append(f"{k}={v}")
-            # nenhum valor "fração não normalizada" (ex.: 0,14 que deveria ser 14)
-            for k in ("saude_pct", "educacao_pct"):
-                v = p.get(k)
-                if v is not None and 0 < v < 1:
-                    bad.append(f"{k} suspeito de fração ({v})")
-            if p.get("saude_min") != 15.0 or p.get("educacao_min") != 25.0:
-                bad.append("min != 15/25")
-            return bad or None
-        self._viol(pred, "pisos fora da faixa plausível")
-
     # --- séries ---
     def test_series(self):
         def pred(m):
@@ -168,7 +147,7 @@ class TestDadosBrasil(unittest.TestCase):
     @unittest.skipUnless(_META.exists(), "meta.json ausente")
     def test_meta_ressalvas(self):
         meta = json.loads(_META.read_text(encoding="utf-8"))
-        for n in ("nota_neutra", "nota_contas", "nota_orcamento", "nota_piso"):
+        for n in ("nota_neutra", "nota_contas", "nota_orcamento"):
             self.assertTrue(meta.get(n), f"ressalva ausente no meta: {n}")
 
 

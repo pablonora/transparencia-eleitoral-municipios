@@ -41,7 +41,6 @@
   "suf_bi": "bn",
   "suf_mi": "M",
   "suf_mil": "k",
-
   "map_h2": "The map",
   "map_color_by": "Color by",
   "map_highlight": "highlight",
@@ -66,13 +65,11 @@
   "mi_gasto": "Campaign spending / voter",
   "leg_vira": "turns at",
   "leg_realcando": "highlighting {q}",
-
   "foto_h2": "Brazil at a glance",
   "foto_sub": "Distribution of the <span id='nMun'>—</span> municipalities by the selected indicator (below). Each bar is a value band.",
   "hist_tip": "{faixa}: {n} municipalities",
   "hist_leg_le": "<b>{n}</b> cities up to 100% of the population",
   "hist_leg_gt": "<b>{n}</b> above 100% (more voters than residents)",
-
   "rank_h2": "Who stands out",
   "rank_tab_razao": "Highest ratio",
   "rank_tab_saldo": "Net voter inflow",
@@ -94,7 +91,6 @@
   "rank_t_margem": "Municipalities where the net voter inflow in 2024 exceeded the mayor's margin of victory. This is a FACT (a comparison of two numbers) — it does not say how those voters voted, nor that they decided the election.",
   "rank_t_rev3": "Municipalities meeting the THREE cumulative criteria of TSE Resolution 23,659/2021 (art. 105) — the legally defined set. Meeting them is NOT an irregularity nor a review: any review is at the TSE's discretion.",
   "rank_t_gasto": "Highest DECLARED campaign spending per voter in {ano} (contracted expenses ÷ voters). These are figures declared to the TSE — they do not indicate irregularity or vote-buying; the ballot is secret. Normalized per voter so it isn't merely a ranking of large cities.",
-
   "cmp_h2": "Compare two cities",
   "cmp_sub": "Put two municipalities side by side — handy to settle that argument.",
   "cmp_share": "🔗 Share this comparison",
@@ -144,7 +140,6 @@
   "chip_rev3_t": "Meets the THREE cumulative criteria of TSE Resolution 23,659/2021 (art. 105). Not an irregularity nor a review — any review is at the TSE's discretion.",
   "chip_turno2": "Had a runoff",
   "chip_turno2_t": "Municipalities whose 2024 mayoral election was decided in a runoff (over 200,000 voters).",
-
   "expl_h2": "Explore all municipalities",
   "expl_search_ph": "Search municipality…",
   "expl_all_ufs": "All states",
@@ -177,13 +172,11 @@
   "expl_dica": "Tap any municipality to open the full profile (transfers, abstention, demographics, the 2024 election and more). The “Electorate 2014–24” column shows a sparkline of the eligible electorate's evolution (teal = grew, amber = fell).",
   "tbl_contagem": "{x} of {y} municipalities{trunc}",
   "tbl_trunc": " (showing {n} — refine)",
-
   "demo_1617": "youth 16–17",
   "demo_70": "70+ years",
   "demo_mulheres": "women",
   "demo_superior": "higher education",
   "demo_fundamental": "primary or less",
-
   "comp_tit": "At the time of each election (first round)",
   "comp_2022": "2022 general election",
   "comp_2024": "2024 municipal election",
@@ -193,7 +186,6 @@
   "comp_fonte": "eligible electorate ÷ {fonte} population",
   "fonte_censo": "2022 Census",
   "fonte_estim": "{ano} estimate",
-
   "el_turno2": "runoff",
   "el_turno1": "first round",
   "el_tit": "2024 election — mayor ({turno})",
@@ -218,9 +210,6 @@
   "rank_tab_eleitcresc": "Electorate growth (2014→2024)",
   "rank_t_eleitcresc": "Largest growth of the ELIGIBLE electorate between 2014 and 2024 (last election's electorate ÷ first − 1). A FACT — it reflects new voters, migration and the electoral domicile; it says nothing about how they voted.",
   "cmp_r_eleitcresc": "Electorate growth (2014→2024)",
-  "cmp_r_piso_saude": "Health application (ASPS, 15% floor)",
-  "cmp_r_piso_educ": "Education application (MDE, 25% floor)",
-
   "ct_tit": "Campaign finance — {ano} campaign",
   "ct_arrecadado": "Raised",
   "ct_gasto": "Declared spending",
@@ -229,7 +218,6 @@
   "ct_candidatos": "Candidates",
   "ct_por_eleitor": "{v}/voter",
   "ct_cand_n": "{n} candidates",
-
   "cr_tit": "Legal criteria for an electorate review",
   "cr_1": "Transfers in the year +10% vs. the previous year",
   "cr_2": "Electorate &gt; 2× (pop. aged 10–15 + 70+)",
@@ -237,7 +225,6 @@
   "cr_sim": "<b>Meets all 3 criteria.</b> Even so, any review is at the TSE's <b>discretion</b> — this is neither a review nor an indication of irregularity.",
   "cr_nao": "Does not meet the 3 cumulative criteria.",
   "cr_fonte": "TSE Resolution 23,659/2021, art. 105 — the three are cumulative. Criterion 1 compares 2025 vs. 2024 transfers.",
-
   "city_frase": "There are <b>{per100}</b> registered voters (TSE, {data}) for every <b>100</b> estimated residents (IBGE, {ano}).",
   "city_rank_pais": "<b>#{r}</b> of {tot}<br>nationwide",
   "city_rank_uf": "<b>#{r}</b> of {tot}<br>in {uf}",
@@ -259,7 +246,6 @@
   "city_img_nota": "Not a fraud detector · official TSE × IBGE data",
   "city_img_ok": "Image downloaded ✓",
   "city_tweet": "In {local}: {per100} registered voters (TSE) for every 100 estimated residents (IBGE). A high ratio is common and does not indicate irregularity — see the official context:",
-
   "pp_razao": "ratio",
   "pp_razao16": "16+ ratio",
   "pp_eleitores": "voters",
@@ -268,20 +254,17 @@
   "pp_abstencao": "abstention",
   "pp_pais": "nationwide",
   "pp_ver": "See full profile →",
-
   "bdg_100": "&gt;100%",
   "bdg_100_t": "More voters than estimated residents",
   "bdg_80": "&gt;80%",
   "bdg_80_t": "Electorate above 80% of the population — only the 3rd of the THREE cumulative criteria in TSE Resolution 23,659/2021 (art. 105). On its own it does NOT trigger an electorate review.",
   "bdg_atip": "atypical",
   "bdg_atip_t": "National statistical outlier: above {lim} (Tukey Q3+1.5·IQR across Brazil)",
-
   "ins_1": "In <b>{local}</b> there are <b>{pct}</b> voters relative to the estimated population.",
   "ins_2": "<b>{n}</b> municipalities have more registered voters than estimated residents.",
   "ins_3": "<b>{local}</b> had the largest net inflow: <b>{saldo}</b> voters through transfers in {ano}.",
   "ins_4": "The oldest electorate is in <b>{local}</b>: <b>{pct}</b> are aged 70+.",
   "ins_5": "In <b>{uf}</b>, <b>{pct}</b> of municipalities have more voters than residents.",
-
   "font_extraido": "Extracted on {data} — URL, date and <b>SHA-256 hash</b> of each file in <code>manifest/provenance.json</code>.",
   "font_malhas": "State & municipal boundaries (GeoJSON)",
   "font_crosswalk": "Official TSE↔IBGE crosswalk",
@@ -289,7 +272,6 @@
   "metanota_metodo": "Each municipality's share of people aged 16+ comes from the 2022 Census (table 9514). Since the annual estimates (6579) carry no age breakdown and do not cover 2022, we apply that 2022 Census share to the year's estimate to obtain the ESTIMATED 16+ population. It is an extrapolation: it assumes the municipality's age structure stayed the same as in 2022.",
   "nota_neutra": "Differences may stem from electoral domicile (≠ civil residence), migration with the registration kept, and the fact that the IBGE population is an estimate. A high ratio does not, in itself, indicate any irregularity.",
   "nota_contas": "Figures declared in the 2024 electoral accounts (candidates). They are what each campaign reported to the TSE — they do not reflect any judgment of the accounts and do not, in themselves, indicate irregularity. Spending more does not mean buying votes: the ballot is secret.",
-
   "met_summary": "Methodology and limits",
   "met_ler": "read ▾",
   "met_h3_fontes": "Sources and reference years",
@@ -321,12 +303,10 @@
   "met_li_lim6": "<b>Campaign spending</b> figures are <b>declared</b> in the 2024 electoral accounts — they do not reflect the TSE's judgment of those accounts and do not, in themselves, indicate irregularity. <b>Spending more does not mean buying votes</b>: the ballot is secret. We use <i>contracted expenses</i> (total declared spending) and <i>revenues</i> (fundraising); “paid expenses” and donors are not included.",
   "met_li_lim7": "<b>Public budget</b> (SICONFI) is the <b>city government's</b> money, not campaign money. These are <i>committed</i> expenses and realized revenues declared by the municipality itself; <b>coverage depends on each one's submission</b> and the figures do not reflect any judgment of the accounts. <b>Public security</b> is mostly a state-level function — many municipalities spend little or nothing.",
   "met_repro": "Everything is reproducible from the official raw data; each file has a URL, date and hash in <code>manifest/provenance.json</code>.",
-
   "foot_h2": "Sources and provenance",
   "foot_baixar": "⬇ Download the data (JSON)",
   "foot_meto": "Methodology and limits",
   "foot_licenca": "Code under the MIT license · derived data under CC-BY 4.0 · original sources: TSE (CC-BY) and IBGE. Every figure is reproducible from the raw files (<code>manifest/provenance.json</code>). Population is always <strong>estimated</strong>.",
-
   "orc_tit": "City government budget — {ano} (SICONFI/Treasury)",
   "orc_receita": "Revenue",
   "orc_despesa": "Total spending",
@@ -342,15 +322,6 @@
   "mi_orc_saude": "% of budget on health",
   "mi_orc_educ": "% of budget on education",
   "nota_orcamento": "The CITY GOVERNMENT's public budget as declared to SICONFI/the National Treasury. These are committed expenses and realized revenues reported by the municipality itself — coverage depends on each city's submission and the figures do not reflect any judgment of the accounts. Do not confuse with campaign spending (TSE): this is public money. Public security is mostly a state-level function — many municipalities spend little or nothing on it.",
-  "orc_piso_nota": "Constitutional application percentages: health (ASPS, 15% floor) and education (MDE, 25% floor), computed on TAX and transfer revenue — not on total expenditure. Source: RREO Annex 14 (6th bimester), SICONFI/National Treasury. Available only where the municipality filed its 2024 RREO (partial coverage). Meeting the floor is the rule; falling short may have justifications and is assessed in the audit of accounts, not here.",
-  "piso_tit": "Constitutional floors (health & education)",
-  "piso_saude": "Health (ASPS)",
-  "piso_educacao": "Education (MDE)",
-  "piso_min": "min. {min}%",
-  "piso_suspeito": "data looks partial",
-  "piso_suspeito_nota": "⚠️ One or more percentages above are FAR below the floor (less than 2/3 of it) — almost always a sign of an incomplete/inconsistent RREO filing, not of actual non-compliance. So we give no verdict here and the city is left out of the ranking. Check the source (SICONFI).",
-  "rank_tab_piso_saude": "Health application below the floor (15%)",
-  "rank_t_piso_saude": "Municipalities with the LOWEST health application (ASPS) over tax revenue — the constitutional floor is 15%. We exclude clearly partial/inconsistent filings (below 2/3 of the floor). Falling short may have justifications and is assessed in the audit of accounts, NOT here. Partial coverage (2024 RREO).",
   "evo_tit": "Voter roll over time",
   "evo_var": "{pct} between {de} and {ate}",
   "evo_nota": "Size of the electorate ELIGIBLE to vote in each election (1st round), from the TSE: 2014/2018/2022 are general elections and 2016/2020/2024 municipal ones. Shows the electorate's trend over time — those eligible in that election.",

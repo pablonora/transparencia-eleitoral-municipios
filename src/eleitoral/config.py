@@ -205,46 +205,6 @@ NOTA_ORCAMENTO = (
     "gastam pouco ou nada nessa função."
 )
 
-# Tesouro Nacional — SICONFI / RREO (Relatório Resumido de Execução Orçamentária),
-# Anexo 14 = "Demonstrativo Simplificado do RREO". No 6º bimestre (fechamento do
-# ano) ele traz, numa ÚNICA requisição por ente, os PERCENTUAIS de aplicação
-# constitucional mínima:
-#   • Saúde (ASPS): % das receitas de impostos aplicado em Ações e Serviços
-#     Públicos de Saúde — piso municipal de 15% (EC 29/2000).
-#   • Educação (MDE): % das receitas de impostos aplicado em Manutenção e
-#     Desenvolvimento do Ensino — piso de 25% (art. 212 da Constituição).
-# DIFERE do DCA (despesa por função): aqui é a aplicação mínima constitucional,
-# calculada sobre a RECEITA DE IMPOSTOS+transferências (não sobre a despesa total).
-# Mesmo padrão de consulta por ente (concorrência limitada + cache) do orçamento.
-SICONFI_RREO_URL = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt/rreo"
-SICONFI_RREO_ANEXO = "RREO-Anexo 14"
-SICONFI_RREO_PERIODO = 6  # 6º bimestre = consolidado do ano
-SICONFI_RREO_DATASET = "SICONFI — RREO Anexo 14 (Demonstrativo Simplificado)"
-PISOS_ANO = 2024
-PISOS_COLUNA = "% Aplicado Até o Bimestre"
-# Coluna do MÍNIMO (15%/25%): usada para CALIBRAR a unidade do ente, porque a API
-# devolve o percentual de forma inconsistente — uns em fração (0,15 / 0,14), outros
-# em ponto percentual (15 / 24,11), e alguns entes lançam valor em R$ por engano.
-PISOS_COLUNA_MIN = "% Mínimo a Aplicar no Exercício"
-PISOS_COD_SAUDE = "AplicacaoTotalDasDespesasComAcoesEServicosPublicosDeSaude"
-PISOS_COD_EDUCACAO = (
-    "MinimoAnualDasReceitasDeImpostosNaManutencaoEDesenvolvimento"
-    "DoEnsinoDemonstrativoSimplificado"
-)
-PISO_SAUDE_MIN = 15.0      # % mínimo (municípios, EC 29)
-PISO_EDUCACAO_MIN = 25.0   # % mínimo (art. 212 CF)
-PISOS_WORKERS = 12
-# Ressalva colada ao dado de pisos constitucionais (guardrail de linguagem).
-NOTA_PISO = (
-    "Percentuais de aplicação constitucional em saúde (ASPS, piso de 15%) e "
-    "educação (MDE, piso de 25%), calculados sobre a RECEITA DE IMPOSTOS e "
-    "transferências — NÃO sobre a despesa total. Fonte: RREO Anexo 14 (6º "
-    f"bimestre) no SICONFI/Tesouro Nacional, exercício {PISOS_ANO}. Valores "
-    "declarados pelo próprio município; disponível apenas onde o ente enviou o "
-    f"RREO de {PISOS_ANO} (cobertura parcial). Cumprir o piso é a regra — ficar "
-    "abaixo pode ter justificativas e é avaliado no julgamento de contas, não aqui."
-)
-
 # IBGE — API de Agregados v3.
 IBGE_API = "https://servicodados.ibge.gov.br/api/v3/agregados"
 
