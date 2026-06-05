@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604j";
+const ASSET_V = "20260604k";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -112,7 +112,13 @@ function aplicarI18nDOM() {
     const v = _tr(el.dataset.i18nPh); if (v != null) el.placeholder = v;
   });
   document.querySelectorAll("[data-i18n-title]").forEach((el) => {
-    const v = _tr(el.dataset.i18nTitle); if (v != null) el.title = v.replace(/<[^>]+>/g, "");
+    const v = _tr(el.dataset.i18nTitle);
+    if (v != null) {
+      const limpo = v.replace(/<[^>]+>/g, "");
+      el.title = limpo;
+      // botões só-ícone (ex.: ⇄) têm aria-label = título, traduzido junto
+      if (el.hasAttribute("aria-label")) el.setAttribute("aria-label", limpo);
+    }
   });
 }
 // Reflete o idioma atual na URL (?lang=), preservando os demais parâmetros. Como
@@ -883,6 +889,13 @@ function linkCompare(A, B) {
 function initComparar() {
   attachAutocomplete(document.getElementById("cmpA"), document.getElementById("acA"), (m) => { cmpAsel = m; renderCompare(); });
   attachAutocomplete(document.getElementById("cmpB"), document.getElementById("acB"), (m) => { cmpBsel = m; renderCompare(); });
+  const sw = document.getElementById("cmpSwap");
+  if (sw) sw.addEventListener("click", () => {
+    const ia = document.getElementById("cmpA"), ib = document.getElementById("cmpB");
+    [cmpAsel, cmpBsel] = [cmpBsel, cmpAsel];        // troca A↔B (e o Δ inverte junto)
+    const tmp = ia.value; ia.value = ib.value; ib.value = tmp;
+    renderCompare();
+  });
   const sh = document.getElementById("cmpShare");
   if (sh) sh.addEventListener("click", async () => {
     if (!cmpAsel || !cmpBsel) return;

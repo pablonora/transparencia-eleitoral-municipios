@@ -41,7 +41,7 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260604j">
+  <link rel="stylesheet" href="style.css?v=20260604k">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -270,6 +270,7 @@
     <p class="sub" data-i18n="cmp_sub">Coloque dois municípios lado a lado — bom pra resolver aquela discussão.</p>
     <div class="compare-inputs">
       <div class="cmp-field"><input type="search" id="cmpA" placeholder="Cidade A…" data-i18n-ph="cmp_a_ph" autocomplete="off"><div class="ac" id="acA" hidden></div></div>
+      <button class="cmp-swap" id="cmpSwap" type="button" data-i18n-title="cmp_swap" title="Trocar A e B" aria-label="Trocar A e B">⇄</button>
       <div class="cmp-field"><input type="search" id="cmpB" placeholder="Cidade B…" data-i18n-ph="cmp_b_ph" autocomplete="off"><div class="ac" id="acB" hidden></div></div>
     </div>
     <div id="compareOut" class="compare-out"></div>
@@ -418,6 +419,6 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js?v=20260604j"></script>
+<script src="app.js?v=20260604k"></script>
 </body>
 </html>

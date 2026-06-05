@@ -387,8 +387,15 @@ tr.detalhe em { color: var(--accent); font-style: normal; font-weight: 600; }
 code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; font-size: .85em; color: var(--code-ink); }
 
 /* comparador */
-.compare-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; max-width: 620px; }
+.compare-inputs { display: grid; grid-template-columns: 1fr auto 1fr; gap: .6rem; max-width: 660px; align-items: center; }
 .cmp-field { position: relative; }
+.cmp-swap {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+  font-size: 1.15rem; line-height: 1; cursor: pointer;
+  transition: background .14s ease, color .14s ease, border-color .14s ease, transform .12s ease;
+}
+.cmp-swap:hover { border-color: var(--accent); color: var(--accent); transform: rotate(180deg); }
 .cmp-field input { width: 100%; padding: .65rem .8rem; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 9px; font-size: .95rem; }
 .cmp-field input:focus { outline: none; border-color: var(--accent); }
 .compare-out { margin-top: 1.2rem; }
