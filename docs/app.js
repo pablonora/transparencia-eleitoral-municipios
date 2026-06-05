@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604c";
+const ASSET_V = "20260604d";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -183,8 +183,12 @@ let DADOS = null, META = null, LINHAS = [];
 let ordenarPor = "razao_total", ordemDesc = true;
 const flagsAtivas = new Set();
 let busca = "", ufSel = "";
+// snapshot dos parâmetros da URL no carregamento: o primeiro render() já reescreve
+// a URL (sync do explorador), então guardamos os params ANTES de qualquer render.
+let _urlInicial = null;
 
 async function carregar() {
+  _urlInicial = new URLSearchParams(location.search);
   // meta.json é pequeno e sempre buscado fresco (no-store); dele tiramos a "versão"
   // dos dados (gerado_em) para versionar o brasil.json. Assim o JSON grande (~2,4 MB
   // gzip) pode ser cacheado de forma IMUTÁVEL: instantâneo em revisitas e re-baixado
@@ -216,7 +220,10 @@ async function carregar() {
   preencherUFs(a.ufs || []);
   renderFontes();
   bind();
+  restaurarExploradorDaURL();   // aplica UF/busca/ordenação/marcadores/mapa da URL
   render();
+  renderRanking();              // re-render com a UF eventualmente restaurada
+  renderHistograma();
   abrirDeepLink();
 }
 
@@ -331,17 +338,29 @@ function rankDefs() {
       val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null),
       fmt: PCT,
     },
+    eleitcresc: {
+      titulo: t("rank_t_eleitcresc"),
+      val: crescEleit,
+      fmt: (v) => sig(v == null ? null : v * 100),
+    },
+    piso_saude: {
+      titulo: t("rank_t_piso_saude"),
+      val: pisoSaude,
+      fmt: (v) => (v == null ? "—" : v.toFixed(1).replace(".", _dec()) + "%"),
+      asc: true,        // menor primeiro (mais perto/abaixo do piso de 15%)
+      piso: 15,
+    },
   };
 }
 function renderRanking() {
   const def = rankDefs()[rankAtual];
   let pool = LINHAS.filter((m) => def.val(m) != null);
   if (ufSel) pool = pool.filter((m) => m.uf === ufSel);
-  pool.sort((a, b) => def.val(b) - def.val(a));
+  pool.sort((a, b) => def.asc ? def.val(a) - def.val(b) : def.val(b) - def.val(a));
   const top = pool.slice(0, 15);
   const maxV = Math.max(...top.map((m) => Math.abs(def.val(m))), 1e-9);
   const sub = document.getElementById("rankSub");
-  const sensivel = (rankAtual === "margem" || rankAtual === "rev3" || rankAtual === "gasto" || rankAtual === "orc");
+  const sensivel = (rankAtual === "margem" || rankAtual === "rev3" || rankAtual === "gasto" || rankAtual === "orc" || rankAtual === "piso_saude");
   sub.className = sensivel ? "sub rank-cuidado" : "sub";
   sub.innerHTML = (sensivel ? "⚠️ " : "") + def.titulo + (ufSel ? ` <strong>(${ufSel})</strong>` : "");
   document.getElementById("ranking").innerHTML = top.map((m) => {
@@ -706,9 +725,64 @@ function cityCardHTML(m) {
     <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${t("nota_neutra")}</p>
     <div class="acts">
       <button class="btn" id="pf-share">${t("city_share")}</button>
+      <button class="btn ghost" id="pf-img">${t("city_img")}</button>
       <a class="btn ghost" id="pf-x" target="_blank" rel="noopener">${t("btn_tweet")}</a>
     </div>
   </div>`;
+}
+// Gera um card PNG (1200×630) com os números da cidade e baixa no navegador
+// (sem servidor: canvas → toDataURL → <a download>). Reaproveita as fontes já
+// carregadas; em fallback usa sans-serif.
+function baixarImagemCidade(m) {
+  const W = 1200, H = 630, PAD = 80;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  x.fillStyle = "#0b0c11"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#ffd23f"; x.fillRect(0, 0, W, 8);
+  x.textBaseline = "alphabetic";
+  // eyebrow
+  x.fillStyle = "#ffd23f"; x.font = "700 25px Inter, sans-serif";
+  try { x.letterSpacing = "2px"; } catch (e) {}
+  x.fillText("TRANSPARÊNCIA ELEITORAL · TSE + IBGE", PAD, 92);
+  try { x.letterSpacing = "0px"; } catch (e) {}
+  // nome + UF (encolhe a fonte se o nome for muito largo)
+  let fs = 70;
+  x.fillStyle = "#eef1f6"; x.font = `800 ${fs}px Sora, sans-serif`;
+  while (x.measureText(m.nome).width > W - PAD * 2 - 90 && fs > 40) { fs -= 4; x.font = `800 ${fs}px Sora, sans-serif`; }
+  x.fillText(m.nome, PAD, 168);
+  const nw = x.measureText(m.nome).width;
+  x.fillStyle = "#9aa3b2"; x.font = "600 34px Inter, sans-serif";
+  x.fillText(m.uf, PAD + nw + 18, 168);
+  // razão grande
+  x.fillStyle = "#ffd23f"; x.font = "800 104px Sora, sans-serif";
+  x.fillText(PCT0(m.razao_total), PAD, 290);
+  x.fillStyle = "#cfd6e2"; x.font = "500 28px Inter, sans-serif";
+  x.fillText(t("city_img_sub"), PAD, 330);
+  // células de estatística (até 3)
+  const cresc = crescEleit(m);
+  const cells = [
+    [fmt(m.eleitores), t("city_d_eleitores")],
+    cresc != null ? [sig(cresc * 100), t("city_img_cresc")] : [fmt(m.pop_total_estimada), t("city_d_pop", { ano: DADOS.ano_populacao })],
+    m._abst != null ? [PCT(m._abst), t("pp_abstencao")] : (m.eleicao2024 && m.eleicao2024.partido ? [m.eleicao2024.partido, t("el_partido")] : null),
+  ].filter(Boolean);
+  const cw = (W - PAD * 2 - 25 * (cells.length - 1)) / cells.length, cy = 380, ch = 130;
+  cells.forEach((cell, i) => {
+    const cx = PAD + i * (cw + 25);
+    x.fillStyle = "#11141c";
+    if (x.roundRect) { x.beginPath(); x.roundRect(cx, cy, cw, ch, 12); x.fill(); } else x.fillRect(cx, cy, cw, ch);
+    x.fillStyle = "#ffd23f"; x.font = "800 42px Sora, sans-serif"; x.fillText(String(cell[0]), cx + 22, cy + 62);
+    x.fillStyle = "#9aa3b2"; x.font = "500 21px Inter, sans-serif"; x.fillText(String(cell[1]), cx + 22, cy + 100);
+  });
+  // rodapé
+  x.fillStyle = "#9aa3b2"; x.font = "400 23px Inter, sans-serif";
+  x.fillText(t("city_img_nota"), PAD, 575);
+  x.fillStyle = "#46e0c0"; x.font = "600 23px Inter, sans-serif";
+  x.fillText("pablonora.github.io/transparencia-eleitoral-municipios", PAD, 605);
+  // download
+  const a = document.createElement("a");
+  a.href = c.toDataURL("image/png");
+  a.download = `${m.nome}-${m.uf}`.normalize("NFD").replace(/[^\w-]+/g, "_") + ".png";
+  document.body.appendChild(a); a.click(); a.remove();
 }
 function linkCidade(m) {
   const u = new URL(location.origin + location.pathname);
@@ -738,6 +812,9 @@ function abrirCidade(m) {
       if (navigator.share) { await navigator.share({ title: `${m.nome}-${m.uf}`, url: link }); return; }
       await navigator.clipboard.writeText(link); toast();
     } catch (_) { /* cancelado */ }
+  });
+  document.getElementById("pf-img").addEventListener("click", () => {
+    try { baixarImagemCidade(m); toast(t("city_img_ok")); } catch (_) {}
   });
 }
 function abrirDeepLink() {
@@ -837,6 +914,7 @@ function renderCompare() {
     { lab: t("cmp_r_razao22"), f: (m) => (m.comparecimento && m.comparecimento["2022"]) ? m.comparecimento["2022"].razao_epoca : null, fm: PCT, d: _ppF },
     { lab: t("cmp_r_eleitores"), f: (m) => m.eleitores, fm: fmt },
     { lab: t("cmp_r_pop", { ano }), f: (m) => m.pop_total_estimada, fm: fmt },
+    { lab: t("cmp_r_eleitcresc"), f: crescEleit, fm: (v) => (v == null ? "—" : sig(v * 100)), d: _ppF },
     { grp: t("cmp_g_demografia") },
     { lab: t("cmp_r_1617"), f: (m) => m.pct_16_17, fm: PCT, d: _ppF },
     { lab: t("cmp_r_70"), f: (m) => m.pct_70mais, fm: PCT, d: _ppF },
@@ -864,6 +942,8 @@ function renderCompare() {
     { lab: t("cmp_r_orc_saude"), f: orcF("saude"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_orc_educ"), f: orcF("educacao"), fm: PCT, d: _ppF },
     { lab: t("cmp_r_orc_seg"), f: orcF("seguranca"), fm: PCT, d: _ppF },
+    { lab: t("cmp_r_piso_saude"), f: pisoSaude, fm: (v) => (v == null ? "—" : v.toFixed(1).replace(".", _dec()) + "%"), d: _ppN },
+    { lab: t("cmp_r_piso_educ"), f: pisoEduc, fm: (v) => (v == null ? "—" : v.toFixed(1).replace(".", _dec()) + "%"), d: _ppN },
   ];
   const dcell = (va, vb, dmag) => {
     if (va == null || vb == null || typeof va !== "number" || typeof vb !== "number") return `<td class="dlt">—</td>`;
@@ -924,6 +1004,16 @@ function cor(t) {
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
+// crescimento do eleitorado entre o 1º e o último ponto da série (aptos 2014→2024).
+// Devolve fração (0,061 = +6,1%); null se não há série suficiente.
+function crescEleit(m) {
+  const s = m.eleitorado_serie;
+  if (!s || s.length < 2 || !s[0].aptos) return null;
+  return (s[s.length - 1].aptos - s[0].aptos) / s[0].aptos;
+}
+const pisoSaude = (m) => (m.pisos && m.pisos.saude_pct != null) ? m.pisos.saude_pct : null;
+const pisoEduc = (m) => (m.pisos && m.pisos.educacao_pct != null) ? m.pisos.educacao_pct : null;
+
 /* indicadores que o mapa pode mostrar (recolorem UF e município) */
 let mapInd = "razao", destaque = "todos", UF_AGG = {};
 const MAP_INDS = {
@@ -933,6 +1023,7 @@ const MAP_INDS = {
   escol:   { label: "mi_escol", val: (m) => m.pct_ate_fundamental, seq: [0.2, 0.8], fmt: (v) => PCT(v), leg: ["20%", "≥80%"] },
   saldo:   { label: "mi_saldo", val: (m) => (m.eleitores ? m.transferencias_saldo / m.eleitores : null), div: [-0.05, 0, 0.05], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−5%", "0", "+5%"] },
   cresc:   { label: "mi_cresc", val: (m) => (m.crescimento_pop_pct != null ? m.crescimento_pop_pct / 100 : null), div: [-0.01, 0, 0.01], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−1%", "0", "+1%"] },
+  eleitcresc: { label: "mi_eleitcresc", val: crescEleit, div: [-0.1, 0, 0.4], fmt: (v) => sig(v == null ? null : v * 100), leg: ["−10%", "0", "≥+40%"] },
   abst24:  { label: "mi_abst24", val: (m) => (m.comparecimento && m.comparecimento["2024"] ? m.comparecimento["2024"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
   abst22:  { label: "mi_abst22", val: (m) => (m.comparecimento && m.comparecimento["2022"] ? m.comparecimento["2022"].abst_pct : null), seq: [0, 0.4], fmt: (v) => PCT(v), leg: ["0%", "≥40%"] },
   gasto:   { label: "mi_gasto", val: (m) => (m.contas ? m.contas.despesa_por_eleitor : null), seq: [10, 90], fmt: (v) => (v == null ? "—" : BRL2.format(v)), leg: ["≤R$ 10", "≥R$ 90"] },
@@ -1194,6 +1285,47 @@ function ordenar(linhas) {
     return ordemDesc ? vb - va : va - vb;
   });
 }
+// Deep link do explorador: reflete UF + busca + ordenação + marcadores + indicador
+// do mapa na URL (preservando lang/cidade/a/b), e restaura no carregamento. Assim
+// uma "visão filtrada" (ex.: PI ordenado por abstenção) vira um link compartilhável.
+function sincronizarURLExplorador() {
+  try {
+    const u = new URL(location.href), sp = u.searchParams;
+    const setDel = (k, v) => { if (v) sp.set(k, v); else sp.delete(k); };
+    setDel("uf", ufSel);
+    setDel("q", busca);
+    if (ordenarPor && ordenarPor !== "razao_total") { sp.set("ord", ordenarPor); sp.set("dir", ordemDesc ? "desc" : "asc"); }
+    else { sp.delete("ord"); sp.delete("dir"); }
+    setDel("flags", [...flagsAtivas].join(","));
+    setDel("map", (mapInd && mapInd !== "razao") ? mapInd : "");
+    history.replaceState(null, "", u);
+  } catch (_) {}
+}
+function restaurarExploradorDaURL() {
+  const sp = _urlInicial || new URLSearchParams(location.search);
+  const uf = sp.get("uf");
+  if (uf && (DADOS.ufs || []).includes(uf)) {
+    ufSel = uf;
+    document.querySelectorAll("select.uf-sync").forEach((s) => { s.value = uf; });
+  }
+  const q = sp.get("q");
+  if (q) { busca = q.trim().toLowerCase(); const b = document.getElementById("busca"); if (b) b.value = q; }
+  const ord = sp.get("ord");
+  if (ord) {
+    ordenarPor = ord; ordemDesc = sp.get("dir") !== "asc";
+    const os = document.getElementById("ordcampo");
+    if (os && [...os.options].some((o) => o.value === ord)) os.value = ord;
+  }
+  const flags = sp.get("flags");
+  if (flags) {
+    flags.split(",").filter(Boolean).forEach((f) => flagsAtivas.add(f));
+    document.querySelectorAll(".chip").forEach((c) => {
+      if (flagsAtivas.has(c.dataset.flag)) c.setAttribute("aria-pressed", "true");
+    });
+  }
+  const map = sp.get("map");
+  if (map && MAP_INDS[map]) { mapInd = map; const ms = document.getElementById("mapaInd"); if (ms) ms.value = map; }
+}
 function render() {
   const todas = ordenar(filtrar());
   const linhas = todas.slice(0, LIMITE_LINHAS);
@@ -1218,6 +1350,7 @@ function render() {
     th.removeAttribute("aria-sort");
     if (th.dataset.k === ordenarPor) th.setAttribute("aria-sort", ordemDesc ? "descending" : "ascending");
   });
+  sincronizarURLExplorador();
 }
 
 /* ---------------- EVENTOS ---------------- */
@@ -1231,7 +1364,7 @@ function bind() {
   });
   const histSel = document.getElementById("histInd");
   if (histSel) histSel.addEventListener("change", (e) => { histInd = e.target.value; renderHistograma(); });
-  document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; recolorMapa(); });
+  document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; recolorMapa(); sincronizarURLExplorador(); });
   document.querySelectorAll("#mapaFiltro button").forEach((b) => {
     b.setAttribute("aria-pressed", b.classList.contains("on") ? "true" : "false");
     b.addEventListener("click", () => {
