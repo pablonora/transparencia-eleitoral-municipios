@@ -41,7 +41,7 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260604e">
+  <link rel="stylesheet" href="style.css?v=20260604g">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -259,7 +259,7 @@
       <button class="tab" data-rk="bn" data-i18n="rank_tab_bn">Brancos + nulos (prefeito)</button>
       <button class="tab" data-rk="gasto" data-i18n="rank_tab_gasto">Gasto de campanha por eleitor</button>
       <button class="tab" data-rk="orc" data-i18n="orc_tab">Gasto público em saúde por habitante</button>
-      <button class="tab" data-rk="piso_saude" data-i18n="rank_tab_piso_saude">Menor aplicação em saúde (piso 15%)</button>
+      <button class="tab" data-rk="piso_saude" data-i18n="rank_tab_piso_saude">Aplicação em saúde abaixo do piso (15%)</button>
       <button class="tab" data-rk="rev3" data-i18n="rank_tab_rev3">Atende aos 3 critérios (TSE)</button>
     </div>
     <p class="sub" id="rankSub"></p>
@@ -314,7 +314,7 @@
             <th data-k="pop_total_estimada" class="num"><span data-i18n="th_pop">População</span> <span id="th-anopop"></span></th>
             <th data-k="razao_total" class="num"><span data-i18n="th_razao">Razão</span> <span class="ajuda" data-i18n-title="th_razao_t" title="Eleitores ÷ população estimada, em %. 100% = tantos eleitores quanto habitantes.">ⓘ</span></th>
             <th data-k="razao_16mais" class="num"><span data-i18n="th_razao16">Razão 16+</span> <span class="ajuda" data-i18n-title="th_razao16_t" title="Eleitores ÷ população em idade de votar (16+) estimada — proporção do Censo 2022 aplicada à estimativa do ano. Passa de 100% com facilidade (divisor menor); leia junto da razão total.">ⓘ</span></th>
-            <th data-i18n="th_tend" data-i18n-title="th_tend_t" title="Tendência do eleitorado apto em cada eleição, de 2014 a 2024.">Tendência</th>
+            <th data-i18n="th_tend" data-i18n-title="th_tend_t" title="Mini-gráfico da evolução do eleitorado apto em cada eleição, de 2014 a 2024 — verde se cresceu, âmbar se caiu.">Eleitorado 2014–24</th>
             <th data-k="_flags" data-i18n="th_marcadores">Marcadores</th>
           </tr>
         </thead>
@@ -419,6 +419,6 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js?v=20260604e"></script>
+<script src="app.js?v=20260604g"></script>
 </body>
 </html>

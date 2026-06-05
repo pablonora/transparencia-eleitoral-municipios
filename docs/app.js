@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604e";
+const ASSET_V = "20260604g";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -345,10 +345,14 @@ function rankDefs() {
     },
     piso_saude: {
       titulo: t("rank_t_piso_saude"),
-      val: pisoSaude,
+      // exclui declarações parciais/inconsistentes (< 2/3 do piso) — não acusar
+      // a partir de dado furado; elas aparecem só no perfil, com ressalva.
+      val: (m) => {
+        const v = pisoSaude(m), min = (m.pisos && m.pisos.saude_min) || 15;
+        return (v != null && !pisoSuspeito(v, min)) ? v : null;
+      },
       fmt: (v) => (v == null ? "—" : v.toFixed(1).replace(".", _dec()) + "%"),
       asc: true,        // menor primeiro (mais perto/abaixo do piso de 15%)
-      piso: 15,
     },
   };
 }
@@ -540,10 +544,16 @@ function orcamentoBlock(m) {
 function pisosBlock(m) {
   const p = m.pisos;
   if (!p) return "";
+  let temSusp = false;
   const linha = (lab, pct, min) => {
     if (pct == null) return "";
-    const ok = pct >= min;
     const v = pct.toFixed(1).replace(".", _dec()) + "%";
+    if (pisoSuspeito(pct, min)) {      // dado parece parcial → não dá veredito ✓/✕
+      temSusp = true;
+      return `<div class="cb-row"><span class="cb-ano">${lab}</span>
+        <b class="piso-susp">${v}</b> <small class="piso-susp-tag">⚠️ ${t("piso_suspeito")}</small></div>`;
+    }
+    const ok = pct >= min;
     return `<div class="cb-row"><span class="cb-ano">${lab}</span>
       <b class="${ok ? "piso-ok" : "piso-no"}">${v}</b>
       <small>${t("piso_min", { min: Math.round(min) })} ${ok ? "✓" : "✕"}</small></div>`;
@@ -553,6 +563,7 @@ function pisosBlock(m) {
   if (!sa && !ed) return "";
   return `<div class="comp-blk"><div class="cb-tit">${t("piso_tit")}</div>
     ${sa}${ed}
+    ${temSusp ? `<div class="cb-fonte">${t("piso_suspeito_nota")}</div>` : ""}
     <div class="cb-fonte">${t("orc_piso_nota")}</div>
   </div>`;
 }
@@ -1029,6 +1040,12 @@ function crescEleit(m) {
 }
 const pisoSaude = (m) => (m.pisos && m.pisos.saude_pct != null) ? m.pisos.saude_pct : null;
 const pisoEduc = (m) => (m.pisos && m.pisos.educacao_pct != null) ? m.pisos.educacao_pct : null;
+// Declaração de piso provavelmente PARCIAL/INCONSISTENTE: aplicação abaixo de 2/3 do
+// piso (saúde <10%, educação <16,7%). Cidade funcionando não roda saúde a <10% das
+// receitas de impostos — é quase sempre RREO incompleto. Esses ficam de FORA dos
+// rankings (não acusar a partir de dado furado) e ganham ressalva no perfil.
+const PISO_SUSP_FRAC = 2 / 3;
+const pisoSuspeito = (pct, min) => pct != null && min && pct < min * PISO_SUSP_FRAC;
 // sparkline SVG inline da série do eleitorado (6 pontos), teal se cresceu / âmbar se caiu
 function sparklineSerie(m, w, h) {
   const s = m.eleitorado_serie;

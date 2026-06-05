@@ -425,6 +425,9 @@ code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; f
 /* pisos constitucionais: % aplicado em saúde/educação (verde = cumpre, âmbar = abaixo) */
 .cb-row b.piso-ok { color: var(--accent2); }
 .cb-row b.piso-no { color: var(--b100); }
+/* dado de piso suspeito (parcial/inconsistente): sem veredito, tom neutro */
+.cb-row b.piso-susp { color: var(--muted); }
+.piso-susp-tag { color: var(--muted); font-style: italic; }
 /* mini-gráfico de evolução do eleitorado (3 pontos) */
 .evo-chart { display: flex; align-items: flex-end; gap: .8rem; margin: .3rem 0 .2rem; }
 .evo-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 0; }
