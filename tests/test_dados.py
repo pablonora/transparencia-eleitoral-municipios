@@ -144,6 +144,16 @@ class TestDadosBrasil(unittest.TestCase):
             extra = set(g) - permitido
             self.assertEqual(extra, set(), f"governador {uf} com campo inesperado: {extra}")
 
+    def test_estados_orcamento(self):
+        for uf, e in (self.d.get("estados") or {}).items():
+            if e.get("despesa") is None:
+                continue
+            self.assertGreater(e["despesa"], 0, f"{uf}: despesa<=0")
+            for f in ("saude", "educacao", "seguranca", "assistencia", "urbanismo", "pessoal"):
+                v = e.get(f)
+                if v is not None:
+                    self.assertLessEqual(v, e["despesa"] * 1.05, f"{uf}: {f} > despesa")
+
     @unittest.skipUnless(_META.exists(), "meta.json ausente")
     def test_meta_ressalvas(self):
         meta = json.loads(_META.read_text(encoding="utf-8"))

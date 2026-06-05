@@ -98,6 +98,12 @@ def main(offline: bool = False) -> None:
     print("[orcamento] orçamento público municipal (SICONFI)...")
     orcamento_mun = orcamento.agregar(manifest, [ind.cd_ibge for ind in inds], offline=offline)
 
+    # 6c) orçamento do GOVERNO ESTADUAL por função (SICONFI/DCA) — 27 entes (UF).
+    estados_cod = {}
+    if config.UF_SIGLA is None:
+        print("[estados] orçamento estadual por função (SICONFI)...")
+        estados_cod = orcamento.agregar_estados(manifest, offline=offline)
+
     registros = []
     for ind in inds:
         d = indicators.para_dict(ind)
@@ -222,6 +228,9 @@ def main(offline: bool = False) -> None:
     uf_codigos = {}
     for cd_tse, mun in mapa.items():
         uf_codigos.setdefault(mun.sg_uf, mun.cd_ibge[:2])
+    # orçamento estadual: rechaveia por sigla da UF (estava por código IBGE de 2 díg)
+    _cod2sigla = {c: s for s, c in uf_codigos.items()}
+    estados = {_cod2sigla[c]: d for c, d in estados_cod.items() if c in _cod2sigla}
 
     # malhas geográficas (UF + municipal por UF) para o mapa
     if config.UF_SIGLA is None:
@@ -246,6 +255,7 @@ def main(offline: bool = False) -> None:
         "nota_orcamento": config.NOTA_ORCAMENTO,
         "ano_orcamento": config.ORCAMENTO_ANO,
         "governadores": governadores,
+        "estados": estados,
         "resumo": {
             "n_municipios": len(registros),
             "n_mais_eleitores_que_pop": n_acima_100,

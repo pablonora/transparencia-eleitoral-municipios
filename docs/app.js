@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604m";
+const ASSET_V = "20260604n";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -500,9 +500,32 @@ function eleicaoBlock(m) {
 }
 function govBlock(m) {
   const g = DADOS.governadores && DADOS.governadores[m.uf];
-  if (!g) return "";
-  return `<div class="comp-blk"><div class="cb-tit">${t("gov_tit", { uf: m.uf })}</div>
-    <div class="cb-row"><span class="cb-ano">${t("el_governador")}</span><b>${g.governador}</b> · ${g.partido}</div></div>`;
+  const e = DADOS.estados && DADOS.estados[m.uf];
+  if (!g && !e) return "";
+  let html = `<div class="comp-blk"><div class="cb-tit">${t("gov_tit", { uf: m.uf })}</div>`;
+  if (g) html += `<div class="cb-row"><span class="cb-ano">${t("el_governador")}</span><b>${g.governador}</b> · ${g.partido}</div>`;
+  if (e) {
+    const pop = e.populacao;
+    const pcap = (v) => (v != null && pop ? `${BRL0.format(v / pop)}${t("orc_hab")}` : "");
+    const pctd = (v) => (v != null && e.despesa ? PCT(v / e.despesa) : "");
+    const linha = (lab, v) => v == null ? "" :
+      `<div class="cb-row"><span class="cb-ano">${lab}</span>${moeda(v)} <small>${[pctd(v), pcap(v)].filter(Boolean).join(" · ")}</small></div>`;
+    const funcoes = [
+      linha(t("orc_saude"), e.saude), linha(t("orc_educacao"), e.educacao),
+      linha(t("orc_seguranca"), e.seguranca), linha(t("orc_assistencia"), e.assistencia),
+      linha(t("orc_urbanismo"), e.urbanismo),
+    ].filter(Boolean).join("");
+    if (e.despesa != null) {
+      html += `<div class="cb-row"><span class="cb-ano">${t("orc_estado_despesa")}</span><b>${moeda(e.despesa)}</b>${pop ? ` <small>(${BRL0.format(e.despesa / pop)}${t("orc_hab")})</small>` : ""}</div>`;
+    }
+    if (funcoes) html += `<div class="cb-subhead">${t("orc_subhead_funcao")}</div>${funcoes}`;
+    if (e.pessoal != null) {
+      html += `<div class="cb-subhead">${t("orc_subhead_tipo")}</div>
+        <div class="cb-row"><span class="cb-ano">${t("orc_pessoal")}</span>${moeda(e.pessoal)}${pcap(e.pessoal) ? ` <small>${pcap(e.pessoal)}</small>` : ""}</div>`;
+    }
+    html += `<div class="cb-fonte">${t("orc_estado_nota")}</div>`;
+  }
+  return html + `</div>`;
 }
 function contasBlock(m) {
   const c = m.contas;
@@ -545,7 +568,7 @@ function orcamentoBlock(m) {
   // diferente da MESMA despesa, NÃO soma com as funções. Por isso bloco separado.
   const pessoal = o.pessoal == null ? "" :
     `<div class="cb-subhead">${t("orc_subhead_tipo")}</div>
-     <div class="cb-row"><span class="cb-ano">${t("orc_pessoal")}</span>${moeda(o.pessoal)} <small>${[pctd(o.pessoal), pcap(o.pessoal)].filter(Boolean).join(" · ")}</small></div>
+     <div class="cb-row"><span class="cb-ano">${t("orc_pessoal")}</span>${moeda(o.pessoal)}${pcap(o.pessoal) ? ` <small>${pcap(o.pessoal)}</small>` : ""}</div>
      <div class="cb-fonte">${t("orc_pessoal_nota")}</div>`;
   return `<div class="comp-blk"><div class="cb-tit">${t("orc_tit", { ano: DADOS.ano_orcamento })}</div>
     <div class="cb-row"><span class="cb-ano">${t("orc_receita")}</span><b>${moeda(o.receita)}</b></div>

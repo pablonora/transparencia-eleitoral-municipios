@@ -179,3 +179,72 @@ def agregar(manifest: Manifest, cods: list[str], *, offline: bool = False,
         http_status=200, content_type="application/json", notes=notes)
     print(f"[orcamento] {len(municipios)}/{len(cods)} municípios com dados de orçamento")
     return municipios
+
+
+def _estado(cod: str, ano: int) -> dict | None:
+    """Orçamento do GOVERNO DO ESTADO (id_ente = código IBGE da UF, 2 dígitos).
+    Mesma estrutura do município (DCA I-E/I-C/I-D) + a população do ente."""
+    base = config.SICONFI_DCA_URL
+    try:
+        ie = _get(f"{base}?an_exercicio={ano}&no_anexo=DCA-Anexo+I-E&id_ente={cod}")["items"]
+        ic = _get(f"{base}?an_exercicio={ano}&no_anexo=DCA-Anexo+I-C&id_ente={cod}")["items"]
+    except Exception:
+        return None
+    total, funcs = parse_despesa_funcao(ie)
+    bruta, liquida = parse_receita(ic)
+    if total is None and bruta is None and not funcs:
+        return None
+    pessoal = None
+    try:
+        idd = _get(f"{base}?an_exercicio={ano}&no_anexo={config.ORCAMENTO_ANEXO_NATUREZA.replace(' ', '+')}&id_ente={cod}")["items"]
+        pessoal = parse_pessoal(idd)
+    except Exception:
+        pessoal = None
+    pop = next((i.get("populacao") for i in ie if i.get("populacao")), None)
+    out = {"despesa": _r(total), "receita": _r(bruta), "receita_liquida": _r(liquida),
+           "pessoal": _r(pessoal), "populacao": pop}
+    soma = 0.0
+    for codf, chave in config.ORCAMENTO_FUNCOES.items():
+        v = funcs.get(codf)
+        if v:
+            out[chave] = _r(v)
+            soma += v
+    if total:
+        out["outras"] = _r(max(0.0, total - soma))
+    return {k: v for k, v in out.items() if v is not None}
+
+
+def agregar_estados(manifest: Manifest, *, offline: bool = False,
+                    ano: int = config.ORCAMENTO_ANO) -> dict[str, dict]:
+    """Retorna {cod_ibge_uf(2 díg) -> {despesa, receita, saude, ...}} dos 27 estados.
+    Crawl pequeno (27 entes). offline reaproveita data/interim/estados_{ano}.json."""
+    interim = config.INTERIM / f"estados_{ano}.json"
+    ds = "SICONFI — DCA dos estados (governo estadual)"
+    if offline and interim.exists():
+        cache = json.loads(interim.read_text(encoding="utf-8"))
+        prov = cache.get("_proc", {})
+        manifest.record(dataset_name=ds, publisher=config.SICONFI_PUBLISHER,
+                        source_url=config.SICONFI_DCA_URL, local_path=interim,
+                        downloaded_at=prov.get("lido_em", utc_now_iso()), reference_period=str(ano),
+                        http_status=200, content_type="application/json", notes=prov.get("notes", ""))
+        print(f"[estados] offline: {len(cache['estados'])} estados (cache)")
+        return cache["estados"]
+    cods = config.UF_CODIGOS_IBGE
+    print(f"[estados] SICONFI DCA {ano}: {len(cods)} estados (id_ente=UF)…")
+    estados: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        for cod, d in zip(cods, ex.map(lambda c: _estado(c, ano), cods)):
+            if d:
+                estados[cod] = d
+    notes = (f"DCA I-E (despesa/função) + I-C (receita) + I-D (pessoal) do GOVERNO "
+             f"ESTADUAL (id_ente=UF), exercício {ano}; {len(estados)}/{len(cods)} estados.")
+    proc = {"lido_em": utc_now_iso(), "ano": ano, "notes": notes}
+    interim.parent.mkdir(parents=True, exist_ok=True)
+    interim.write_text(json.dumps({"_proc": proc, "estados": estados},
+                                  ensure_ascii=False, indent=2), encoding="utf-8")
+    manifest.record(dataset_name=ds, publisher=config.SICONFI_PUBLISHER,
+                    source_url=config.SICONFI_DCA_URL, local_path=interim,
+                    downloaded_at=proc["lido_em"], reference_period=str(ano),
+                    http_status=200, content_type="application/json", notes=notes)
+    print(f"[estados] {len(estados)}/{len(cods)} estados com orçamento")
+    return estados
