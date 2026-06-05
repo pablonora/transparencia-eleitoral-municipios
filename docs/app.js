@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604k";
+const ASSET_V = "20260604l";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -188,7 +188,7 @@ const NCOLS = 10;
 let DADOS = null, META = null, LINHAS = [];
 let ordenarPor = "razao_total", ordemDesc = true;
 const flagsAtivas = new Set();
-let busca = "", ufSel = "";
+let busca = "", ufSel = "", porteSel = "", partidoSel = "";
 // snapshot dos parâmetros da URL no carregamento: o primeiro render() já reescreve
 // a URL (sync do explorador), então guardamos os params ANTES de qualquer render.
 let _urlInicial = null;
@@ -224,6 +224,7 @@ async function carregar() {
   renderRanking();
   initComparar();
   preencherUFs(a.ufs || []);
+  preencherPartidos();
   renderFontes();
   bind();
   restaurarExploradorDaURL();   // aplica UF/busca/ordenação/marcadores/mapa da URL
@@ -1260,6 +1261,13 @@ function preencherUFs(ufs) {
     ufs.forEach((u) => { const o = document.createElement("option"); o.value = u; o.textContent = u; sel.appendChild(o); });
   });
 }
+// opções do filtro de partido do prefeito (siglas únicas eleitas em 2024, ordenadas)
+function preencherPartidos() {
+  const sel = document.getElementById("partido");
+  if (!sel) return;
+  const ps = [...new Set(LINHAS.map((m) => m.eleicao2024 && m.eleicao2024.partido).filter(Boolean))].sort();
+  ps.forEach((p) => { const o = document.createElement("option"); o.value = p; o.textContent = p; sel.appendChild(o); });
+}
 // filtro de UF unificado: sincroniza todos os seletores e re-renderiza tabela,
 // ranking e histograma (assim o filtro vale "em todo lugar", de forma consistente).
 function setUF(uf) {
@@ -1288,10 +1296,18 @@ const CHIP_PREDS = {
   rev3: (m) => m.revisao && m.revisao.atende_3,
   turno2: (m) => m.eleicao2024 && m.eleicao2024.turno === "2",
 };
+// porte por população: p < 20 mil, m 20–100 mil, g > 100 mil
+function porteMatch(m) {
+  if (!porteSel) return true;
+  const p = m.pop_total_estimada || 0;
+  return porteSel === "p" ? p < 20000 : porteSel === "m" ? (p >= 20000 && p <= 100000) : p > 100000;
+}
 function filtrar() {
   return LINHAS.filter((m) => {
     if (ufSel && m.uf !== ufSel) return false;
     if (busca && !m.nome.toLowerCase().includes(busca)) return false;
+    if (!porteMatch(m)) return false;
+    if (partidoSel && !(m.eleicao2024 && m.eleicao2024.partido === partidoSel)) return false;
     for (const f of flagsAtivas) { const p = CHIP_PREDS[f]; if (p ? !p(m) : !m[f]) return false; }
     return true;
   });
@@ -1329,6 +1345,8 @@ function sincronizarURLExplorador() {
     const setDel = (k, v) => { if (v) sp.set(k, v); else sp.delete(k); };
     setDel("uf", ufSel);
     setDel("q", busca);
+    setDel("porte", porteSel);
+    setDel("partido", partidoSel);
     if (ordenarPor && ordenarPor !== "razao_total") { sp.set("ord", ordenarPor); sp.set("dir", ordemDesc ? "desc" : "asc"); }
     else { sp.delete("ord"); sp.delete("dir"); }
     setDel("flags", [...flagsAtivas].join(","));
@@ -1345,6 +1363,10 @@ function restaurarExploradorDaURL() {
   }
   const q = sp.get("q");
   if (q) { busca = q.trim().toLowerCase(); const b = document.getElementById("busca"); if (b) b.value = q; }
+  const porte = sp.get("porte");
+  if (["p", "m", "g"].includes(porte)) { porteSel = porte; const e = document.getElementById("porte"); if (e) e.value = porte; }
+  const part = sp.get("partido");
+  if (part) { const e = document.getElementById("partido"); if (e && [...e.options].some((o) => o.value === part)) { partidoSel = part; e.value = part; } }
   const ord = sp.get("ord");
   if (ord) {
     ordenarPor = ord; ordemDesc = sp.get("dir") !== "asc";
@@ -1394,6 +1416,10 @@ function bind() {
   document.getElementById("busca").addEventListener("input", (e) => { busca = e.target.value.trim().toLowerCase(); render(); });
   document.querySelectorAll("select.uf-sync").forEach((s) =>
     s.addEventListener("change", (e) => setUF(e.target.value)));
+  const porteEl = document.getElementById("porte");
+  if (porteEl) porteEl.addEventListener("change", (e) => { porteSel = e.target.value; render(); });
+  const partidoEl = document.getElementById("partido");
+  if (partidoEl) partidoEl.addEventListener("change", (e) => { partidoSel = e.target.value; render(); });
   const ordSel = document.getElementById("ordcampo");
   if (ordSel) ordSel.addEventListener("change", (e) => {
     ordenarPor = e.target.value || "razao_total"; ordemDesc = true; render();

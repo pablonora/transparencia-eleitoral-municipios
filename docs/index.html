@@ -41,7 +41,7 @@
       } catch (e) { document.documentElement.dataset.theme = "dark"; }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20260604k">
+  <link rel="stylesheet" href="style.css?v=20260604l">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -293,6 +293,15 @@
         <option value="o_orc_saude" data-i18n="ord_orc_saude">% orçamento saúde</option>
         <option value="o_orc_educ" data-i18n="ord_orc_educ">% orçamento educação</option>
       </select>
+      <select id="porte" aria-label="Filtrar por porte (população)">
+        <option value="" data-i18n="porte_all">Qualquer porte</option>
+        <option value="p" data-i18n="porte_p">Pequeno (&lt; 20 mil)</option>
+        <option value="m" data-i18n="porte_m">Médio (20–100 mil)</option>
+        <option value="g" data-i18n="porte_g">Grande (&gt; 100 mil)</option>
+      </select>
+      <select id="partido" aria-label="Filtrar por partido do prefeito">
+        <option value="" data-i18n="partido_all">Qualquer partido (prefeito)</option>
+      </select>
       <div class="chips" id="chips" role="group" aria-label="Filtrar por marcador">
         <button class="chip" data-flag="mais_eleitores_que_pop" data-i18n="chip_cem" data-i18n-title="chip_cem_t">Mais eleitores que habitantes (&gt;100%)</button>
         <button class="chip" data-flag="acima_limiar_tse" data-i18n="chip_tse" data-i18n-title="chip_tse_t" title="Eleitorado > 80% da população — apenas o 3º dos três critérios cumulativos da Res. TSE 23.659/2021. Sozinho não enseja revisão.">Eleitorado &gt; 80% da pop.</button>
@@ -419,6 +428,6 @@
   <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
 </div>
 
-<script src="app.js?v=20260604k"></script>
+<script src="app.js?v=20260604l"></script>
 </body>
 </html>
