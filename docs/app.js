@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260604i";
+const ASSET_V = "20260604j";
 // respeita "reduzir movimento" do sistema (a11y) em scrolls/animações de mapa
 const prefersReducedMotion = () =>
   window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -525,15 +525,25 @@ function orcamentoBlock(m) {
   const pctd = (v) => (v != null && o.despesa ? PCT(v / o.despesa) : "");
   const linha = (lab, v) => v == null ? "" :
     `<div class="cb-row"><span class="cb-ano">${lab}</span>${moeda(v)} <small>${[pctd(v), pcap(v)].filter(Boolean).join(" · ")}</small></div>`;
+  // POR FUNÇÃO (para onde vai): saúde, educação… — repartem a despesa total.
+  const funcoes = [
+    linha(t("orc_saude"), o.saude),
+    linha(t("orc_educacao"), o.educacao),
+    linha(t("orc_seguranca"), o.seguranca),
+    linha(t("orc_assistencia"), o.assistencia),
+    linha(t("orc_urbanismo"), o.urbanismo),
+  ].filter(Boolean).join("");
+  // POR TIPO (que tipo de gasto): pessoal ATRAVESSA todas as funções — recorte
+  // diferente da MESMA despesa, NÃO soma com as funções. Por isso bloco separado.
+  const pessoal = o.pessoal == null ? "" :
+    `<div class="cb-subhead">${t("orc_subhead_tipo")}</div>
+     <div class="cb-row"><span class="cb-ano">${t("orc_pessoal")}</span>${moeda(o.pessoal)} <small>${[pctd(o.pessoal), pcap(o.pessoal)].filter(Boolean).join(" · ")}</small></div>
+     <div class="cb-fonte">${t("orc_pessoal_nota")}</div>`;
   return `<div class="comp-blk"><div class="cb-tit">${t("orc_tit", { ano: DADOS.ano_orcamento })}</div>
     <div class="cb-row"><span class="cb-ano">${t("orc_receita")}</span><b>${moeda(o.receita)}</b></div>
     <div class="cb-row"><span class="cb-ano">${t("orc_despesa")}</span><b>${moeda(o.despesa)}</b>${pop ? ` <small>(${BRL0.format(o.despesa / pop)}${t("orc_hab")})</small>` : ""}</div>
-    ${linha(t("orc_pessoal"), o.pessoal)}
-    ${linha(t("orc_saude"), o.saude)}
-    ${linha(t("orc_educacao"), o.educacao)}
-    ${linha(t("orc_seguranca"), o.seguranca)}
-    ${linha(t("orc_assistencia"), o.assistencia)}
-    ${linha(t("orc_urbanismo"), o.urbanismo)}
+    ${funcoes ? `<div class="cb-subhead">${t("orc_subhead_funcao")}</div>${funcoes}` : ""}
+    ${pessoal}
     <div class="cb-fonte">${t("nota_orcamento")}</div>
   </div>`;
 }
