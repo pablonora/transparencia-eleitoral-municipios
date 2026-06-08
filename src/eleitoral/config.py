@@ -211,6 +211,100 @@ NOTA_ORCAMENTO = (
     "gastam pouco ou nada nessa função."
 )
 
+# TransfereGov — Transferências Especiais (emendas parlamentares individuais que
+# vão DIRETO à conta do município, modalidade criada pela EC 105/2019, a "emenda
+# Pix"). API REST pública, ABERTA (sem chave), baseada em PostgREST, com CORS
+# liberado (a própria API reflete o Origin) — por isso pode ser consultada tanto
+# no build (snapshot agregado) quanto AO VIVO pelo navegador (botão "tempo real"),
+# filtrando por CNPJ do beneficiário. É o sistema operacional vivo: já traz o ano
+# corrente. Recurso usado: plano_acao_especial.
+#
+# ENQUADRAMENTO/ressalva (NOTA_EMENDAS): cobre SÓ a modalidade transferência
+# especial (RP6). NÃO inclui emendas de finalidade definida executadas por
+# convênio/fundo-a-fundo (ex.: saúde via FNS), nem emendas de bancada, comissão
+# ou relator. É um recorte bem definido — o dinheiro que cai direto no município.
+#
+# O beneficiário vem por NOME+UF (não por código IBGE): casamos com o nome oficial
+# do IBGE (crosswalk) por igualdade normalizada; os poucos divergentes entram na
+# tabela curada EMENDAS_APELIDOS (verificada à mão — NUNCA fuzzy, que fabricaria
+# match errado). Quem não casar é logado e DESCARTADO (nunca chutado).
+TRANSFEREGOV_ESPECIAIS_URL = "https://api.transferegov.dth.api.gov.br/transferenciasespeciais"
+EMENDAS_PUBLISHER = "TransfereGov — Ministério da Gestão e da Inovação"
+EMENDAS_DATASET = "TransfereGov — Transferências Especiais (plano_acao_especial)"
+EMENDAS_ANO_MIN = 2020          # 1º ano da modalidade (EC 105/2019)
+EMENDAS_PAGINA = 1000           # PostgREST: itens por página
+EMENDAS_TOP_PARLAMENTARES = 6   # ranking exibido por município
+EMENDAS_ULTIMAS = 6             # nº de emendas recentes no snapshot estático
+# Áreas (código de função orçamentária → chave interna). Reaproveita as funções
+# do orçamento e acrescenta as comuns em emendas. O que não estiver aqui = "outras".
+EMENDAS_AREAS = {
+    "10": "saude", "12": "educacao", "06": "seguranca", "08": "assistencia",
+    "15": "urbanismo", "04": "administracao", "26": "transporte", "20": "agricultura",
+    "18": "ambiente", "27": "desporto", "13": "cultura", "23": "turismo",
+}
+# Apelidos VERIFICADOS À MÃO (nome normalizado da TransfereGov, sem prefixo
+# "MUNICIPIO DE"/sufixo "PREFEITURA", por UF) → código IBGE. São grafias antigas/
+# divergentes e municípios renomeados; cada código foi conferido no crosswalk.
+EMENDAS_APELIDOS = {
+    ("BA", "LAGEDO DO TABOCAL"): "2919058",
+    ("BA", "MUQUEM DO SAO FRANCISCO"): "2922250",
+    ("GO", "BOM JESUS"): "5203500",                  # Bom Jesus de Goiás
+    ("MG", "BARAO DO MONTE ALTO"): "3105509",
+    ("MG", "DONA EUZEBIA"): "3122900",               # Dona Eusébia
+    ("MG", "GOUVEA"): "3127602",                     # Gouveia
+    ("MG", "QUELUZITA"): "3153806",                  # Queluzito
+    ("PB", "TACIMA"): "2516409",                     # Campo de Santana (nome antigo)
+    ("PE", "BELEM DE SAO FRANCISCO"): "2601607",
+    ("PE", "IGUARACI"): "2606903",                   # Iguaracy
+    ("PR", "BELA VISTA DO CAROBA"): "4102752",
+    ("PR", "MUNHOZ DE MELLO"): "4116307",            # Munhoz de Melo
+    ("PR", "PINHAL DO SAO BENTO"): "4119251",
+    ("PR", "SANTA CRUZ DO MONTE CASTELO"): "4123303",
+    ("RJ", "ARMACAO DE BUZIOS"): "3300233",          # Armação dos Búzios
+    ("RN", "ASSU"): "2400208",                       # Açu
+    ("RN", "BOA SAUDE"): "2405306",                  # Januário Cicco
+    ("RN", "CAMPO GRANDE"): "2401305",               # Augusto Severo
+    ("RN", "LAGOA DANTA"): "2406205",                # Lagoa d'Anta
+    ("RS", "SANTANA DO LIVRAMENTO"): "4317103",      # Sant'Ana do Livramento
+    ("SC", "BALNEARIO DE PICARRAS"): "4212809",      # Balneário Piçarras
+    ("SC", "PRESIDENTE CASTELO BRANCO"): "4213906",  # Presidente Castello Branco
+    ("SC", "SAO LOURENCO D OESTE"): "4216909",       # São Lourenço do Oeste
+    ("SC", "SAO MIGUEL D OESTE"): "4217204",         # São Miguel do Oeste
+    ("SE", "GRACCHO CARDOSO"): "2802601",            # Gracho Cardoso
+    ("SP", "EMBU DAS ARTES"): "3515004",             # Embu
+    ("SP", "ESTANCIA TURISTICA DE IBITINGA"): "3519600",  # Ibitinga
+    ("SP", "ESTANCIA TURISTICA DE OLIMPIA"): "3533908",   # Olímpia
+    ("SP", "FLORINEA"): "3516101",                   # Florínia
+    ("SP", "JAHU"): "3525300",                       # Jaú
+    ("SP", "MOGI MIRIM"): "3530805",                 # Moji Mirim
+    ("SP", "SAO LUIZ DO PARAITINGA"): "3550001",     # São Luís do Paraitinga
+    ("TO", "COUTO DE MAGALHAES"): "1706001",         # Couto Magalhães
+    ("TO", "SAO VALERIO DA NATIVIDADE"): "1720499",  # São Valério
+}
+# Rótulo Câmara/Senado por parlamentar: a TransfereGov não traz a casa, então
+# cruzamos o NOME do autor com as listas abertas da Câmara e do Senado, cobrindo
+# as legislaturas que abrangem o período das emendas (56 = 2019–2023, 57 =
+# 2023–2027). Match por nome normalizado; quem não bater fica sem rótulo (sem
+# chute). Ambas as APIs são públicas e sem chave.
+CAMARA_API = "https://dadosabertos.camara.leg.br/api/v2"
+SENADO_API = "https://legis.senado.leg.br/dadosabertos"
+CAMARA_DATASET = "Câmara dos Deputados — lista de deputados (dados abertos)"
+SENADO_DATASET = "Senado Federal — lista de senadores por legislatura (dados abertos)"
+EMENDAS_LEGISLATURAS = [56, 57]
+
+# Ressalva colada ao dado de emendas (guardrail de linguagem).
+NOTA_EMENDAS = (
+    "Emendas parlamentares na modalidade TRANSFERÊNCIA ESPECIAL (a 'emenda Pix', "
+    "EC 105/2019), que vão direto à conta do município, conforme a TransfereGov "
+    "(Ministério da Gestão). NÃO inclui emendas executadas por convênio ou "
+    "fundo-a-fundo (como saúde pelo Fundo Nacional de Saúde), nem emendas de "
+    "bancada, comissão ou relator, nem emendas de deputado estadual — portanto não "
+    "é o total de emendas do município. São valores autorizados/empenhados, não "
+    "necessariamente já pagos, e não indicam, por si sós, irregularidade. Se uma "
+    "emenda específica não aparecer, pode ser de outra modalidade, de deputado "
+    "estadual, recente ou ainda não registrada na TransfereGov."
+)
+
 # IBGE — API de Agregados v3.
 IBGE_API = "https://servicodados.ibge.gov.br/api/v3/agregados"
 
