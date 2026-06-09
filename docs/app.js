@@ -1268,6 +1268,7 @@ const MAP_INDS = {
   orcsaude:{ label: "mi_orc_saude", val: (m) => (m.orcamento && m.orcamento.saude != null && m.orcamento.despesa) ? m.orcamento.saude / m.orcamento.despesa : null, seq: [0.15, 0.32], fmt: (v) => PCT(v), leg: ["≤15%", "≥32%"] },
   orceduc: { label: "mi_orc_educ", val: (m) => (m.orcamento && m.orcamento.educacao != null && m.orcamento.despesa) ? m.orcamento.educacao / m.orcamento.despesa : null, seq: [0.18, 0.42], fmt: (v) => PCT(v), leg: ["≤18%", "≥42%"] },
   bn:      { label: "mi_bn", val: (m) => (m.eleicao2024 ? m.eleicao2024.pct_brancos_nulos : null), seq: [0.02, 0.10], fmt: (v) => PCT(v), leg: ["≤2%", "≥10%"] },
+  emendas_hab: { label: "mi_emendas_hab", val: (m) => (m.emendas && m.emendas.total && m.pop_total_estimada) ? m.emendas.total / m.pop_total_estimada : null, seq: [50, 2000], fmt: (v) => (v == null ? "—" : BRL0.format(v)), leg: ["≤R$ 50", "≥R$ 2 mil"] },
 };
 const _lerp = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 // divergente daltônico-friendly: azul ↔ laranja (em vez de azul ↔ vermelho).
@@ -1636,7 +1637,10 @@ function restaurarExploradorDaURL() {
     });
   }
   const map = sp.get("map");
-  if (map && MAP_INDS[map]) { mapInd = map; const ms = document.getElementById("mapaInd"); if (ms) ms.value = map; }
+  if (map && MAP_INDS[map]) {
+    mapInd = map; const ms = document.getElementById("mapaInd"); if (ms) ms.value = map;
+    if (map === "emendas_hab" && !EMENDAS_RESUMO) ensureEmendasResumo().then(recolorMapa);  // carga sob demanda
+  }
 }
 function render() {
   const todas = ordenar(filtrar());
@@ -1693,8 +1697,16 @@ function bind() {
     ordenarPor = e.target.value || "razao_total"; ordemDesc = true; render();
   });
   const histSel = document.getElementById("histInd");
-  if (histSel) histSel.addEventListener("change", (e) => { histInd = e.target.value; renderHistograma(); });
-  document.getElementById("mapaInd").addEventListener("change", (e) => { mapInd = e.target.value; track("mapa-" + mapInd); recolorMapa(); sincronizarURLExplorador(); });
+  if (histSel) histSel.addEventListener("change", (e) => {
+    histInd = e.target.value;
+    if (histInd === "emendas_hab" && !EMENDAS_RESUMO) ensureEmendasResumo().then(renderHistograma);  // carga sob demanda
+    renderHistograma();
+  });
+  document.getElementById("mapaInd").addEventListener("change", (e) => {
+    mapInd = e.target.value; track("mapa-" + mapInd);
+    if (mapInd === "emendas_hab" && !EMENDAS_RESUMO) ensureEmendasResumo().then(recolorMapa);  // carga sob demanda
+    recolorMapa(); sincronizarURLExplorador();
+  });
   document.querySelectorAll("#mapaFiltro button").forEach((b) => {
     b.setAttribute("aria-pressed", b.classList.contains("on") ? "true" : "false");
     b.addEventListener("click", () => {
