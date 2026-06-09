@@ -294,16 +294,29 @@ EMENDAS_LEGISLATURAS = [56, 57]
 
 # Ressalva colada ao dado de emendas (guardrail de linguagem).
 NOTA_EMENDAS = (
-    "Emendas parlamentares na modalidade TRANSFERÊNCIA ESPECIAL (a 'emenda Pix', "
-    "EC 105/2019), que vão direto à conta do município, conforme a TransfereGov "
-    "(Ministério da Gestão). NÃO inclui emendas executadas por convênio ou "
-    "fundo-a-fundo (como saúde pelo Fundo Nacional de Saúde), nem emendas de "
-    "bancada, comissão ou relator, nem emendas de deputado estadual — portanto não "
-    "é o total de emendas do município. São valores autorizados/empenhados, não "
-    "necessariamente já pagos, e não indicam, por si sós, irregularidade. Se uma "
-    "emenda específica não aparecer, pode ser de outra modalidade, de deputado "
-    "estadual, recente ou ainda não registrada na TransfereGov."
+    "Emendas parlamentares FEDERAIS de todas as modalidades (individual, bancada, "
+    "comissão e relator), conforme os Documentos de Despesa do Portal da "
+    "Transparência (CGU). Atribuídas ao MUNICÍPIO DE APLICAÇÃO do recurso (campo "
+    "oficial do Portal); emendas nacionais ou de âmbito estadual não entram no "
+    "recorte municipal. NÃO inclui emendas de deputado estadual. São valores "
+    "EMPENHADOS (reservados), não necessariamente já pagos, e não indicam, por si "
+    "sós, irregularidade. Atualização semanal."
 )
+
+# Portal da Transparência (CGU) — Emendas parlamentares, TODAS as modalidades
+# (individual, bancada, comissão, relator), com valores empenhado/liquidado/pago.
+# Fonte mais completa que a TransfereGov (que só tem transferência especial), mas
+# exige CHAVE pessoal (gov.br). A chave NUNCA vai no código/repo: é lida da variável
+# de ambiente PORTAL_API_KEY (local) e do Secret homônimo no GitHub Actions. Como a
+# chave fica no servidor/local (não no navegador), o snapshot é SEMANAL (sem botão
+# "tempo real"). O recurso /emendas é paginado; identifica o município pela
+# `localidadeDoGasto` (texto). Rate limit: 400 req/min (700 de 0h–6h) — paceamos.
+PORTAL_API_URL = "https://api.portaldatransparencia.gov.br/api-de-dados"
+PORTAL_API_KEY_ENV = "PORTAL_API_KEY"
+PORTAL_EMENDAS_PUBLISHER = "Controladoria-Geral da União — Portal da Transparência"
+PORTAL_EMENDAS_DATASET = "Portal da Transparência — Emendas parlamentares (todas as modalidades)"
+PORTAL_RATE_RPM = 340          # teto auto-imposto, folga sob os 400/min oficiais
+PORTAL_EMENDAS_ANOS = [2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
 # IBGE — API de Agregados v3.
 IBGE_API = "https://servicodados.ibge.gov.br/api/v3/agregados"

@@ -12,6 +12,12 @@ data/processed/
 # para rebaixar e conferir bytes idênticos. Ver README ("Procedência").
 data/raw/tse/*.zip
 
+# Emendas do Portal da Transparência (download em massa por ano). Baixados
+# MANUALMENTE no navegador (o WAF da Amazon bloqueia automação headless), então
+# não são reproduzíveis pelo CI — ficam locais. O derivado docs/data/emendas.json
+# é que é versionado. ~130 MB no total.
+data/raw/portal/*.zip
+
 # Mantemos versionados os brutos pequenos (crosswalk e respostas do IBGE),
 # essenciais para reproduzir os números sem depender da rede.
 !data/raw/crosswalk/

@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from . import (config, comparecimento, contas, crosswalk, eleitorado, emendas,
+from . import (config, comparecimento, contas, crosswalk, eleitorado,
                governador, ibge, indicators, malhas, orcamento, resultados,
                transferencia)
 from .download import baixar_tudo
@@ -99,16 +99,11 @@ def main(offline: bool = False) -> None:
     print("[orcamento] orçamento público municipal (SICONFI)...")
     orcamento_mun = orcamento.agregar(manifest, [ind.cd_ibge for ind in inds], offline=offline)
 
-    # 6d) emendas parlamentares FEDERAIS (transferências especiais, TransfereGov).
-    # Só a "emenda Pix" (RP6) que cai direto na conta do município; deputado
-    # federal + senador, com rótulo de casa. Não cobre estaduais nem outras
-    # modalidades (ver config.NOTA_EMENDAS).
-    print("[emendas] emendas parlamentares federais (TransfereGov)...")
-    emendas_mun = emendas.agregar(manifest, mapa, offline=offline)
-    # carga SOB DEMANDA: emendas vão para docs/data/emendas.json (não embutidas no
-    # brasil.json, que fica leve e só é baixado mensalmente).
-    emendas_gerado_em = utc_now_iso()
-    emendas.escrever_snapshot(emendas_mun, gerado_em=emendas_gerado_em)
+    # Emendas parlamentares FEDERAIS: NÃO entram aqui. São processadas à parte por
+    # `python -m eleitoral.emendas_federal` (download em massa do Portal da
+    # Transparência, manual no navegador por causa do WAF), que gera
+    # docs/data/emendas_resumo.json + docs/data/emendas/{uf}.json e carimba
+    # meta.emendas_gerado_em. O front carrega esses sob demanda.
 
     # 6c) orçamento do GOVERNO ESTADUAL por função (SICONFI/DCA) — 27 entes (UF).
     estados_cod = {}
@@ -219,8 +214,7 @@ def main(offline: bool = False) -> None:
         if o:
             d["orcamento"] = o
 
-        # Emendas: NÃO embutidas aqui — ficam em docs/data/emendas.json (carga sob
-        # demanda no front). Ver emendas.escrever_snapshot acima.
+        # Emendas federais: processadas à parte (eleitoral.emendas_federal).
         registros.append(d)
 
     # 7) saída ---------------------------------------------------------------
@@ -234,8 +228,6 @@ def main(offline: bool = False) -> None:
     despesa_nac = round(sum(d["contas"]["despesa_total"] for d in registros if d.get("contas")), 2)
     receita_nac = round(sum(d["contas"]["receita_total"] for d in registros if d.get("contas")), 2)
     n_orcamento = sum(1 for d in registros if d.get("orcamento"))
-    n_emendas = len(emendas_mun)
-    emendas_total_nac = round(sum((v.get("total") or 0) for v in emendas_mun.values()), 2)
     orc_despesa_nac = round(sum(d["orcamento"].get("despesa") or 0 for d in registros if d.get("orcamento")), 2)
     orc_saude_nac = round(sum(d["orcamento"].get("saude") or 0 for d in registros if d.get("orcamento")), 2)
     orc_educ_nac = round(sum(d["orcamento"].get("educacao") or 0 for d in registros if d.get("orcamento")), 2)
@@ -284,8 +276,6 @@ def main(offline: bool = False) -> None:
             "despesa_campanha_total": despesa_nac,
             "receita_campanha_total": receita_nac,
             "n_com_orcamento": n_orcamento,
-            "n_com_emendas": n_emendas,
-            "emendas_total": emendas_total_nac,
             "orcamento_despesa_total": orc_despesa_nac,
             "orcamento_saude_total": orc_saude_nac,
             "orcamento_educacao_total": orc_educ_nac,
@@ -297,7 +287,7 @@ def main(offline: bool = False) -> None:
     saida = config.DOCS_DATA / f"{config.escopo_slug()}.json"
     saida.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    _escrever_meta(manifest, ano_pop, el.dt_geracao, emendas_gerado_em)
+    _escrever_meta(manifest, ano_pop, el.dt_geracao)
     manifest.write()
 
     print(f"[ok] {len(registros)} municípios em {len(ufs)} UF | >100%: {n_acima_100} | "
@@ -307,12 +297,20 @@ def main(offline: bool = False) -> None:
           f"receita R$ {receita_nac:,.0f}")
     print(f"[ok] orçamento: {n_orcamento} municípios | despesa pública R$ {orc_despesa_nac:,.0f} | "
           f"saúde R$ {orc_saude_nac:,.0f} | educação R$ {orc_educ_nac:,.0f}")
-    print(f"[ok] emendas federais: {n_emendas} municípios | total R$ {emendas_total_nac:,.0f}")
     print(f"[ok] docs/data/{config.escopo_slug()}.json + meta.json + manifest/provenance.json")
 
 
-def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str,
-                   emendas_gerado_em: str | None = None) -> None:
+def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str) -> None:
+    # preserva o carimbo das emendas federais (gerado à parte por emendas_federal),
+    # senão o front perde a versão de cache do emendas_resumo/{uf}.json.
+    emendas_gerado_em = None
+    if config.DOCS_DATA.joinpath("meta.json").exists():
+        try:
+            emendas_gerado_em = json.loads(
+                (config.DOCS_DATA / "meta.json").read_text(encoding="utf-8")
+            ).get("emendas_gerado_em")
+        except Exception:  # noqa: BLE001
+            emendas_gerado_em = None
     fontes = [
         {
             "dataset": s["dataset_name"], "publisher": s["publisher"],
@@ -384,20 +382,21 @@ def _escrever_meta(manifest: Manifest, ano_pop: str, dt_eleitorado: str,
             },
             "emendas_federais": {
                 "definicao": (
-                    "emendas parlamentares FEDERAIS na modalidade transferência "
-                    "especial (a 'emenda Pix', EC 105/2019) recebidas pelo "
-                    f"município, de {config.EMENDAS_ANO_MIN} em diante, por "
-                    "deputado federal e senador, com rótulo da casa."
+                    "emendas parlamentares FEDERAIS de TODAS as modalidades "
+                    "(individual, bancada, comissão, relator) recebidas pelo "
+                    "município (2020 em diante), com modalidade, área, autor e casa, "
+                    "e valor por mês (filtro de período no front)."
                 ),
                 "metodo": (
-                    "Recurso plano_acao_especial da TransfereGov (API pública, sem "
-                    "chave). Beneficiário casado ao código IBGE por nome+UF (tabela "
-                    "de apelidos curada; nunca fuzzy). Casa do autor cruzada com as "
-                    "listas abertas da Câmara e do Senado por nome. O front pode "
-                    "atualizar AO VIVO por CNPJ do beneficiário (mesma API)."
+                    "Download em massa 'Emendas por Documentos de Despesa' do Portal "
+                    "da Transparência (CGU), um CSV por ano, baixado manualmente no "
+                    "navegador (o WAF bloqueia automação). Atribuído ao MUNICÍPIO DE "
+                    "APLICAÇÃO (código IBGE oficial do Portal). Processado por "
+                    "eleitoral.emendas_federal → docs/data/emendas_resumo.json + "
+                    "emendas/{uf}.json. Atualização semanal."
                 ),
                 "ressalva": config.NOTA_EMENDAS,
-                "fonte": f"{config.EMENDAS_PUBLISHER}; Câmara e Senado (dados abertos)",
+                "fonte": "Controladoria-Geral da União — Portal da Transparência; Câmara e Senado (casa)",
             },
             "votos_branco_nulo": {
                 "definicao": ("votos válidos, brancos e nulos na eleição para prefeito "
