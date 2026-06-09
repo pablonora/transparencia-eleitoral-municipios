@@ -446,6 +446,11 @@ code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; f
 .em-quem { min-width: 0; }                       /* deixa quebrar/truncar nomes longos */
 .em-val { flex: none; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .em-sub { display: block; color: var(--muted); font-size: .72rem; margin-top: .05rem; }
+/* seletor de período das emendas (ano + mês) */
+.em-periodo { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; margin: .1rem 0 .5rem; }
+.em-periodo-lab { font-size: .74rem; color: var(--muted); }
+.em-sel { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: .25rem .5rem; font-size: .8rem; font-family: inherit; cursor: pointer; }
+.em-sel:disabled { opacity: .5; cursor: default; }
 /* chip da casa: Câmara (teal) × Senado (âmbar) — cores distintas, legível nos dois
    temas (deriva das vars --accent/--accent2 via color-mix). */
 .casa-tag { display: inline-block; font-size: .6rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; padding: .06rem .42rem; border-radius: 999px; vertical-align: middle; margin-left: .35rem; border: 1px solid transparent; white-space: nowrap; }

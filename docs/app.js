@@ -3,7 +3,7 @@
 // Versão dos assets servidos pelo Pages (bump junto com ?v= de app.js/style.css no
 // index.html). Usada para versionar fetch de i18n → permite cache imutável (a URL
 // muda quando o conteúdo muda), em vez de re-baixar a cada visita.
-const ASSET_V = "20260608e";
+const ASSET_V = "20260609a";
 
 // Métricas de interação: eventos custom do GoatCounter. No-op quando o count.js
 // não carregou (localhost / Do Not Track → window.goatcounter ausente). Nunca lança,
@@ -206,25 +206,40 @@ const LIMITE_LINHAS = 800;
 const NCOLS = 10;
 
 let DADOS = null, META = null, LINHAS = [];
-// Emendas: CARGA SOB DEMANDA (fora do brasil.json). Baixado só quando o usuário
-// abre o card de uma cidade ou usa a coluna de emendas — mantém o payload inicial
-// leve. ensureEmendas() busca uma vez, cacheia, e funde em cada município (munById).
-let EMENDAS = null, _emendasPromise = null;
-function ensureEmendas() {
-  if (EMENDAS) return Promise.resolve(EMENDAS);
-  if (_emendasPromise) return _emendasPromise;
+// Emendas FEDERAIS (Portal da Transparência) — CARGA SOB DEMANDA, em dois níveis:
+//  • RESUMO (totais por município): emendas_resumo.json, leve — alimenta o mapa e a
+//    coluna da tabela. ensureEmendasResumo() funde {total,n} em cada município.
+//  • GRANULAR por UF: emendas/{uf}.json (lista de emendas com valor por mês) — só é
+//    baixado quando o usuário abre uma cidade. Base do filtro de período no card.
+// Versionado por meta.emendas_gerado_em (refresh semanal). Nada disso pesa o load.
+let EMENDAS_RESUMO = null, _resumoPromise = null;
+const _emendasUFP = {};                  // uf -> Promise<{municipios:{cd:...}}>
+function _emendasVer() {
   const v = META && META.emendas_gerado_em;
-  const url = v ? `data/emendas.json?v=${encodeURIComponent(v)}` : "data/emendas.json";
-  _emendasPromise = fetch(url, { cache: v ? "force-cache" : "no-store" })
+  return v ? `?v=${encodeURIComponent(v)}` : "";
+}
+function ensureEmendasResumo() {
+  if (EMENDAS_RESUMO) return Promise.resolve(EMENDAS_RESUMO);
+  if (_resumoPromise) return _resumoPromise;
+  const v = _emendasVer();
+  _resumoPromise = fetch(`data/emendas_resumo.json${v}`, { cache: v ? "force-cache" : "no-store" })
     .then((r) => r.json())
     .then((j) => {
-      EMENDAS = j;
+      EMENDAS_RESUMO = j;
       const mm = (j && j.municipios) || {};
       for (const cd in mm) { const m = munById.get(cd); if (m) m.emendas = mm[cd]; }
       return j;
     })
-    .catch(() => { EMENDAS = { municipios: {} }; return EMENDAS; });
-  return _emendasPromise;
+    .catch(() => { EMENDAS_RESUMO = { municipios: {} }; return EMENDAS_RESUMO; });
+  return _resumoPromise;
+}
+function ensureEmendasUF(uf) {
+  if (_emendasUFP[uf]) return _emendasUFP[uf];
+  const v = _emendasVer();
+  _emendasUFP[uf] = fetch(`data/emendas/${uf}.json${v}`, { cache: v ? "force-cache" : "no-store" })
+    .then((r) => r.json())
+    .catch(() => ({ municipios: {} }));
+  return _emendasUFP[uf];
 }
 let ordenarPor = "razao_total", ordemDesc = true;
 const flagsAtivas = new Set();
@@ -618,36 +633,73 @@ function orcamentoBlock(m) {
     <div class="cb-fonte">${t("nota_orcamento")}</div>
   </div>`;
 }
-// Emendas parlamentares FEDERAIS (transferências especiais) recebidas pelo
-// município. Snapshot estático + botão que atualiza AO VIVO pela API da
-// TransfereGov (por CNPJ do beneficiário), com fallback para o snapshot.
-function emendasBlock(m) {
-  const e = m.emendas;
-  if (!e) return "";
-  const pop = m.pop_total_estimada;
-  const hab = (v) => (pop ? ` <small>(${BRL0.format(v / pop)}${t("orc_hab")})</small>` : "");
-  const parls = (e.top_parlamentares || []).map((p) =>
-    `<div class="em-row"><span class="em-quem">${p.nome}${casaChip(p.casa)}</span><span class="em-val">${moeda(p.valor)}</span></div>`).join("");
-  const areas = Object.entries(e.por_area || {}).slice(0, 6).map(([k, v]) =>
-    `<div class="em-row"><span class="em-quem">${t("emarea_" + k)}</span><span class="em-val">${moeda(v)}</span></div>`).join("");
-  const linhaUlt = (u) =>
-    `<div class="em-row"><span class="em-quem">${u.parlamentar}${casaChip(u.casa)}<small class="em-sub">${u.ano} · ${u.area}</small></span><span class="em-val">${moeda(u.valor)}</span></div>`;
-  const ult = (e.ultimas || []).map(linhaUlt).join("");
-  const ger = (EMENDAS && EMENDAS.gerado_em) || null;
-  const anoMin = (EMENDAS && EMENDAS.ano_min) || "";
-  const snap = ger ? `<div class="cb-fonte">${t("em_snapshot_em", { data: dataCurta(ger) })}</div>` : "";
+// Emendas parlamentares FEDERAIS (Portal da Transparência — Documentos de Despesa):
+// TODAS as modalidades (individual, bancada, comissão, relator), atribuídas ao
+// município de APLICAÇÃO do recurso. Snapshot semanal (sem tempo real). Tem
+// SELETOR DE PERÍODO (ano/mês) que filtra a lista e recalcula os totais.
+// Usa window._em = { full, anos, ger } (definido ao abrir a cidade).
+function emendasBlock() {
+  const E = window._em;
+  if (!E || !E.full || !(E.full.emendas || []).length) return "";
+  const optAno = `<option value="">${t("em_periodo_todos")}</option>` +
+    E.anos.map((a) => `<option value="${a}">${a}</option>`).join("");
+  const meses = LANG === "en" ? MESES_EN : MESES_PT;
+  const optMes = `<option value="">${t("em_periodo_meses")}</option>` +
+    meses.map((nm, i) => `<option value="${String(i + 1).padStart(2, "0")}">${nm}</option>`).join("");
+  const ger = E.ger ? `<div class="cb-fonte">${t("em_snapshot_em", { data: dataCurta(E.ger) })}</div>` : "";
   return `<div class="comp-blk" id="pf-emendas">
-    <div class="cb-tit">${t("em_tit", { de: anoMin })}</div>
+    <div class="cb-tit">${t("em_tit")}</div>
     <div class="cb-aviso">${t("em_aviso")}</div>
-    <div class="cb-row"><span class="cb-ano">${t("em_total")}</span><b id="em-total">${moeda(e.total)}</b>${hab(e.total)}</div>
-    <div class="cb-row"><span class="cb-ano">${t("em_n")}</span><span id="em-n">${t("em_n_val", { n: fmt(e.n), p: e.n_parlamentares })}</span></div>
-    ${parls ? `<div class="cb-subhead">${t("em_subhead_parl")}</div>${parls}` : ""}
-    ${areas ? `<div class="cb-subhead">${t("em_subhead_area")}</div>${areas}` : ""}
-    ${ult ? `<div class="cb-subhead">${t("em_subhead_ult")}</div><div id="em-ultimas">${ult}</div>` : ""}
-    ${snap}
-    <div class="cb-row" style="margin-top:.6rem"><button class="btn ghost" id="pf-emendas-live" type="button">${t("em_live_btn")}</button> <span id="em-live-status" class="cb-fonte"></span></div>
+    <div class="em-periodo"><span class="em-periodo-lab">${t("em_periodo")}</span>
+      <select id="em-ano" class="em-sel">${optAno}</select>
+      <select id="em-mes" class="em-sel" disabled>${optMes}</select>
+    </div>
+    <div id="em-conteudo"></div>
+    ${ger}
     <div class="cb-fonte">${t("nota_emendas")}</div>
   </div>`;
+}
+const _MOD_EN = { "Individual": "Individual", "Bancada": "Caucus", "Comissão": "Committee", "Relator": "Rapporteur", "Outras": "Other" };
+function modLabel(v) { return LANG === "en" ? (_MOD_EN[v] || v) : v; }
+// Filtra as emendas pelo período (ano/mês) e re-agrega. Valor = empenhado nos
+// meses da janela (o dado granular é por mês).
+function emendasNoPeriodo(full, ano, mes) {
+  const inWin = (mm) => (!ano || (mm.slice(0, 4) === ano && (!mes || mm.slice(5, 7) === mes)));
+  let total = 0, n = 0;
+  const porMod = {}, porArea = {}, lista = [];
+  for (const e of (full.emendas || [])) {
+    let v = 0;
+    for (const mm in e.m) if (inWin(mm)) v += e.m[mm];
+    if (v <= 0) continue;
+    n++; total += v;
+    porMod[e.t] = (porMod[e.t] || 0) + v;
+    porArea[e.f] = (porArea[e.f] || 0) + v;
+    lista.push({ a: e.a, c: e.c, t: e.t, f: e.f, v: v });
+  }
+  lista.sort((a, b) => b.v - a.v);
+  return { total, n, porMod, porArea, lista };
+}
+function renderEmendasConteudo(ano, mes) {
+  const E = window._em; const cont = document.getElementById("em-conteudo");
+  if (!E || !cont) return;
+  const r = emendasNoPeriodo(E.full, ano, mes);
+  const m = window._cidadeAberta, pop = m && m.pop_total_estimada;
+  const hab = (v) => (pop ? ` <small>(${BRL0.format(v / pop)}${t("orc_hab")})</small>` : "");
+  const mods = Object.entries(r.porMod).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
+    `<div class="em-row"><span class="em-quem">${modLabel(k)}</span><span class="em-val">${moeda(v)}</span></div>`).join("");
+  const areas = Object.entries(r.porArea).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) =>
+    `<div class="em-row"><span class="em-quem">${t("emarea_" + k)}</span><span class="em-val">${moeda(v)}</span></div>`).join("");
+  const N = 15;
+  const lista = r.lista.slice(0, N).map((e) =>
+    `<div class="em-row"><span class="em-quem">${e.a}${casaChip(e.c)}<small class="em-sub">${modLabel(e.t)} · ${t("emarea_" + e.f)}</small></span><span class="em-val">${moeda(e.v)}</span></div>`).join("");
+  const mais = r.lista.length > N ? `<div class="cb-fonte">${t("em_mais", { n: r.lista.length - N })}</div>` : "";
+  cont.innerHTML =
+    `<div class="cb-row"><span class="cb-ano">${t("em_total")}</span><b>${moeda(r.total)}</b>${hab(r.total)}</div>
+    <div class="cb-row"><span class="cb-ano">${t("em_n")}</span>${t("em_n_val", { n: fmt(r.n) })}</div>
+    ${mods ? `<div class="cb-subhead">${t("em_subhead_mod")}</div>${mods}` : ""}
+    ${areas ? `<div class="cb-subhead">${t("em_subhead_area")}</div>${areas}` : ""}
+    ${lista ? `<div class="cb-subhead">${t("em_subhead_lista")}</div>${lista}${mais}`
+            : `<div class="cb-row" style="color:var(--muted)">${t("em_vazio_periodo")}</div>`}`;
 }
 // Rótulo traduzível da casa (o dado guarda "Câmara"/"Senado" em PT).
 function casaLabel(c) {
@@ -664,63 +716,6 @@ function casaChip(c) {
 // Placeholder enquanto o emendas.json (carga sob demanda) não chega.
 function emendasLoadingHTML() {
   return `<div class="comp-blk"><div class="cb-row cb-loading">${t("em_loading")}</div></div>`;
-}
-// Extrai a 1ª função da string de áreas ("10-Saúde / 302-..." → "Saúde").
-function _emendaArea(s) {
-  const mm = (s || "").match(/\d{2}\s*-\s*([^\/,]+)/);
-  return mm ? mm[1].trim() : "—";
-}
-// Consulta a TransfereGov ao vivo por CNPJ e atualiza total, contagem e últimas.
-// Em qualquer falha (offline, rate-limit, API fora) preserva o snapshot.
-async function atualizarEmendasLive(m) {
-  const e = m.emendas;
-  const btn = document.getElementById("pf-emendas-live");
-  const status = document.getElementById("em-live-status");
-  const liveUrl = EMENDAS && EMENDAS.live_url;
-  if (!e || !e.cnpj || !btn || !liveUrl) return;
-  // mapa local nome→casa do snapshot, para rotular as últimas vindas ao vivo
-  const casaDe = {};
-  (e.top_parlamentares || []).concat(e.ultimas || []).forEach((p) => {
-    const nome = p.nome || p.parlamentar;
-    if (nome && p.casa) casaDe[nome] = p.casa;
-  });
-  btn.disabled = true;
-  status.textContent = t("em_live_loading");
-  const sel = "id_plano_acao,ano_plano_acao,nome_parlamentar_emenda_plano_acao," +
-    "valor_custeio_plano_acao,valor_investimento_plano_acao," +
-    "codigo_descricao_areas_politicas_publicas_plano_acao";
-  const url = `${liveUrl}/plano_acao_especial` +
-    `?cnpj_beneficiario_plano_acao=eq.${encodeURIComponent(e.cnpj)}` +
-    `&select=${sel}&order=id_plano_acao.desc&limit=1000`;
-  try {
-    const r = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const planos = await r.json();
-    if (!Array.isArray(planos) || !planos.length) throw new Error("vazio");
-    let total = 0;
-    const parlSet = new Set();
-    planos.forEach((p) => {
-      total += (+p.valor_custeio_plano_acao || 0) + (+p.valor_investimento_plano_acao || 0);
-      if (p.nome_parlamentar_emenda_plano_acao) parlSet.add(p.nome_parlamentar_emenda_plano_acao);
-    });
-    document.getElementById("em-total").textContent = moeda(total);
-    document.getElementById("em-n").textContent =
-      t("em_n_val", { n: fmt(planos.length), p: parlSet.size });
-    const ult = planos.slice(0, 6).map((p) => {
-      const nome = (p.nome_parlamentar_emenda_plano_acao || "—").trim();
-      const v = (+p.valor_custeio_plano_acao || 0) + (+p.valor_investimento_plano_acao || 0);
-      const area = _emendaArea(p.codigo_descricao_areas_politicas_publicas_plano_acao);
-      return `<div class="em-row"><span class="em-quem">${nome}${casaChip(casaDe[nome])}<small class="em-sub">${p.ano_plano_acao} · ${area}</small></span><span class="em-val">${moeda(v)}</span></div>`;
-    }).join("");
-    const cont = document.getElementById("em-ultimas");
-    if (cont) cont.innerHTML = ult;
-    status.textContent = t("em_live_ok");
-    track("emendas-live");
-  } catch (err) {
-    status.textContent = t("em_live_err");
-  } finally {
-    btn.disabled = false;
-  }
 }
 function criteriosBlock(m) {
   const r = m.revisao;
@@ -913,7 +908,7 @@ function cityCardHTML(m) {
     ${govBlock(m)}
     ${contasBlock(m)}
     ${orcamentoBlock(m)}
-    <div id="pf-emendas-slot">${EMENDAS ? "" : emendasLoadingHTML()}</div>
+    <div id="pf-emendas-slot">${emendasLoadingHTML()}</div>
     ${criteriosBlock(m)}
     <p class="frase" style="font-size:.8rem; color:#9aa3b2; margin-top:1rem">${t("nota_neutra")}</p>
     <div class="acts">
@@ -1012,17 +1007,28 @@ function abrirCidade(m) {
     track("baixar-imagem");
     try { baixarImagemCidade(m); toast(t("city_img_ok")); } catch (_) {}
   });
-  // Emendas: carga SOB DEMANDA. O card já apareceu; buscamos o emendas.json (uma
-  // vez, cacheado) e preenchemos o slot quando chegar. Se o usuário trocar de
-  // cidade nesse meio-tempo, abortamos (evita preencher o card errado).
-  ensureEmendas().then((j) => {
+  // Emendas: carga SOB DEMANDA por UF. O card já apareceu; buscamos emendas/{uf}.json
+  // (cacheado por UF), pegamos a cidade, montamos o bloco + seletor de período. Se o
+  // usuário trocar de cidade no meio, abortamos (não preenche o card errado).
+  ensureEmendasUF(m.uf).then((uf) => {
     if (window._cidadeAberta !== m) return;
-    m.emendas = (j.municipios || {})[m.cd_ibge] || null;
+    const mdata = (uf.municipios || {})[m.cd_ibge] || null;
     const slot = document.getElementById("pf-emendas-slot");
     if (!slot) return;
-    slot.innerHTML = emendasBlock(m);   // vazio se a cidade não tiver emendas
-    const emBtn = document.getElementById("pf-emendas-live");
-    if (emBtn) emBtn.addEventListener("click", () => atualizarEmendasLive(m));
+    if (!mdata) { slot.innerHTML = ""; window._em = null; return; }
+    const anos = new Set();
+    mdata.emendas.forEach((e) => { for (const mm in e.m) anos.add(mm.slice(0, 4)); });
+    window._em = { full: mdata, anos: [...anos].sort(), ger: uf.gerado_em };
+    slot.innerHTML = emendasBlock();
+    renderEmendasConteudo("", "");
+    const selA = document.getElementById("em-ano"), selM = document.getElementById("em-mes");
+    if (selA) selA.addEventListener("change", () => {
+      selM.disabled = !selA.value;
+      if (!selA.value) selM.value = "";
+      renderEmendasConteudo(selA.value, selM.value);
+      track("emendas-periodo");
+    });
+    if (selM) selM.addEventListener("change", () => renderEmendasConteudo(selA.value, selM.value));
   });
 }
 function abrirDeepLink() {
@@ -1614,7 +1620,7 @@ function restaurarExploradorDaURL() {
   const col = sp.get("col");
   if (col && COL_INDS[col]) {
     colInd = col; const e = document.getElementById("colInd"); if (e) e.value = col;
-    if (col === "emendas_hab" && !EMENDAS) ensureEmendas().then(render);   // carga sob demanda
+    if (col === "emendas_hab" && !EMENDAS_RESUMO) ensureEmendasResumo().then(render);   // carga sob demanda
   }
   const ord = sp.get("ord");
   if (ord) {
@@ -1679,7 +1685,7 @@ function bind() {
     track("coluna-" + colInd);
     ordenarPor = "_colind"; ordemDesc = true;   // escolher um indicador já ordena por ele
     // emendas é carga sob demanda: dispara o load e re-renderiza quando chegar
-    if (colInd === "emendas_hab" && !EMENDAS) ensureEmendas().then(render);
+    if (colInd === "emendas_hab" && !EMENDAS_RESUMO) ensureEmendasResumo().then(render);
     render();
   });
   const ordSel = document.getElementById("ordcampo");
